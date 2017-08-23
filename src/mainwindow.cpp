@@ -128,7 +128,7 @@ void MainWindow::createDockWindows()
 
 void MainWindow::startTimer()
 {
-    mOgreManager-> createScene();
+    mOgreManager->createScene();
     mTimer->start();
 }
 
@@ -239,12 +239,14 @@ void MainWindow::actionExportObj()
     QString sLastOpenLocation = settings.value("actionExportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",
-                                                        sLastOpenLocation,
+                                                        sLastOpenLocation + "/a.obj",
                                                         "Wavefront obj (*.obj)");
     if (sObjFileName.isEmpty())
     {
         return;
     }
+
+    //QString sObjFileName = "C:/Users/Matt/Desktop/a.obj";
 
     if (QFile::exists(sObjFileName)) QFile::remove(sObjFileName);
 
@@ -256,8 +258,8 @@ void MainWindow::actionExportObj()
     Ogre::Mesh* mesh = mOgreManager->currentMesh();
     if (mesh != nullptr)
     {
-        ObjExporter objImporter;
-        bool ok = objImporter.exportFile(mesh, sObjFileName.toStdString());
+        ObjExporter objExporter;
+        bool ok = objExporter.exportFile(mesh, sObjFileName);
 
         qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
 
