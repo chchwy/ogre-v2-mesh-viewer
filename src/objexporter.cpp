@@ -8,11 +8,19 @@
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"
 
+#define CLOCK_LINENUM_CAT( name, ln ) name##ln
+#define CLOCK_LINENUM( name, ln ) name##ln
+#define PROFILE( f ) \
+    clock_t CLOCK_LINENUM(t1, __LINE__) = clock(); \
+    f; \
+    clock_t CLOCK_LINENUM(t2, __LINE__) = clock(); \
+    qDebug() << #f << float( CLOCK_LINENUM(t2, __LINE__) - CLOCK_LINENUM(t1, __LINE__) ) / CLOCKS_PER_SEC << "sec";
 
 ObjExporter::ObjExporter()
 {
-
 }
+
+void go() { qDebug() << "go"; }
 
 bool ObjExporter::exportFile(Ogre::Mesh* srcMesh, const std::string& sOutFile)
 {
@@ -27,9 +35,10 @@ bool ObjExporter::exportFile(Ogre::Mesh* srcMesh, const std::string& sOutFile)
     v1Mesh->importV2(srcMesh);
 
     Ogre::v1::XMLMeshSerializer xmlSerializer;
-    xmlSerializer.exportMesh(v1Mesh.get(), "C:/Users/Matt/Desktop/abc.mesh.xml");
+    PROFILE( xmlSerializer.exportMesh(v1Mesh.get(), "C:/Users/Matt/Desktop/abc.mesh.xml") );
 
-    
+
+    //QXmlStreamReader 
 
     return true;
 }
