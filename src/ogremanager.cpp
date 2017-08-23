@@ -252,7 +252,7 @@ Ogre::Mesh* OgreManager::currentMesh(int index /*= 0*/)
     if ( mLoadedV2Meshes.size() > index )
         return mLoadedV2Meshes[index].get();
 
-    Q_ASSERT(false);
+    //Q_ASSERT(false);
     return nullptr;
 }
 

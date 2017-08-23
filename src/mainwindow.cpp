@@ -254,16 +254,18 @@ void MainWindow::actionExportObj()
     settings.setValue("actionExportObj", info.absolutePath());
 
     Ogre::Mesh* mesh = mOgreManager->currentMesh();
-    
-    ObjExporter objImporter;
-    bool ok = objImporter.exportFile(mesh, sObjFileName.toStdString());
-
-    qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
-
-    if (!ok)
+    if (mesh != nullptr)
     {
-        qDebug() << "Failed to export obj model.";
-        QMessageBox::information(this, "Error", "Filed to export obj model");
+        ObjExporter objImporter;
+        bool ok = objImporter.exportFile(mesh, sObjFileName.toStdString());
+
+        qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
+
+        if (!ok)
+        {
+            qDebug() << "Failed to export obj model.";
+            QMessageBox::information(this, "Error", "Filed to export obj model");
+        }
     }
 
     mTimer->start();
