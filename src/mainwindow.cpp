@@ -128,7 +128,7 @@ void MainWindow::createDockWindows()
 
 void MainWindow::startTimer()
 {
-    mOgreManager-> createScene();
+    mOgreManager->createScene();
     mTimer->start();
 }
 
@@ -239,12 +239,14 @@ void MainWindow::actionExportObj()
     QString sLastOpenLocation = settings.value("actionExportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",
-                                                        sLastOpenLocation,
+                                                        sLastOpenLocation + "/a.obj",
                                                         "Wavefront obj (*.obj)");
     if (sObjFileName.isEmpty())
     {
         return;
     }
+
+    //QString sObjFileName = "C:/Users/Matt/Desktop/a.obj";
 
     if (QFile::exists(sObjFileName)) QFile::remove(sObjFileName);
 
@@ -254,16 +256,18 @@ void MainWindow::actionExportObj()
     settings.setValue("actionExportObj", info.absolutePath());
 
     Ogre::Mesh* mesh = mOgreManager->currentMesh();
-    
-    ObjExporter objImporter;
-    bool ok = objImporter.exportFile(mesh, sObjFileName.toStdString());
-
-    qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
-
-    if (!ok)
+    if (mesh != nullptr)
     {
-        qDebug() << "Failed to export obj model.";
-        QMessageBox::information(this, "Error", "Filed to export obj model");
+        ObjExporter objExporter;
+        bool ok = objExporter.exportFile(mesh, sObjFileName);
+
+        qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
+
+        if (!ok)
+        {
+            qDebug() << "Failed to export obj model.";
+            QMessageBox::information(this, "Error", "Filed to export obj model");
+        }
     }
 
     mTimer->start();

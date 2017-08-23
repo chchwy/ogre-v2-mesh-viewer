@@ -154,7 +154,7 @@ void OgreWidget::resizeEvent( QResizeEvent* e )
 			mOgreRenderWindow->resize( newSize.width(), newSize.height() );
 			mOgreRenderWindow->windowMovedOrResized();
 			
-			qDebug() << "Window resize=" << newSize << ", Ratio=" << aspectRatio;
+			//qDebug() << "Window resize=" << newSize << ", Ratio=" << aspectRatio;
 		}
 	}
 }

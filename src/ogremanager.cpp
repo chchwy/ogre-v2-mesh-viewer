@@ -89,6 +89,9 @@ OgreManager::OgreManager()
 
 OgreManager::~OgreManager()
 {
+    mLoadedV1Meshes.clear();
+    mLoadedV2Meshes.clear();
+
 	delete mRoot;
     mRoot = nullptr;
 
@@ -252,7 +255,7 @@ Ogre::Mesh* OgreManager::currentMesh(int index /*= 0*/)
     if ( mLoadedV2Meshes.size() > index )
         return mLoadedV2Meshes[index].get();
 
-    Q_ASSERT(false);
+    //Q_ASSERT(false);
     return nullptr;
 }
 
@@ -367,6 +370,7 @@ void OgreManager::createScene()
     Q_ASSERT(mMeshRootNode == nullptr);
     mMeshRootNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
 
+    //loadMesh("C:/Users/Matt/Desktop/Sphere1000.mesh");
     emit sceneCreated();
 }
 
