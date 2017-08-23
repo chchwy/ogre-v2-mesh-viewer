@@ -57,8 +57,8 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
 
     datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
 
-    //auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-    //datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+    auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
+    datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
 
     datablock->setDiffuse(Ogre::Vector3(srcMtl.diffuse[0], srcMtl.diffuse[1], srcMtl.diffuse[2]));
     datablock->setBackgroundDiffuse(Ogre::ColourValue(1, 1, 1, 1));
