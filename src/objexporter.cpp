@@ -205,8 +205,11 @@ bool ObjExporter::writeObjFile(const QString& sOutFile, const QString& sMtlFileN
     for (int i = 0; i < mSubmeshes.size(); ++i)
     {
         OgreDataSubMesh& mesh01 = mSubmeshes[i];
-        fout << "o " << mesh01.meshName.c_str() << "\n";
-            
+        if (!mesh01.meshName.empty())
+            fout << "o " << QString::fromStdString(mesh01.meshName) << "\n";
+        else
+            fout << "o exportMesh001\n";
+
         // write vertices
         for (const OgreDataVertex& v : mesh01.vertices )
         {
@@ -360,6 +363,14 @@ void ObjExporter::normalize(OgreDataVertex& v)
     QVector3D v3D(v.normal[0], v.normal[1], v.normal[2]);
     v3D.normalize();
 
+    if (isnan(v3D.x()))
+    {
+        v.normal[0] = 0.0f;
+        v.normal[1] = 1.0f;
+        v.normal[2] = 0.0f;
+        return;
+    }
+    
     v.normal[0] = v3D.x();
     v.normal[1] = v3D.y();
     v.normal[2] = v3D.z();
