@@ -6,6 +6,7 @@
 namespace Ogre
 {
     class Mesh;
+    class Texture;
 }
 
 
@@ -37,15 +38,14 @@ public:
 
     bool exportFile(Ogre::Mesh* srcMesh, const QString& sOutFile);
 
-
 private:
     bool convertToOgreData(const QString& sXmlFile);
     void clearOgreDataSubMesh(OgreDataSubMesh&);
     void clearOgreDataVertex(OgreDataVertex&);
-    bool writeObjFile(const QString& sOutFile);
+    bool writeObjFile(const QString& sOutObjFile, const QString& sMtlFileName);
     bool writeMtlFile(Ogre::Mesh*, const QString& sOutFile);
+    void writeTexture(Ogre::Texture* tex, const std::string& sTexFileName);
     void normalize(OgreDataVertex&);
-
     std::vector<OgreDataSubMesh> mSubmeshes;
 };
 
