@@ -45,11 +45,21 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
     Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
 
     std::string strBlockName(srcMtl.name);
-    Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(
-        hlmsPbs->createDatablock(strBlockName, strBlockName,
-                                 Ogre::HlmsMacroblock(),
-                                 Ogre::HlmsBlendblock(),
-                                 Ogre::HlmsParamVec()));
+    Ogre::HlmsPbsDatablock* datablock = nullptr;
+    
+    try
+    {
+        datablock = static_cast<Ogre::HlmsPbsDatablock*>(
+            hlmsPbs->createDatablock(strBlockName, strBlockName,
+                                     Ogre::HlmsMacroblock(),
+                                     Ogre::HlmsBlendblock(),
+                                     Ogre::HlmsParamVec()));
+    }
+    catch (std::exception& e)
+    {
+        qDebug() << "Cannot create datablock.";
+        return nullptr;
+    }
 
     Ogre::HlmsSamplerblock samplerBlock;
     samplerBlock.setAddressingMode(Ogre::TAM_WRAP);
@@ -281,6 +291,8 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
     Ogre::v1::MeshManager::getSingleton().remove(v1MeshPtr);
     v2Mesh.reset();
     v1MeshPtr.reset();
+
+    QFile::remove(strTempXMLFile);
 
     return b;
 }
