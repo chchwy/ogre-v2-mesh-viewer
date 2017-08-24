@@ -216,7 +216,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
             {
                 //<submeshname name="Cerberus00_Fixed0" index="0" />
                 xout.writeStartElement("submeshname");
-                xout.writeAttribute("name", mOgreSubMeshes[s].meshName.c_str());
+                xout.writeAttribute("name", QString::fromStdString(mOgreSubMeshes[s].meshName));
                 xout.writeAttribute("index", QString::number(s));
                 xout.writeEndElement();
 
@@ -291,8 +291,6 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
     Ogre::v1::MeshManager::getSingleton().remove(v1MeshPtr);
     v2Mesh.reset();
     v1MeshPtr.reset();
-
-    QFile::remove(strTempXMLFile);
 
     return b;
 }
