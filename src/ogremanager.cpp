@@ -198,6 +198,13 @@ bool OgreManager::loadMesh(QString sFileName)
         {
             pItem->getSubItem(i)->setDatablock("viewer_default_mtl");
         }
+
+        if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
+        {
+            auto hlmsTextureManager = mRoot->getHlmsManager()->getTextureManager();
+            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
+            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+        }
     }
     return true;
 }
@@ -328,8 +335,8 @@ void OgreManager::renderOgreWidgetsOneFrame()
 		// Update all QOgreWidgets
 		for ( auto it = mOgreWidgets.begin(); it != mOgreWidgets.end(); ++it )
 		{
-            OgreWidget* pItem = *it;
-            pItem->updateOgre( timeSinceLastFrame );
+            OgreWidget* widget = *it;
+            widget->updateOgre( timeSinceLastFrame );
 		}
 	}
 }
