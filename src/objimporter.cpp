@@ -45,11 +45,21 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
     Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
 
     std::string strBlockName(srcMtl.name);
-    Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(
-        hlmsPbs->createDatablock(strBlockName, strBlockName,
-                                 Ogre::HlmsMacroblock(),
-                                 Ogre::HlmsBlendblock(),
-                                 Ogre::HlmsParamVec()));
+    Ogre::HlmsPbsDatablock* datablock = nullptr;
+    
+    try
+    {
+        datablock = static_cast<Ogre::HlmsPbsDatablock*>(
+            hlmsPbs->createDatablock(strBlockName, strBlockName,
+                                     Ogre::HlmsMacroblock(),
+                                     Ogre::HlmsBlendblock(),
+                                     Ogre::HlmsParamVec()));
+    }
+    catch (std::exception& e)
+    {
+        qDebug() << "Cannot create datablock.";
+        return nullptr;
+    }
 
     Ogre::HlmsSamplerblock samplerBlock;
     samplerBlock.setAddressingMode(Ogre::TAM_WRAP);
@@ -206,7 +216,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
             {
                 //<submeshname name="Cerberus00_Fixed0" index="0" />
                 xout.writeStartElement("submeshname");
-                xout.writeAttribute("name", mOgreSubMeshes[s].meshName.c_str());
+                xout.writeAttribute("name", QString::fromStdString(mOgreSubMeshes[s].meshName));
                 xout.writeAttribute("index", QString::number(s));
                 xout.writeEndElement();
 
