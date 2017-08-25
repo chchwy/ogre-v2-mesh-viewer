@@ -1,6 +1,13 @@
 QT += widgets
 
-OGREHOME = "C:/SDK/OgreSDK/Ogre/Build/sdk"
+message(Qt version: $$[QT_VERSION])
+
+OGREHOME = $$(OGRE_HOME)
+isEmpty(OGREHOME) {
+    OGREHOME = "C:/SDK/OgreSDK/Ogre/Build/sdk"
+}
+
+message(OGRE_HOME: $$OGREHOME)
 
 PRECOMPILED_HEADER = src/stdafx.h
 
@@ -12,9 +19,9 @@ HEADERS = \
     src/tiny_obj_loader.h \
     src/objimporter.h \
     src/cameramanager.h \
-	src/OgreXML/OgreXMLMeshSerializer.h \
-	src/OgreXML/tinyxml.h \
-	src/OgreXML/tinystr.h \
+    src/OgreXML/OgreXMLMeshSerializer.h \
+    src/OgreXML/tinyxml.h \
+    src/OgreXML/tinystr.h \
     src/objexporter.h
 
 
@@ -26,11 +33,11 @@ SOURCES = \
     src/lightwidget.cpp \
     src/objimporter.cpp \
     src/cameramanager.cpp \
-	src/OgreXML/OgreXMLMeshSerializer.cpp \
-	src/OgreXML/tinyxml.cpp \
-	src/OgreXML/tinystr.cpp \
-	src/OgreXML/tinyxmlerror.cpp \
-	src/OgreXML/tinyxmlparser.cpp \
+    src/OgreXML/OgreXMLMeshSerializer.cpp \
+    src/OgreXML/tinyxml.cpp \
+    src/OgreXML/tinystr.cpp \
+    src/OgreXML/tinyxmlerror.cpp \
+    src/OgreXML/tinyxmlparser.cpp \
     src/objexporter.cpp
 
 
