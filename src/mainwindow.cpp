@@ -140,6 +140,9 @@ void MainWindow::doQuitMenuAction()
 
 void MainWindow::actionOpenMesh()
 {
+    mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
+
     mOgreManager->clearScene();
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
@@ -182,6 +185,7 @@ void MainWindow::actionOpenMesh()
 void MainWindow::actionSaveMesh()
 {
     mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
@@ -215,8 +219,6 @@ void MainWindow::actionSaveMesh()
             QMessageBox::information(this, "Error", "Filed to export obj model");
         }
     }
-
-    mTimer->start();
 }
 
 void MainWindow::actionImportObj()
@@ -224,6 +226,7 @@ void MainWindow::actionImportObj()
     mOgreManager->clearScene();
 
     mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QSettings settings( "OgreSpoooky", "OgreSpoooky" );
@@ -267,13 +270,12 @@ void MainWindow::actionImportObj()
         qDebug() << "Failed to import obj model.";
         QMessageBox::information(this, "Error", "Filed to import obj model");
     }
-
-    mTimer->start();
 }
 
 void MainWindow::actionExportObj()
 {
     mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QSettings settings("OgreSpoooky", "OgreSpoooky");
@@ -310,6 +312,4 @@ void MainWindow::actionExportObj()
             QMessageBox::information(this, "Error", "Filed to export obj model");
         }
     }
-
-    mTimer->start();
 }
