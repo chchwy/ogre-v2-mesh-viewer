@@ -183,8 +183,8 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
         return false;
     }
 
-    //QString strTempXMLFile = QDir(tempDir.path()).filePath("out.mesh.xml");
-    QString strTempXMLFile = "C:/Users/Matt/Desktop/out.mesh.xml";
+    QString strTempXMLFile = QDir(tempDir.path()).filePath("out.mesh.xml");
+    //QString strTempXMLFile = "C:/Users/Matt/Desktop/out.mesh.xml";
     PROFILE(writeMeshXML(strTempXMLFile));
 
     progress.setValue(60);
