@@ -352,20 +352,6 @@ void OgreManager::createScene()
         }
     }
     //qDebug() << QDir::currentPath();
-    
-    
-    QDirIterator d(QDir::currentPath() + "/../mesh", QStringList() << "*.mesh");
-    while (d.hasNext())
-    {
-        QString strMesh = d.next();
-        strMesh = QFileInfo(strMesh).fileName();
-        qDebug() << strMesh;
-        loadV1Mesh(strMesh);
-        Ogre::Item* item = mSceneManager->createItem(strMesh.toStdString());
-        auto childNode = mSceneManager->getRootSceneNode()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
-        childNode->attachObject(item);
-        
-    }
     */
 
     auto hlmsManager = mRoot->getHlmsManager();
@@ -377,7 +363,14 @@ void OgreManager::createScene()
     Q_ASSERT(mMeshRootNode == nullptr);
     mMeshRootNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
 
-    //loadMesh("C:/Users/Matt/Desktop/Sphere1000.mesh");
+    QDirIterator d(QDir::currentPath() + "/../mesh", QStringList() << "*.mesh");
+    while (d.hasNext())
+    {
+        QString strMesh = d.next();
+        //strMesh = QFileInfo(strMesh).fileName();
+        loadMesh(strMesh);
+    }
+
     emit sceneCreated();
 }
 
