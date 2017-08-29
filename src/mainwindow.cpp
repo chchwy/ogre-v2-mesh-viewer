@@ -42,6 +42,7 @@
 #include "ogrewidget.h"
 #include "objimporter.h"
 #include "objexporter.h"
+#include "OgreMesh2Serializer.h"
 
 
 MainWindow::MainWindow()
@@ -73,7 +74,7 @@ MainWindow::MainWindow()
 
     // actions
     connect(ui->actionOpenOgreMesh, &QAction::triggered, this, &MainWindow::actionOpenMesh);
-
+    connect(ui->actionSaveOgreMesh, &QAction::triggered, this, &MainWindow::actionSaveMesh);
     connect(ui->actionImportObj, &QAction::triggered, this, &MainWindow::actionImportObj);
     connect(ui->actionExportObj, &QAction::triggered, this, &MainWindow::actionExportObj);
 
@@ -139,6 +140,9 @@ void MainWindow::doQuitMenuAction()
 
 void MainWindow::actionOpenMesh()
 {
+    mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
+
     mOgreManager->clearScene();
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
@@ -178,11 +182,51 @@ void MainWindow::actionOpenMesh()
     }
 }
 
+void MainWindow::actionSaveMesh()
+{
+    mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
+
+    QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
+
+    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QString sLastOpenLocation = settings.value("actionSaveMesh", sUserDoc).toString();
+
+    QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
+                                                         sLastOpenLocation + "/a.mesh",
+                                                         "Ogre Mesh (*.mesh)");
+    if (sMeshFileName.isEmpty())
+    {
+        return;
+    }
+
+    QFileInfo info(sMeshFileName);
+    settings.setValue("actionSaveMesh", info.absolutePath());
+
+    if (QFile::exists(sMeshFileName)) QFile::remove(sMeshFileName);
+    Q_ASSERT(!QFile::exists(sMeshFileName));
+
+    Ogre::Mesh* mesh = mOgreManager->currentMesh();
+    if (mesh != nullptr)
+    {
+        Ogre::Root* root = Ogre::Root::getSingletonPtr();
+        Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
+        meshSerializer2.exportMesh(mesh, sMeshFileName.toStdString());
+
+        if (!QFile::exists(sMeshFileName))
+        {
+            qDebug() << "Failed to export obj model.";
+            QMessageBox::information(this, "Error", "Filed to export obj model");
+        }
+    }
+}
+
 void MainWindow::actionImportObj()
 {
     mOgreManager->clearScene();
 
     mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QSettings settings( "OgreSpoooky", "OgreSpoooky" );
@@ -226,13 +270,12 @@ void MainWindow::actionImportObj()
         qDebug() << "Failed to import obj model.";
         QMessageBox::information(this, "Error", "Filed to import obj model");
     }
-
-    mTimer->start();
 }
 
 void MainWindow::actionExportObj()
 {
     mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QSettings settings("OgreSpoooky", "OgreSpoooky");
@@ -269,6 +312,4 @@ void MainWindow::actionExportObj()
             QMessageBox::information(this, "Error", "Filed to export obj model");
         }
     }
-
-    mTimer->start();
 }

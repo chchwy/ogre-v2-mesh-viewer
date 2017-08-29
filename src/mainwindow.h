@@ -60,10 +60,10 @@ private:
     void Tick();
 
 private:
+    void actionOpenMesh();
+    void actionSaveMesh();
     void actionImportObj();
     void actionExportObj();
-
-    void actionOpenMesh();
 
     OgreWidget* mOgreWidget = nullptr;
     OgreManager* mOgreManager = nullptr;
