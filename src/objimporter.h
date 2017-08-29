@@ -51,13 +51,15 @@ public:
     bool import(const std::string& sObjFile, const std::string& sOgreMeshFile );
 
 private:
-    void writeXMLOneMesh(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
+    void writeMeshXML(const QString& sOutFile);
+    void writeXMLOneSubMesh(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
     void writeXMLFaces(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
     void writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
 
-    void PreprocessObjIndexes();
     void ConvertToOgreData();
     OgreDataSubMesh ConvertObjMeshToOgreData(const tinyobj::mesh_t&);
+    
+    void importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr);
 
 private:
     // the results of tinyobj loader
