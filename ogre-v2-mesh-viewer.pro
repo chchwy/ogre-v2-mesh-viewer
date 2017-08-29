@@ -22,7 +22,8 @@ HEADERS = \
     src/OgreXML/OgreXMLMeshSerializer.h \
     src/OgreXML/tinyxml.h \
     src/OgreXML/tinystr.h \
-    src/objexporter.h
+    src/objexporter.h \
+	src/scopeguard.h
 
 
 SOURCES = \

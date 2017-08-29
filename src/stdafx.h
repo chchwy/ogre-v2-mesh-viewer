@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <functional>
 
 // windows header
 #define NOMINMAX
@@ -24,3 +25,5 @@
 #include <QString>
 #include <QWidget>
 #include <QDebug>
+
+#include "scopeguard.h"
