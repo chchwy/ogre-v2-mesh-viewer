@@ -223,7 +223,9 @@ void ObjImporter::writeMeshXML(const QString& sOutFile)
     Q_ASSERT(b);
 
     QXmlStreamWriter xout(&outputFile);
+#ifdef _DEBUG
     xout.setAutoFormatting(true);
+#endif
     xout.writeStartDocument();
     xout.writeStartElement("mesh");
     {
