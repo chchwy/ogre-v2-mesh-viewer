@@ -24,10 +24,16 @@
 #include "OgreHlmsJsonPbs.h"
 
 
-void printTime(const QString& s, clock_t t)
-{
-    qDebug() << s << float(t) << "ms";
-}
+#define CLOCK_LINENUM_CAT( name, ln ) name##ln
+#define CLOCK_LINENUM( name, ln ) CLOCK_LINENUM_CAT( name, ln )
+#define CLOCK_BEGIN CLOCK_LINENUM(t1, __LINE__)
+#define CLOCK_END   CLOCK_LINENUM(t2, __LINE__)
+#define PROFILE( f ) \
+    clock_t CLOCK_BEGIN = clock(); \
+    f; \
+    clock_t CLOCK_END = clock(); \
+    qDebug() << #f << ": Use" << float( CLOCK_END - CLOCK_BEGIN ) / CLOCKS_PER_SEC << "sec";
+
 
 bool operator<(const UniqueVertex& l, const UniqueVertex& r)
 {
@@ -122,7 +128,6 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
     return datablock;
 }
 
-
 ObjImporter::ObjImporter()
 {}
 
@@ -139,8 +144,9 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
 
     QFileInfo info(QString::fromStdString(sObjFile));
     std::string sMtlBasePath = info.absolutePath().toStdString() + "/";
-    bool b = tinyobj::LoadObj(&mObjAttrib, &mObjShapes, &mObjMaterials, &sError, sObjFile.c_str(), sMtlBasePath.c_str(), true);
-    
+    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mObjShapes, &mObjMaterials, &sError, sObjFile.c_str(), sMtlBasePath.c_str(), true));
+    Q_ASSERT(b);
+
     if (!sError.empty())
     {
         qDebug() << "Error:" << sError.c_str();
@@ -148,8 +154,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
 
     progress.setValue(10);
     QApplication::processEvents();
-    clock_t t1 = clock();
-
+    
     for (tinyobj::material_t& mtl : mObjMaterials)
     {
         if (mImportedMaterials.count(mtl.name) == 0)
@@ -158,24 +163,16 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
             mImportedMaterials.insert(mtl.name);
         }
     }
-    clock_t tt = clock() - t1;
-    printTime("Convert Mtl", tt);
-
+    
     progress.setValue(20);
     QApplication::processEvents();
 
-    t1 = clock();
-    PreprocessObjIndexes();
-    tt = clock() - t1;
-    printTime("PreprocessObjIndexes()", tt);
+    //PROFILE(PreprocessObjIndexes());
 
     progress.setValue(30);
     QApplication::processEvents();
 
-    t1 = clock();
-    ConvertToOgreData();
-    tt = clock() - t1;
-    printTime("ConvertToOgreData()", tt);
+    PROFILE(ConvertToOgreData());
 
     progress.setValue(40);
     QApplication::processEvents();
@@ -186,16 +183,44 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
         return false;
     }
 
-    QString strTempXMLFile = QDir(tempDir.path()).filePath("out.mesh.xml");
-    //QString strTempXMLFile = "C:/Users/Matt/Desktop/out.mesh.xml";
+    //QString strTempXMLFile = QDir(tempDir.path()).filePath("out.mesh.xml");
+    QString strTempXMLFile = "C:/Users/Matt/Desktop/out.mesh.xml";
+    PROFILE(writeMeshXML(strTempXMLFile));
 
-    qDebug() << "  Temp mesh.xml=" << strTempXMLFile;
+    progress.setValue(60);
+    QApplication::processEvents();
 
-    QFile outputFile(strTempXMLFile);
-    b = outputFile.open(QFile::WriteOnly);
+    Ogre::v1::MeshPtr v1MeshPtr;
+    PROFILE(importOgreMeshFromXML(strTempXMLFile, v1MeshPtr));
+
+    progress.setValue(80);
+    QApplication::processEvents();
+
+    auto v2Mesh = Ogre::MeshManager::getSingleton().createManual("v2Mesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    v2Mesh->importV1(v1MeshPtr.get(), false, false, true);
+
+    Ogre::Root* root = Ogre::Root::getSingletonPtr();
+    Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
+    meshSerializer2.exportMesh(v2Mesh.get(), sOgreMeshFile);
+
+    progress.setValue(90);
+    QApplication::processEvents();
+
+    Ogre::MeshManager::getSingleton().remove(v2Mesh);
+    Ogre::v1::MeshManager::getSingleton().remove(v1MeshPtr);
+    v2Mesh.reset();
+    v1MeshPtr.reset();
+
+    return b;
+}
+
+void ObjImporter::writeMeshXML(const QString& sOutFile)
+{
+    qDebug() << "  Temp mesh.xml=" << sOutFile;
+
+    QFile outputFile(sOutFile);
+    bool b = outputFile.open(QFile::WriteOnly);
     Q_ASSERT(b);
-
-    t1 = clock();
 
     QXmlStreamWriter xout(&outputFile);
     xout.setAutoFormatting(true);
@@ -205,7 +230,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
         xout.writeStartElement("submeshes");
         for (int s = 0; s < mOgreSubMeshes.size(); ++s)
         {
-            writeXMLOneMesh(xout, mOgreSubMeshes[s]);
+            writeXMLOneSubMesh(xout, mOgreSubMeshes[s]);
             QApplication::processEvents();
         }
         xout.writeEndElement(); // submeshes
@@ -231,71 +256,10 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
     outputFile.flush();
     outputFile.close();
 
-    tt = clock() - t1;
-    printTime("Write .mesh.xml", tt);
-
-    mUniqueVerticesVec.clear();
-    mUniqueVerticesIndexMap.clear();
-
-    // XML writing done.
-
-    progress.setValue(60);
-    QApplication::processEvents();
-
-    t1 = clock();
-
-    static int convertionCount = 0; // just to avoid name conflicts
-    std::ostringstream sout;
-    sout << "conversion_" << convertionCount++;
-
-    auto v1MeshPtr = Ogre::v1::MeshManager::getSingleton().createManual(
-        sout.str(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-    std::string source = strTempXMLFile.toStdString();
-
-    Ogre::v1::XMLMeshSerializer xmlMeshSerializer;
-    Ogre::VertexElementType colourElementType = Ogre::VET_COLOUR_ABGR;
-    xmlMeshSerializer.importMesh(source, colourElementType, v1MeshPtr.get());
-
-    tt = clock() - t1;
-    printTime("Import .mesh.xml", tt);
-
-    progress.setValue(80);
-    QApplication::processEvents();
-
-    t1 = clock();
-
-    // Make sure animation types are up to date first
-    v1MeshPtr->_determineAnimationTypes();
-    v1MeshPtr->buildTangentVectors();
-
-    auto v2Mesh = Ogre::MeshManager::getSingleton().createManual("v2Mesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-    v2Mesh->importV1(v1MeshPtr.get(), false, false, true);
-
-    tt = clock() - t1;
-    printTime("Load v2.mesh", tt);
-
-    t1 = clock();
-
-    Ogre::Root* root = Ogre::Root::getSingletonPtr();
-    Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
-    meshSerializer2.exportMesh(v2Mesh.get(), sOgreMeshFile);
-
-    tt = clock() - t1;
-    printTime("Load v2.mesh", tt);
-
-    progress.setValue(90);
-    QApplication::processEvents();
-
-    Ogre::MeshManager::getSingleton().remove(v2Mesh);
-    Ogre::v1::MeshManager::getSingleton().remove(v1MeshPtr);
-    v2Mesh.reset();
-    v1MeshPtr.reset();
-
-    return b;
+    mOgreSubMeshes.clear();
 }
 
-void ObjImporter::writeXMLOneMesh(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01)
+void ObjImporter::writeXMLOneSubMesh(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01)
 {
     // <submesh material="pistol_fbx#0" usesharedvertices="false" use32bitindexes="true" operationtype="triangle_list">
     xout.writeStartElement("submesh");
@@ -381,36 +345,6 @@ void ObjImporter::writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh
     xout.writeEndElement(); // geometry
 }
 
-void ObjImporter::PreprocessObjIndexes()
-{
-    qDebug() << "Shape Count=" << mObjShapes.size();
-
-    std::set<UniqueVertex> uniqueVerticesSet;
-
-    for (int s = 0; s < mObjShapes.size(); ++s)
-    {
-        qDebug() << "  Shape name=" << mObjShapes[s].name.c_str();
-        tinyobj::mesh_t& mesh01 = mObjShapes[s].mesh;
-
-        Q_ASSERT(mesh01.indices.size() % 3 == 0);
-        for (auto& i : mesh01.indices)
-        {
-            auto p = uniqueVerticesSet.insert(UniqueVertex(i));
-        }
-    }
-
-    Q_ASSERT(mUniqueVerticesVec.size() == 0);
-    mUniqueVerticesVec.assign(uniqueVerticesSet.begin(), uniqueVerticesSet.end());
-
-    uniqueVerticesSet.clear();
-    mUniqueVerticesIndexMap.clear();
-
-    for (int i = 0; i < mUniqueVerticesVec.size(); ++i)
-    {
-        mUniqueVerticesIndexMap.emplace(mUniqueVerticesVec[i], i);
-    }
-}
-
 void ObjImporter::ConvertToOgreData()
 {
     mOgreSubMeshes.clear();
@@ -419,6 +353,26 @@ void ObjImporter::ConvertToOgreData()
     {
         tinyobj::mesh_t& mesh01 = mObjShapes[s].mesh;
         qDebug() << "    Converting Mesh=" << mObjShapes[s].name.c_str();
+        qDebug() << "      face count=" << mesh01.indices.size() / 3;
+
+        // build indexes
+        std::set<UniqueVertex> uniqueVerticesSet;
+        Q_ASSERT(mesh01.indices.size() % 3 == 0);
+        for (auto& i : mesh01.indices)
+        {
+            auto p = uniqueVerticesSet.insert(UniqueVertex(i));
+        }
+
+        Q_ASSERT(mUniqueVerticesVec.empty());
+        mUniqueVerticesVec.assign(uniqueVerticesSet.begin(), uniqueVerticesSet.end());
+
+        uniqueVerticesSet.clear();
+
+        Q_ASSERT(mUniqueVerticesIndexMap.empty());
+        for (int i = 0; i < mUniqueVerticesVec.size(); ++i)
+        {
+            mUniqueVerticesIndexMap.emplace(mUniqueVerticesVec[i], i);
+        }
 
         OgreDataSubMesh subMesh = ConvertObjMeshToOgreData(mesh01);
 
@@ -429,6 +383,10 @@ void ObjImporter::ConvertToOgreData()
         subMesh.meshName = mObjShapes[s].name;
 
         mOgreSubMeshes.push_back(subMesh);
+
+
+        mUniqueVerticesVec.clear();
+        mUniqueVerticesIndexMap.clear();
 
         QApplication::processEvents();
     }
@@ -492,5 +450,24 @@ ObjImporter::OgreDataSubMesh ObjImporter::ConvertObjMeshToOgreData(const tinyobj
     }
 
     return mout;
+}
+
+void ObjImporter::importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr)
+{
+    static int convertionCount = 0; // just to avoid name conflicts
+    std::ostringstream sout;
+    sout << "conversion_" << convertionCount++;
+    meshV1Ptr = Ogre::v1::MeshManager::getSingleton().createManual(
+        sout.str(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+    std::string source = sXMLFile.toStdString();
+
+    Ogre::v1::XMLMeshSerializer xmlMeshSerializer;
+    Ogre::VertexElementType colourElementType = Ogre::VET_COLOUR_ABGR;
+    xmlMeshSerializer.importMesh(source, colourElementType, meshV1Ptr.get());
+
+    // Make sure animation types are up to date first
+    meshV1Ptr->_determineAnimationTypes();
+    meshV1Ptr->buildTangentVectors();
 }
 
