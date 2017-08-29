@@ -56,7 +56,7 @@ bool ObjExporter::exportFile(Ogre::Mesh* srcMesh, const QString& sOutFile)
     QString sTempXmlFile = QDir(tempDir.path()).filePath("out.mesh.xml");
 
     Ogre::v1::XMLMeshSerializer xmlSerializer;
-    PROFILE( xmlSerializer.exportMesh(v1Mesh.get(), sTempXmlFile.toStdString()) );
+    PROFILE(xmlSerializer.exportMesh(v1Mesh.get(), sTempXmlFile.toStdString()));
     PROFILE(convertToOgreData(sTempXmlFile));
 
     QFileInfo info(sOutFile);
