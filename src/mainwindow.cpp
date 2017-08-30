@@ -238,6 +238,9 @@ void MainWindow::actionImportObj()
         return;
     }
 
+    auto ret = QMessageBox::question(this, "Coordinate system", "Convert from Z-up to Y-up?", 
+                                     QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
     Q_ASSERT(QFile::exists(sObjFileName));
 
     QFileInfo info(sObjFileName);
@@ -249,7 +252,8 @@ void MainWindow::actionImportObj()
 
     mOgreManager->clearScene();
 
-    ObjImporter objImporter;
+    ObjImporter objImporter;  
+    objImporter.setZUpToYUp(ret == QMessageBox::Yes);
     bool b = objImporter.import(sObjFileName.toStdString(), sOutFile.toStdString() );
 
     qDebug() << "Obj=" << sObjFileName << ", Success=" << b;

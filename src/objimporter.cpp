@@ -383,6 +383,11 @@ void ObjImporter::convertToOgreData()
             generateNormalVectors(OUT subMesh);
         }
 
+        if (mZUpToYUp)
+        {
+            convertFromZUpToYUp(subMesh);
+        }
+
         if (mesh01.material_ids[0] >= 0)
         {
             subMesh.material = mObjMaterials[mesh01.material_ids[0]].name;
@@ -537,3 +542,15 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
     }
 }
 
+
+void ObjImporter::convertFromZUpToYUp(OgreDataSubMesh& submesh)
+{
+    for (OgreDataVertex& v : submesh.vertices)
+    {
+        std::swap(v.position[1], v.position[2]);
+        std::swap(v.normal[1], v.normal[2]);
+
+        v.position[2] = -v.position[2];
+        v.normal[2] = -v.normal[2];
+    }
+}
