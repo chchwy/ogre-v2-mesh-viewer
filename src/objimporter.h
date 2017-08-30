@@ -43,6 +43,8 @@ class ObjImporter
         std::string material;
         std::vector<OgreDataVertex> vertices;
         std::vector<OgreDataFace> faces;
+
+        bool bNeedGenerateNormals = false;
     };
 
 public:
@@ -60,6 +62,8 @@ private:
     OgreDataSubMesh ConvertObjMeshToOgreData(const tinyobj::mesh_t&);
     
     void importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr);
+    void generateNormalVectors(OgreDataSubMesh& submesh);
+
 
 private:
     // the results of tinyobj loader
