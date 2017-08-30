@@ -67,7 +67,7 @@ MainWindow::MainWindow()
 	createDockWindows();
 	
 	// Set the title
-	setWindowTitle( QString( "Ogre Model Viewer v0.6.3" ) );
+	setWindowTitle( QString( "Ogre v2 Mesh Viewer v%1" ).arg(APP_VERSION_NUMBER));
 	readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
