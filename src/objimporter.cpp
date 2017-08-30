@@ -172,7 +172,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
     progress.setValue(30);
     QApplication::processEvents();
 
-    PROFILE(ConvertToOgreData());
+    PROFILE(convertToOgreData());
 
     progress.setValue(40);
     QApplication::processEvents();
@@ -347,7 +347,7 @@ void ObjImporter::writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh
     xout.writeEndElement(); // geometry
 }
 
-void ObjImporter::ConvertToOgreData()
+void ObjImporter::convertToOgreData()
 {
     mOgreSubMeshes.clear();
 
@@ -376,7 +376,7 @@ void ObjImporter::ConvertToOgreData()
             mUniqueVerticesIndexMap.emplace(mUniqueVerticesVec[i], i);
         }
 
-        OgreDataSubMesh subMesh = ConvertObjMeshToOgreData(mesh01);
+        OgreDataSubMesh subMesh = convertObjMeshToOgreData(mesh01);
 
         if (subMesh.bNeedGenerateNormals)
         {
@@ -399,7 +399,7 @@ void ObjImporter::ConvertToOgreData()
     }
 }
 
-ObjImporter::OgreDataSubMesh ObjImporter::ConvertObjMeshToOgreData(const tinyobj::mesh_t& mesh01)
+ObjImporter::OgreDataSubMesh ObjImporter::convertObjMeshToOgreData(const tinyobj::mesh_t& mesh01)
 {
     OgreDataSubMesh mout;
 

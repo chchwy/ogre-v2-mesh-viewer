@@ -58,8 +58,9 @@ private:
     void writeXMLFaces(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
     void writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
 
-    void ConvertToOgreData();
-    OgreDataSubMesh ConvertObjMeshToOgreData(const tinyobj::mesh_t&);
+    void convertToOgreData();
+    OgreDataSubMesh convertObjMeshToOgreData(const tinyobj::mesh_t&);
+    
     
     void importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr);
     void generateNormalVectors(OgreDataSubMesh& submesh);

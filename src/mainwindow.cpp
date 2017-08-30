@@ -143,8 +143,6 @@ void MainWindow::actionOpenMesh()
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
-    mOgreManager->clearScene();
-
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
     QSettings settings("OgreSpoooky", "OgreSpoooky");
@@ -162,6 +160,8 @@ void MainWindow::actionOpenMesh()
     QFileInfo info(sMeshFileName);
     settings.setValue("actionOpenMesh", info.absolutePath());
     
+    mOgreManager->clearScene();
+
     auto& manager = Ogre::ResourceGroupManager::getSingleton();
     manager.addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "OgreSpooky");
 
@@ -223,8 +223,6 @@ void MainWindow::actionSaveMesh()
 
 void MainWindow::actionImportObj()
 {
-    mOgreManager->clearScene();
-
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
@@ -248,6 +246,8 @@ void MainWindow::actionImportObj()
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "OgreSpooky");
     
     QString sOutFile = info.absolutePath() + "/" + info.baseName() + ".mesh";
+
+    mOgreManager->clearScene();
 
     ObjImporter objImporter;
     bool b = objImporter.import(sObjFileName.toStdString(), sOutFile.toStdString() );
