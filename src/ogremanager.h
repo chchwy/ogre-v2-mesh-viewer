@@ -67,7 +67,7 @@ public:
 	HGLRC getGlContext() const;
 	void setGlContext( HGLRC glContext );
 
-    bool loadMesh( QString sFileName );
+    bool loadMesh(const QString& sFileName);
     void clearScene();
 
     Ogre::Mesh* currentMesh(int index = 0);

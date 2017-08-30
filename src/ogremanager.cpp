@@ -167,7 +167,7 @@ void OgreManager::setGlContext( HGLRC glContext )
 	mGlContext = glContext;
 }
 
-bool OgreManager::loadMesh(QString sFileName)
+bool OgreManager::loadMesh(const QString& sFileName)
 {
     QFileInfo info(sFileName);
 
@@ -205,6 +205,11 @@ bool OgreManager::loadMesh(QString sFileName)
             auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
             datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
         }
+        /*
+        Ogre::HlmsMacroblock macro;
+        macro.mPolygonMode = Ogre::PM_WIREFRAME;
+        datablock->setMacroblock(macro);
+        */
     }
     return true;
 }
