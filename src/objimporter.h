@@ -43,12 +43,15 @@ class ObjImporter
         std::string material;
         std::vector<OgreDataVertex> vertices;
         std::vector<OgreDataFace> faces;
+
+        bool bNeedGenerateNormals = false;
     };
 
 public:
     ObjImporter();
 
     bool import(const std::string& sObjFile, const std::string& sOgreMeshFile );
+    void setZUpToYUp(bool b) { mZUpToYUp = b; }
 
 private:
     void writeMeshXML(const QString& sOutFile);
@@ -56,10 +59,13 @@ private:
     void writeXMLFaces(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
     void writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
 
-    void ConvertToOgreData();
-    OgreDataSubMesh ConvertObjMeshToOgreData(const tinyobj::mesh_t&);
+    void convertToOgreData();
+    OgreDataSubMesh convertObjMeshToOgreData(const tinyobj::mesh_t&);
     
     void importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr);
+    void generateNormalVectors(OgreDataSubMesh& submesh);
+
+    void convertFromZUpToYUp(OgreDataSubMesh& submesh);
 
 private:
     // the results of tinyobj loader
@@ -73,6 +79,8 @@ private:
 
     std::set<std::string> mImportedMaterials;
     std::vector<OgreDataSubMesh> mOgreSubMeshes;
+
+    bool mZUpToYUp = true;
 };
 
 #endif // OBJIMPORTER_H

@@ -63,7 +63,7 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
     }
     catch (std::exception& e)
     {
-        qDebug() << "Cannot create datablock.";
+        qDebug() << "Cannot create datablock." << e.what();
         return nullptr;
     }
 
@@ -172,7 +172,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
     progress.setValue(30);
     QApplication::processEvents();
 
-    PROFILE(ConvertToOgreData());
+    PROFILE(convertToOgreData());
 
     progress.setValue(40);
     QApplication::processEvents();
@@ -347,7 +347,7 @@ void ObjImporter::writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh
     xout.writeEndElement(); // geometry
 }
 
-void ObjImporter::ConvertToOgreData()
+void ObjImporter::convertToOgreData()
 {
     mOgreSubMeshes.clear();
 
@@ -376,7 +376,17 @@ void ObjImporter::ConvertToOgreData()
             mUniqueVerticesIndexMap.emplace(mUniqueVerticesVec[i], i);
         }
 
-        OgreDataSubMesh subMesh = ConvertObjMeshToOgreData(mesh01);
+        OgreDataSubMesh subMesh = convertObjMeshToOgreData(mesh01);
+
+        if (subMesh.bNeedGenerateNormals)
+        {
+            generateNormalVectors(OUT subMesh);
+        }
+
+        if (mZUpToYUp)
+        {
+            convertFromZUpToYUp(subMesh);
+        }
 
         if (mesh01.material_ids[0] >= 0)
         {
@@ -394,7 +404,7 @@ void ObjImporter::ConvertToOgreData()
     }
 }
 
-ObjImporter::OgreDataSubMesh ObjImporter::ConvertObjMeshToOgreData(const tinyobj::mesh_t& mesh01)
+ObjImporter::OgreDataSubMesh ObjImporter::convertObjMeshToOgreData(const tinyobj::mesh_t& mesh01)
 {
     OgreDataSubMesh mout;
 
@@ -433,6 +443,10 @@ ObjImporter::OgreDataSubMesh ObjImporter::ConvertObjMeshToOgreData(const tinyobj
                 v1.normal[0] = normalX;
                 v1.normal[1] = normalY;
                 v1.normal[2] = normalZ;
+            }
+            else
+            {
+                mout.bNeedGenerateNormals = true;
             }
 
             if (uniqueV.t != -1)
@@ -473,3 +487,70 @@ void ObjImporter::importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshP
     meshV1Ptr->buildTangentVectors();
 }
 
+void AssignVector(float f[3], const Ogre::Vector3& v)
+{
+    f[0] = v.x; 
+    f[1] = v.y;
+    f[2] = v.z;
+}
+
+void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
+{
+    struct NormalSum
+    {
+        Ogre::Vector3 normal{0, 0, 0};
+        int count = 0;
+    };
+
+    std::vector<NormalSum> normalSums;
+    normalSums.resize(submesh.vertices.size());
+
+    for (OgreDataFace& f : submesh.faces)
+    {
+        Ogre::Vector3 p1(submesh.vertices[f.index[0]].position);
+        Ogre::Vector3 p2(submesh.vertices[f.index[1]].position);
+        Ogre::Vector3 p3(submesh.vertices[f.index[2]].position);
+
+        Ogre::Vector3 v1 = p2 - p1;
+        Ogre::Vector3 v2 = p3 - p1;
+
+        Ogre::Vector3 theNormal = v2.crossProduct(v1);
+        theNormal.normalise();
+
+        //AssignVector(submesh.vertices[f.index[0]].normal, theNormal);
+        //AssignVector(submesh.vertices[f.index[1]].normal, theNormal);
+        //AssignVector(submesh.vertices[f.index[2]].normal, theNormal);
+        
+        normalSums[f.index[0]].normal += theNormal;
+        normalSums[f.index[0]].count += 1;
+
+        normalSums[f.index[1]].normal += theNormal;
+        normalSums[f.index[1]].count += 1;
+
+        normalSums[f.index[2]].normal += theNormal;
+        normalSums[f.index[2]].count += 1;
+    }
+
+    for (NormalSum& n : normalSums)
+    {
+        n.normal = n.normal / float(n.count);
+    }
+
+    for (int i = 0; i < submesh.vertices.size(); ++i)
+    {
+        AssignVector(submesh.vertices[i].normal, normalSums[i].normal);
+    }
+}
+
+
+void ObjImporter::convertFromZUpToYUp(OgreDataSubMesh& submesh)
+{
+    for (OgreDataVertex& v : submesh.vertices)
+    {
+        std::swap(v.position[1], v.position[2]);
+        std::swap(v.normal[1], v.normal[2]);
+
+        v.position[2] = -v.position[2];
+        v.normal[2] = -v.normal[2];
+    }
+}

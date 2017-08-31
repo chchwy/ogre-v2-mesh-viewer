@@ -143,8 +143,6 @@ void MainWindow::actionOpenMesh()
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
-    mOgreManager->clearScene();
-
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
     QSettings settings("OgreSpoooky", "OgreSpoooky");
@@ -162,6 +160,8 @@ void MainWindow::actionOpenMesh()
     QFileInfo info(sMeshFileName);
     settings.setValue("actionOpenMesh", info.absolutePath());
     
+    mOgreManager->clearScene();
+
     auto& manager = Ogre::ResourceGroupManager::getSingleton();
     manager.addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "OgreSpooky");
 
@@ -223,8 +223,6 @@ void MainWindow::actionSaveMesh()
 
 void MainWindow::actionImportObj()
 {
-    mOgreManager->clearScene();
-
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
@@ -240,6 +238,9 @@ void MainWindow::actionImportObj()
         return;
     }
 
+    auto ret = QMessageBox::question(this, "Coordinate system", "Convert from Z-up to Y-up?", 
+                                     QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
     Q_ASSERT(QFile::exists(sObjFileName));
 
     QFileInfo info(sObjFileName);
@@ -249,7 +250,10 @@ void MainWindow::actionImportObj()
     
     QString sOutFile = info.absolutePath() + "/" + info.baseName() + ".mesh";
 
-    ObjImporter objImporter;
+    mOgreManager->clearScene();
+
+    ObjImporter objImporter;  
+    objImporter.setZUpToYUp(ret == QMessageBox::Yes);
     bool b = objImporter.import(sObjFileName.toStdString(), sOutFile.toStdString() );
 
     qDebug() << "Obj=" << sObjFileName << ", Success=" << b;
