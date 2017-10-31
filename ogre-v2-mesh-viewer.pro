@@ -4,7 +4,7 @@ message(Qt version: $$[QT_VERSION])
 
 DEFINES += APP_VERSION_NUMBER=\"0.1.0\"
 
-OGREHOME = $$(OGRE_HOME)
+OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {
     OGREHOME = "C:/SDK/OgreSDK/Ogre/Build/sdk"
 }
