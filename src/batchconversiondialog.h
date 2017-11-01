@@ -12,7 +12,7 @@ class BatchConversionDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit BatchConversionDialog(QWidget *parent = 0);
+    explicit BatchConversionDialog(QWidget* parent = 0);
     ~BatchConversionDialog();
 
 protected:
