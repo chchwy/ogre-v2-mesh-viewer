@@ -43,6 +43,7 @@
 #include "objimporter.h"
 #include "objexporter.h"
 #include "OgreMesh2Serializer.h"
+#include "batchconversiondialog.h"
 
 #define _STR(x) #x
 #define STR(X)  _STR(x)
@@ -79,6 +80,7 @@ MainWindow::MainWindow()
     connect(ui->actionSaveOgreMesh, &QAction::triggered, this, &MainWindow::actionSaveMesh);
     connect(ui->actionImportObj, &QAction::triggered, this, &MainWindow::actionImportObj);
     connect(ui->actionExportObj, &QAction::triggered, this, &MainWindow::actionExportObj);
+    connect(ui->actionBatchConverter, &QAction::triggered, this, &MainWindow::actionBatchConverter);
 
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
 }
@@ -318,4 +320,11 @@ void MainWindow::actionExportObj()
             QMessageBox::information(this, "Error", "Filed to export obj model");
         }
     }
+}
+
+void MainWindow::actionBatchConverter()
+{
+    BatchConversionDialog dialog;
+    dialog.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog.exec();
 }
