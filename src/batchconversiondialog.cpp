@@ -8,7 +8,7 @@
 
 #include "objimporter.h"
 
-BatchConversionDialog::BatchConversionDialog(QWidget *parent) :
+BatchConversionDialog::BatchConversionDialog(QWidget* parent) :
     QDialog(parent),
     ui(new Ui::BatchConversionDialog)
 {
