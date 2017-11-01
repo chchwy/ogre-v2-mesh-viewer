@@ -44,6 +44,8 @@
 #include "objexporter.h"
 #include "OgreMesh2Serializer.h"
 
+#define _STR(x) #x
+#define STR(X)  _STR(x)
 
 MainWindow::MainWindow()
 {
@@ -67,7 +69,7 @@ MainWindow::MainWindow()
 	createDockWindows();
 	
 	// Set the title
-	setWindowTitle( QString( "Ogre v2 Mesh Viewer v%1" ).arg(APP_VERSION_NUMBER));
+    setWindowTitle("Ogre v2 Mesh Viewer v" STR(APP_VERSION_NUMBER));
 	readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
