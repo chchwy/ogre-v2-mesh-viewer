@@ -97,7 +97,7 @@ void MainWindow::closeEvent( QCloseEvent* event )
 
     mTimer->stop();
 
-	QSettings settings( "DisplaySweet", "OgreModelViewer" );
+	QSettings settings("DisplaySweet", "OgreModelViewer");
 	settings.setValue( "geometry", saveGeometry() );
 	settings.setValue( "windowState", saveState() );
 	QMainWindow::closeEvent( event );
@@ -149,7 +149,7 @@ void MainWindow::actionOpenMesh()
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
-    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionOpenMesh", sUserDoc).toString();
 
     QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open Ogre Mesh",
@@ -193,7 +193,7 @@ void MainWindow::actionSaveMesh()
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
-    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionSaveMesh", sUserDoc).toString();
 
     QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
@@ -231,7 +231,7 @@ void MainWindow::actionImportObj()
     ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings( "OgreSpoooky", "OgreSpoooky" );
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionImportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getOpenFileName(this, "Open Obj", 
@@ -286,7 +286,7 @@ void MainWindow::actionExportObj()
     ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionExportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",

@@ -21,14 +21,25 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QPushButton" name="AddFileButton">
-        <property name="text">
-         <string>Add Files</string>
-        </property>
-       </widget>
+       <widget class="QListWidget" name="FileListWidget"/>
       </item>
       <item>
-       <widget class="QListWidget" name="FileListWidget"/>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QPushButton" name="AddFileButton">
+          <property name="text">
+           <string>Add Files</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="ClearButton">
+          <property name="text">
+           <string>Clear</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -53,16 +64,16 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QCheckBox" name="ZupToYUpCheckBox">
      <property name="text">
-      <string>Convert</string>
+      <string>Z-Up to Y-up</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox_2">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Close</set>
+    <widget class="QPushButton" name="ConvertButton">
+     <property name="text">
+      <string>Convert</string>
      </property>
     </widget>
    </item>
