@@ -131,20 +131,20 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
 ObjImporter::ObjImporter()
 {}
 
-bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMeshFile)
+bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
 {
+    QFileInfo info(sObjFile);
+
     QProgressDialog progress(nullptr, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
-    progress.setLabelText("Converting obj model...");
+    progress.setLabelText( QString("Converting %1...").arg(info.fileName()));
     progress.setRange(0, 100);
     progress.setModal(true);
     progress.show();
     QApplication::processEvents();
 
     std::string sError;
-
-    QFileInfo info(QString::fromStdString(sObjFile));
     std::string sMtlBasePath = info.absolutePath().toStdString() + "/";
-    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mObjShapes, &mObjMaterials, &sError, sObjFile.c_str(), sMtlBasePath.c_str(), true));
+    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mObjShapes, &mObjMaterials, &sError, sObjFile.toStdString().c_str(), sMtlBasePath.c_str(), true));
     Q_ASSERT(b);
 
     if (!sError.empty())
@@ -201,7 +201,7 @@ bool ObjImporter::import(const std::string& sObjFile, const std::string& sOgreMe
 
     Ogre::Root* root = Ogre::Root::getSingletonPtr();
     Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
-    meshSerializer2.exportMesh(v2Mesh.get(), sOgreMeshFile);
+    meshSerializer2.exportMesh(v2Mesh.get(), sOgreMeshFile.toStdString());
 
     progress.setValue(90);
     QApplication::processEvents();
