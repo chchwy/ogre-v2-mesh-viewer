@@ -64,6 +64,7 @@ private:
     void actionSaveMesh();
     void actionImportObj();
     void actionExportObj();
+    void actionBatchConverter();
 
     OgreWidget* mOgreWidget = nullptr;
     OgreManager* mOgreManager = nullptr;
