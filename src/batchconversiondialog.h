@@ -19,6 +19,12 @@ protected:
     void showEvent(QShowEvent* ev) override;
 
 private:
+    void AddFileButtonClicked();
+    void ClearButtonClicked();
+    void BrowserOutputFolderButtonClicked();
+    void ConvertButtonClicked();
+
+private:
     Ui::BatchConversionDialog *ui;
 };
 
