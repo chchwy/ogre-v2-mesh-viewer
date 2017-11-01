@@ -2,7 +2,7 @@ QT += widgets
 
 message(Qt version: $$[QT_VERSION])
 
-DEFINES += APP_VERSION_NUMBER=\"0.1.0\"
+DEFINES += APP_VERSION_NUMBER=\\\"0.1.0\\\"
 
 OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {

@@ -1,4 +1,6 @@
 
+#pragma once
+
 class ScopeGuard
 {
 public:
