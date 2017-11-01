@@ -258,7 +258,7 @@ void MainWindow::actionImportObj()
 
     ObjImporter objImporter;  
     objImporter.setZUpToYUp(ret == QMessageBox::Yes);
-    bool b = objImporter.import(sObjFileName.toStdString(), sOutFile.toStdString() );
+    bool b = objImporter.import(sObjFileName, sOutFile);
 
     qDebug() << "Obj=" << sObjFileName << ", Success=" << b;
 
