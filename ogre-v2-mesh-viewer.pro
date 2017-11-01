@@ -2,9 +2,9 @@ QT += widgets
 
 message(Qt version: $$[QT_VERSION])
 
-DEFINES += APP_VERSION_NUMBER=\"0.1.0\"
+DEFINES += APP_VERSION_NUMBER=\\\"0.1.0\\\"
 
-OGREHOME = $$(OGRE_HOME)
+OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {
     OGREHOME = "C:/SDK/OgreSDK/Ogre/Build/sdk"
 }
@@ -25,7 +25,8 @@ HEADERS = \
     src/OgreXML/tinyxml.h \
     src/OgreXML/tinystr.h \
     src/objexporter.h \
-	src/scopeguard.h
+	src/scopeguard.h \
+    src/batchconversiondialog.h
 
 
 SOURCES = \
@@ -41,7 +42,8 @@ SOURCES = \
     src/OgreXML/tinystr.cpp \
     src/OgreXML/tinyxmlerror.cpp \
     src/OgreXML/tinyxmlparser.cpp \
-    src/objexporter.cpp
+    src/objexporter.cpp \
+    src/batchconversiondialog.cpp
 
 
 INCLUDEPATH += "src"
@@ -80,5 +82,6 @@ INSTALLS += target
 
 FORMS += \
     src/mainwindow.ui \
-    src/lightwidget.ui
+    src/lightwidget.ui \
+    src/batchconversiondialog.ui
 

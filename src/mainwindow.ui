@@ -32,6 +32,7 @@
     <addaction name="separator"/>
     <addaction name="actionImportObj"/>
     <addaction name="actionExportObj"/>
+    <addaction name="actionBatchConverter"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -93,6 +94,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionBatchConverter">
+   <property name="text">
+    <string>Batch Converter</string>
    </property>
   </action>
  </widget>

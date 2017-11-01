@@ -43,7 +43,10 @@
 #include "objimporter.h"
 #include "objexporter.h"
 #include "OgreMesh2Serializer.h"
+#include "batchconversiondialog.h"
 
+#define _STR(x) #x
+#define STR(X)  _STR(x)
 
 MainWindow::MainWindow()
 {
@@ -67,7 +70,7 @@ MainWindow::MainWindow()
 	createDockWindows();
 	
 	// Set the title
-	setWindowTitle( QString( "Ogre v2 Mesh Viewer v%1" ).arg(APP_VERSION_NUMBER));
+    setWindowTitle("Ogre v2 Mesh Viewer v" STR(APP_VERSION_NUMBER));
 	readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
@@ -77,6 +80,7 @@ MainWindow::MainWindow()
     connect(ui->actionSaveOgreMesh, &QAction::triggered, this, &MainWindow::actionSaveMesh);
     connect(ui->actionImportObj, &QAction::triggered, this, &MainWindow::actionImportObj);
     connect(ui->actionExportObj, &QAction::triggered, this, &MainWindow::actionExportObj);
+    connect(ui->actionBatchConverter, &QAction::triggered, this, &MainWindow::actionBatchConverter);
 
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
 }
@@ -93,7 +97,7 @@ void MainWindow::closeEvent( QCloseEvent* event )
 
     mTimer->stop();
 
-	QSettings settings( "DisplaySweet", "OgreModelViewer" );
+	QSettings settings("DisplaySweet", "OgreModelViewer");
 	settings.setValue( "geometry", saveGeometry() );
 	settings.setValue( "windowState", saveState() );
 	QMainWindow::closeEvent( event );
@@ -145,7 +149,7 @@ void MainWindow::actionOpenMesh()
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
-    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionOpenMesh", sUserDoc).toString();
 
     QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open Ogre Mesh",
@@ -189,7 +193,7 @@ void MainWindow::actionSaveMesh()
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
-    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionSaveMesh", sUserDoc).toString();
 
     QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
@@ -227,7 +231,7 @@ void MainWindow::actionImportObj()
     ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings( "OgreSpoooky", "OgreSpoooky" );
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionImportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getOpenFileName(this, "Open Obj", 
@@ -282,7 +286,7 @@ void MainWindow::actionExportObj()
     ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings("OgreSpoooky", "OgreSpoooky");
+    QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionExportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",
@@ -316,4 +320,11 @@ void MainWindow::actionExportObj()
             QMessageBox::information(this, "Error", "Filed to export obj model");
         }
     }
+}
+
+void MainWindow::actionBatchConverter()
+{
+    BatchConversionDialog dialog;
+    dialog.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog.exec();
 }
