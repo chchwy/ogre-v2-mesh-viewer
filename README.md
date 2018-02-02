@@ -4,7 +4,7 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models
 
 ## How to compile
 
-1. Have Qt 5 framework installed (recommend Qt 5.6+), you can download it [here][0].
+1. Have your Qt 5 SDK installed (recommend Qt 5.6+), download it [here][0].
 2. Have a working Ogre3D 2.1 copy.
 3. Set the path to Ogre sdk folder. You can either set an user-level `OGREHOME` environment variable, or set it directly in `ogre-v2-mesh-viewer.pro` line 9.
 4. Open `ogre-v2-mesh-viewer.pro` in QtCreator and presse `RUN`.
