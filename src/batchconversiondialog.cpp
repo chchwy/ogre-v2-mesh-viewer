@@ -8,7 +8,7 @@
 
 #include "objimporter.h"
 
-BatchConversionDialog::BatchConversionDialog(QWidget *parent) :
+BatchConversionDialog::BatchConversionDialog(QWidget* parent) :
     QDialog(parent),
     ui(new Ui::BatchConversionDialog)
 {
@@ -91,7 +91,7 @@ void BatchConversionDialog::ConvertButtonClicked()
         ObjImporter importer;
         importer.setZUpToYUp(bZupToYup);
 
-        bool b = importer.import(inFile.toStdString(), outFile.toStdString());
+        bool b = importer.import(inFile, outFile);
 
         qDebug() << "Obj=" << inFile << ", Success=" << b;
     }
