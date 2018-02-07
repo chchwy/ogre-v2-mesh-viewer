@@ -1,6 +1,6 @@
-# ogre-v2-mesh-viewer
+# Ogre3D mesh viewer/converter
 
-A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models 
+A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 
 ## How to compile
 
@@ -15,3 +15,7 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models
 - [x] Automatically generate normals if there are no normal vectors in obj
 
 [0]: https://www1.qt.io/download-open-source/ "Qt download"
+
+## Known issues
+
+- [ ] Normals will be broken when converting a v2-mesh to obj format.
