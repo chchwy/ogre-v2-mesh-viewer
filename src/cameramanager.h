@@ -21,8 +21,10 @@
 #pragma once
 
 #include "Ogre.h"
-#include <QtGui>
 #include <limits>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
 
 enum CameraMode   // enumerator values for different styles of camera movement
 {
