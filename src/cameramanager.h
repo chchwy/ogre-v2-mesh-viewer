@@ -62,225 +62,33 @@ public:
     CameraManager(Ogre::Camera* cam);
     ~CameraManager();
 
-    /*-----------------------------------------------------------------------------
-    | Swaps the camera on our camera man for another camera.
-    -----------------------------------------------------------------------------*/
-    virtual void setCamera(Ogre::Camera* cam)
-    {
-        mCamera = cam;
-        mCameraNode = mCamera->getSceneManager()->getRootSceneNode()->createChildSceneNode();
-        mCamera->detachFromParent();
-        mCameraNode->attachObject(mCamera);
-        mCamera->setPosition(Ogre::Vector3(0, 5, 15));
-        mCamera->lookAt(Ogre::Vector3(0, 0, 0));
-        mCamera->setNearClipDistance(1.f);
-        mCamera->setFarClipDistance(10000.0f);
-        mCamera->setAutoAspectRatio(true);
-    }
+    void setCamera(Ogre::Camera* cam);
+    Ogre::Camera* getCamera() { return mCamera; }
 
-    virtual Ogre::Camera* getCamera()
-    {
-        return mCamera;
-    }
+    void setTarget(Ogre::SceneNode* target);
+    Ogre::SceneNode* getTarget() { return mTarget; }
 
-    /*-----------------------------------------------------------------------------
-    | Sets the target to revolve around.
-    -----------------------------------------------------------------------------*/
-    virtual void setTarget(Ogre::SceneNode* target)
-    {
-        if (target != mTarget)
-        {
-            mTarget = target;
-            if (target)
-            {
-                setYawPitchDist(Ogre::Degree(0), Ogre::Degree(15), 150);
-            }
-            else
-            {
-                mCamera->setAutoTracking(false);
-            }
-        }
-    }
+    void manualStop();
+    Ogre::Real getDistanceFromTarget() { return mDistFromTarget; }
 
-    /*-----------------------------------------------------------------------------
-    | Manually stops the camera when in free-look mode.
-    -----------------------------------------------------------------------------*/
-    virtual void manualStop()
-    {
-        if (mMode == CM_FLY)
-        {
-            mGoingForward = false;
-            mGoingBack = false;
-            mGoingLeft = false;
-            mGoingRight = false;
-            mGoingUp = false;
-            mGoingDown = false;
-            mVelocity = Ogre::Vector3::ZERO;
-        }
-    }
+    void setYawPitchDist(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::Real dist);
 
-    virtual Ogre::SceneNode* getTarget()
-    {
-        return mTarget;
-    }
+    void setMode(CameraMode mode);
+    CameraMode getMode() { return mMode; }
 
-    virtual Ogre::Real getDistanceFromTarget()
-    {
-        return mDistFromTarget;
-    }
+    void setProjectionType(Ogre::ProjectionType pt);
+    Ogre::ProjectionType getProjectionType() { return mCamera->getProjectionType(); }
 
-    /*-----------------------------------------------------------------------------
-    | Sets the spatial offset from the target. Only applies for orbit style.
-    -----------------------------------------------------------------------------*/
-    virtual void setYawPitchDist(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::Real dist)
-    {
-        mCamera->setPosition(mTarget->_getDerivedPositionUpdated());
-        mCamera->setOrientation(mTarget->_getDerivedOrientationUpdated());
-        mCamera->yaw(yaw);
-        mCamera->pitch(-pitch);
-        mCamera->moveRelative(Ogre::Vector3(0, 0, dist));
-    }
+    View getView() { return mCurrentView; }
+    void setView(View newView);
 
-    /*-----------------------------------------------------------------------------
-    | Sets the movement style of our camera man.
-    -----------------------------------------------------------------------------*/
-    virtual void setMode(CameraMode mode)
-    {
-        if (mMode != CM_BLENDER && mode == CM_BLENDER)
-        {
-            //qDebug() << "Target=" << (void*)mTarget;
-            setTarget(mTarget ? mTarget : mCamera->getSceneManager()->getRootSceneNode());
-            setYawPitchDist(Ogre::Degree(0), Ogre::Degree(15), 150);
-        }
-        else if (mMode != CM_FLY && mode == CM_FLY)
-        {
-            mCamera->setAutoTracking(false);
-            mCamera->setFixedYawAxis(true);
-        }
-
-        if (mTarget == nullptr)
-        {
-            setTarget(mTarget ? mTarget : mCamera->getSceneManager()->getRootSceneNode());
-        }
-        mMode = mode;
-    }
-
-    virtual void setProjectionType(Ogre::ProjectionType pt)
-    {
-        if (pt == Ogre::PT_ORTHOGRAPHIC)
-        {
-            /// @todo: Make orthographic projection work properly.
-        }
-        else if (pt == Ogre::PT_PERSPECTIVE)
-        {
-            mCamera->setCustomProjectionMatrix(false);
-        }
-        mCamera->setProjectionType(pt);
-    }
-
-
-    virtual Ogre::ProjectionType getProjectionType()
-    {
-        return mCamera->getProjectionType();
-    }
-
-    virtual View getView()
-    {
-        return mCurrentView;
-    }
-
-    virtual void setView(View newView)
-    {
-        switch (newView)
-        {
-        case VI_TOP:
-            mCameraNode->setOrientation(sqrt(0.5), -sqrt(0.5), 0, 0);
-            break;
-        case VI_BOTTOM:
-            mCameraNode->setOrientation(sqrt(0.5), sqrt(0.5), 0, 0);
-            break;
-        case VI_LEFT:
-            mCameraNode->setOrientation(sqrt(0.5), 0, -sqrt(0.5), 0);
-            break;
-        case VI_RIGHT:
-            mCameraNode->setOrientation(sqrt(0.5), 0, sqrt(0.5), 0);
-            break;
-        case VI_FRONT:
-            mCameraNode->setOrientation(1, 0, 0, 0);
-            break;
-        case VI_BACK:
-            setView(VI_FRONT); // Recursion
-            mCameraNode->setOrientation(0, 0, 1, 0);
-
-        }
-        mCurrentView = newView;
-    }
-
-    virtual void rotatePerspective(Direction dir)
-    {
-        Ogre::Radian amount = Ogre::Radian(Ogre::Degree(15));
-        switch (dir)
-        {
-        case DR_FORWARD:
-            mCameraNode->rotate(Ogre::Vector3(1, 0, 0), -amount);
-            break;
-        case DR_BACKWARD:
-            mCameraNode->rotate(Ogre::Vector3(1, 0, 0), amount);
-            break;
-        case DR_LEFT:
-            mCameraNode->rotate(Ogre::Vector3(0, 1, 0), -amount, Ogre::Node::TS_WORLD);
-            break;
-        case DR_RIGHT:
-            mCameraNode->rotate(Ogre::Vector3(0, 1, 0), amount, Ogre::Node::TS_WORLD);
-            break;
-        }
-    }
-
-    virtual void numpadViewSwitch(const QKeyEvent* evt)
-    {
-        bool ctrl = evt->modifiers().testFlag(Qt::ControlModifier);
-        bool numpad = evt->modifiers().testFlag(Qt::KeypadModifier);
-        if (numpad)
-        {
-            switch (evt->key())
-            {
-            case Qt::Key_1:
-                setView(ctrl ? VI_BACK : VI_FRONT);
-                break;
-            case Qt::Key_2:
-                rotatePerspective(DR_BACKWARD);
-                break;
-            case Qt::Key_3:
-                setView(ctrl ? VI_LEFT : VI_RIGHT);
-                break;
-            case Qt::Key_4:
-                rotatePerspective(DR_LEFT);
-                break;
-            case Qt::Key_5:
-                setProjectionType((mCamera->getProjectionType() == Ogre::PT_PERSPECTIVE) ? Ogre::PT_ORTHOGRAPHIC : Ogre::PT_PERSPECTIVE);
-                break;
-            case Qt::Key_6:
-                rotatePerspective(DR_RIGHT);
-                break;
-            case Qt::Key_7:
-                setView(ctrl ? VI_BOTTOM : VI_TOP);
-                break;
-            case Qt::Key_8:
-                rotatePerspective(DR_FORWARD);
-                break;
-            }
-        }
-    }
-
-    virtual CameraMode getMode()
-    {
-        return mMode;
-    }
+    void rotatePerspective(Direction dir);
+    void numpadViewSwitch(const QKeyEvent* evt);
 
     /*-----------------------------------------------------------------------------
     | Per-frame updates.
     -----------------------------------------------------------------------------*/
-    virtual bool frameRenderingQueued(const Ogre::FrameEvent &evt)
+    bool frameRenderingQueued(const Ogre::FrameEvent &evt)
     {
         if (mMode == CM_FLY)
         {
@@ -322,7 +130,7 @@ public:
     /*-----------------------------------------------------------------------------
     | Processes key presses for free-look style movement.
     -----------------------------------------------------------------------------*/
-    virtual void injectKeyDown(const QKeyEvent *evt)
+    void injectKeyDown(const QKeyEvent *evt)
     {
         if (mMode == CM_FLY)
         {
@@ -379,7 +187,7 @@ public:
     /*-----------------------------------------------------------------------------
     | Processes key releases for free-look style movement.
     -----------------------------------------------------------------------------*/
-    virtual void injectKeyUp(const QKeyEvent* evt)
+    void injectKeyUp(const QKeyEvent* evt)
     {
         if (evt->key() == Qt::Key_W)
             mGoingForward = false;
@@ -396,9 +204,8 @@ public:
     /*-----------------------------------------------------------------------------
     | Processes mouse movement differently for each style.
     -----------------------------------------------------------------------------*/
-    virtual void injectMouseMove(Ogre::Vector2 mousePos)
+    void injectMouseMove(Ogre::Vector2 mousePos)
     {
-
         if (mMode == CM_FLY)
         {
             mCamera->yaw(Ogre::Degree(-mousePos.x * 0.15f));
@@ -419,7 +226,7 @@ public:
         }
     }
 
-    virtual void injectMouseWheel(const QWheelEvent* evt)
+    void injectMouseWheel(const QWheelEvent* evt)
     {
         mMouseWheelDelta = evt->delta();
         //qDebug() << (uint64_t)mCamera << ", " << (uint64_t)mTarget;
@@ -427,7 +234,7 @@ public:
         mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0008f * mDistFromTarget));
     }
 
-    virtual void injectMouseDown(const QMouseEvent* evt)
+    void injectMouseDown(const QMouseEvent* evt)
     {
         if (mMode == CM_BLENDER || mMode == CM_ORBIT)
         {
@@ -442,7 +249,7 @@ public:
     | Processes mouse releases. Only applies for orbit style.
     | Left button is for orbiting, and right button is for zooming.
     -----------------------------------------------------------------------------*/
-    virtual void injectMouseUp(const QMouseEvent* evt)
+    void injectMouseUp(const QMouseEvent* evt)
     {
         if (mMode == CM_BLENDER || mMode == CM_ORBIT)
         {
@@ -453,13 +260,13 @@ public:
         }
     }
 
-    virtual void rotate(int x, int y)
+    void rotate(int x, int y)
     {
         mCameraNode->yaw(Ogre::Degree(-x * 0.4f), Ogre::Node::TS_PARENT);
         mCameraNode->pitch(Ogre::Degree(-y * 0.4f));
     }
 
-    virtual void pan(int x, int y)
+    void pan(int x, int y)
     {
         Ogre::Vector3 transVector(-x, y, 0);
         if (mTarget)
@@ -495,7 +302,5 @@ protected:
 
     View mCurrentView = VI_USER;
     CameraMode mMode = CM_FLY;
-
-
 };
 
