@@ -465,7 +465,7 @@ public:
         if (mTarget)
         {
             mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
-            if (mTarget->getAttachedObject(0))
+            if (mTarget->numAttachedObjects() > 0 && mTarget->getAttachedObject(0))
                 transVector *= mTarget->getAttachedObject(0)->getWorldRadius() * (mDistFromTarget / 10000.0f);
             //transVector *= mTarget->getAttachedObject(0)->getBoundingRadius() * (mDistFromTarget / 10000.0f);
         }
