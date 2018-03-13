@@ -74,7 +74,7 @@ public:
         mCamera->setPosition(Ogre::Vector3(0, 5, 15));
         mCamera->lookAt(Ogre::Vector3(0, 0, 0));
         mCamera->setNearClipDistance(1.f);
-        mCamera->setFarClipDistance(5000.0f);
+        mCamera->setFarClipDistance(10000.0f);
         mCamera->setAutoAspectRatio(true);
     }
 
