@@ -193,7 +193,12 @@ bool OgreManager::loadMesh(const QString& sFileName)
     Ogre::HlmsManager* hlmsMgr = mRoot->getHlmsManager();
     for (int i = 0; i < pItem->getNumSubItems(); ++i)
     {
-        auto datablock = (Ogre::HlmsPbsDatablock*)pItem->getSubItem(i)->getDatablock();
+        auto datablock = dynamic_cast<Ogre::HlmsPbsDatablock*>(pItem->getSubItem(i)->getDatablock());
+        if (datablock == nullptr)
+        {
+            continue;
+        }
+
         if (datablock == hlmsMgr->getDefaultDatablock())
         {
             pItem->getSubItem(i)->setDatablock("viewer_default_mtl");
@@ -466,7 +471,7 @@ Ogre::Item* OgreManager::loadV2Mesh(QString meshName)
     }
     catch (...)
     {
-        qDebug() << "Failed to load v1 mesh:" << meshName;
+        qDebug() << "Failed to load v2 mesh:" << meshName;
         item = nullptr;
     }
     return item;
