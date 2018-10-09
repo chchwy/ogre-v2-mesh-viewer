@@ -152,9 +152,7 @@ void MainWindow::actionOpenMesh()
     QSettings settings("DisplaySweet", "OgreModelViewer");
     QString sLastOpenLocation = settings.value("actionOpenMesh", sUserDoc).toString();
 
-    QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open Ogre Mesh",
-                                                        sLastOpenLocation,
-                                                        "Ogre Mesh (*.mesh)");
+    QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open Ogre Mesh", sLastOpenLocation, "Ogre Mesh (*.mesh)");
     if (sMeshFileName.isEmpty())
     {
         return;
