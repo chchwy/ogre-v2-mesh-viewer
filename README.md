@@ -14,7 +14,7 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 - [ ] Improve performance by converting obj data to ogre mesh directly. (Currently it uses mesh.xml as intermediate data format)
 - [x] Automatically generate normals if there are no normal vectors in obj
 
-[0]: https://www1.qt.io/download-open-source/ "Qt download"
+[0]: https://www.qt.io/download-qt-installer "Qt download"
 
 ## Known issues
 
