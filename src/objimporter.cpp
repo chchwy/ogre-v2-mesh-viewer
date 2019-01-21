@@ -117,7 +117,7 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
         datablock->setSamplerblock(Ogre::PBSM_NORMAL, samplerBlock);
     }
 
-    Ogre::HlmsJsonPbs hlmsJson(hlmsManager);
+    Ogre::HlmsJsonPbs hlmsJson(hlmsManager, nullptr, "");
     std::string outJson;
     hlmsJson.saveMaterial(datablock, outJson); // FIXME:
 
