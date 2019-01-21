@@ -6,7 +6,7 @@ DEFINES += APP_VERSION_NUMBER=\\\"0.1.0\\\"
 
 OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {
-    OGREHOME = "C:/SDK/OgreSDK/Ogre/Build/sdk"
+    OGREHOME = "C:/SDK/OgreSDK/Ogre/build/sdk"
 }
 
 message(OGRE_HOME: $$OGREHOME)

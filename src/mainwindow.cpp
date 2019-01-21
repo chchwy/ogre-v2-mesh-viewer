@@ -170,7 +170,7 @@ void MainWindow::actionOpenMesh()
     auto all_mtl = manager.findResourceNames("OgreSpooky", "*.material.json");
     for (std::string m : *all_mtl)
     {
-        Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(m, "OgreSpooky");
+        Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(m, "OgreSpooky", nullptr, "");
     }
 
     try
