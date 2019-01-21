@@ -2,7 +2,28 @@
 @property( hlms_forwardplus_fine_light_mask )
 	@piece( andObjLightMaskFwdPlusCmp )&& ((objLightMask & asuint( lightDiffuse.w )) != 0u)@end
 @end
-@piece( forward3dLighting )
+
+@property( hlms_enable_decals )
+@piece( DeclDecalsSamplers )
+	SamplerState decalsSampler : register(s@value(decalsTexUnit));
+	@property( hlms_decals_diffuse )Texture2DArray decalsDiffuseTex : register(t@counter(decalsTexUnit));@end
+	@property( hlms_decals_normals )Texture2DArray<float2> decalsNormalsTex : register(t@counter(decalsTexUnit));@end
+	@property( hlms_decals_diffuse == hlms_decals_emissive )
+		#define decalsEmissiveTex decalsDiffuseTex
+	@end
+	@property( hlms_decals_emissive && hlms_decals_diffuse != hlms_decals_emissive )
+		Texture2DArray decalsEmissiveTex : register(t@counter(decalsTexUnit));
+	@end
+@end
+@end
+
+/// The header is automatically inserted. Whichever subsystem needs it first, will call it
+@piece( forward3dHeader )
+	@property( hlms_forwardplus_covers_entire_target )
+		#define FWDPLUS_APPLY_OFFSET_Y(v) (v)
+		#define FWDPLUS_APPLY_OFFSET_X(v) (v)
+	@end
+
 	@property( hlms_forwardplus_fine_light_mask && !hlms_fine_light_mask )
 		uint objLightMask = worldMaterialIdx[inPs.drawId].z;
 	@end
@@ -27,13 +48,20 @@
 		float lightsPerCell = passBuf.f3dGridHWW[0].w;
 		float windowHeight = passBuf.f3dGridHWW[1].w; //renderTarget->height
 
+		@property( !hlms_forwardplus_covers_entire_target )
+			#define FWDPLUS_APPLY_OFFSET_Y(v) (v - passBuf.f3dViewportOffset.y)
+			#define FWDPLUS_APPLY_OFFSET_X(v) (v - passBuf.f3dViewportOffset.x)
+		@end
+
 		//passBuf.f3dGridHWW[slice].x = grid_width / renderTarget->width;
 		//passBuf.f3dGridHWW[slice].y = grid_height / renderTarget->height;
 		//passBuf.f3dGridHWW[slice].z = grid_width * lightsPerCell;
 		//uint sampleOffset = 0;
 		uint sampleOffset = offset +
-							uint(floor( (windowHeight - gl_FragCoord.y) * passBuf.f3dGridHWW[slice].y ) * passBuf.f3dGridHWW[slice].z) +
-							uint(floor( gl_FragCoord.x * passBuf.f3dGridHWW[slice].x ) * lightsPerCell);
+							uint(floor( (windowHeight - FWDPLUS_APPLY_OFFSET_Y(gl_FragCoord.y) ) *
+										passBuf.f3dGridHWW[slice].y ) * passBuf.f3dGridHWW[slice].z) +
+							uint(floor( FWDPLUS_APPLY_OFFSET_X(gl_FragCoord.x) *
+										passBuf.f3dGridHWW[slice].x ) * lightsPerCell);
 	@end @property( hlms_forwardplus != forward3d )
 		float f3dMinDistance	= passBuf.f3dData.x;
 		float f3dInvExponentK	= passBuf.f3dData.y;
@@ -44,18 +72,38 @@
 		fSlice = floor( min( fSlice, f3dNumSlicesSub1 ) );
 		uint sliceSkip = uint( fSlice * @value( fwd_clustered_width_x_height ) );
 
+		@property( !hlms_forwardplus_covers_entire_target )
+			#define FWDPLUS_APPLY_OFFSET_Y(v) (v - passBuf.fwdScreenToGrid.w)
+			#define FWDPLUS_APPLY_OFFSET_X(v) (v - passBuf.fwdScreenToGrid.z)
+		@end
+
 		uint sampleOffset = sliceSkip +
-							uint(floor( gl_FragCoord.x * passBuf.fwdScreenToGrid.x ));
+							uint(floor( FWDPLUS_APPLY_OFFSET_X(gl_FragCoord.x) *
+										passBuf.fwdScreenToGrid.x ));
 		float windowHeight = passBuf.f3dData.w; //renderTarget->height
-		sampleOffset += uint(floor( (windowHeight - gl_FragCoord.y) * passBuf.fwdScreenToGrid.y ) *
+		sampleOffset += uint(floor( (windowHeight - FWDPLUS_APPLY_OFFSET_Y(gl_FragCoord.y) ) *
+									passBuf.fwdScreenToGrid.y ) *
 							 @value( fwd_clustered_width ));
 
 		sampleOffset *= @value( fwd_clustered_lights_per_cell )u;
 	@end
 
-	uint numLightsInGrid = f3dGrid.Load( int(sampleOffset) ).x;
+	@property( hlms_forwardplus_debug )uint totalNumLightsInGrid = 0u;@end
+@end
 
-	@property( hlms_forwardplus_debug )uint totalNumLightsInGrid = numLightsInGrid;@end
+@piece( forward3dLighting )
+	@property( !hlms_enable_decals )
+		@insertpiece( forward3dHeader )
+		uint numLightsInGrid;
+	@end
+
+	@property( hlms_decals_emissive )
+		finalColour += finalDecalEmissive;
+	@end
+
+	numLightsInGrid = f3dGrid.Load( int(sampleOffset) ).x;
+
+	@property( hlms_forwardplus_debug )totalNumLightsInGrid += numLightsInGrid;@end
 
 	for( uint i=0u; i<numLightsInGrid; ++i )
 	{

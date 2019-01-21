@@ -1,11 +1,11 @@
-@property( !metallic_workflow && (!specular_map || !fresnel_workflow) )
+@property( !metallic_workflow && (!specular_map || !fresnel_workflow) && !hlms_decals_diffuse )
 	@property( !transparent_mode )
 		@piece( F0 )material.F0@end
 	@end @property( transparent_mode )
 		//Premultiply F0.xyz with the alpha from the texture, but only in transparent mode.
 		@piece( F0 )(material.F0.@insertpiece( FresnelSwizzle ) * diffuseCol.w)@end
 	@end
-@end @property( metallic_workflow || (specular_map && fresnel_workflow) )
+@end @property( metallic_workflow || (specular_map && fresnel_workflow) || hlms_decals_diffuse )
 	@piece( F0 )F0@end
 @end
 
@@ -68,7 +68,10 @@ vec3 BRDF( vec3 lightDir, vec3 viewDir, float NdotV, vec3 lightDiffuse, vec3 lig
 		blinnPhong *= (shininess + 8.0) / (8.0 * 3.141592654);
 
 		//Avoid very small denominators, they go to NaN or cause aliasing artifacts
-		@insertpiece( FresnelType ) Rs = ( fresnelS * blinnPhong ) / max( 4.0 * NdotV * NdotL, 0.01 );
+		//Note: For blinn-phong we use larger denominators otherwise specular blows out of proportion
+		@insertpiece( FresnelType ) Rs = ( fresnelS * blinnPhong ) / max( 4.0 * NdotV * NdotL, 0.75 );
+		//Make diffuse look closer to Default.
+		fresnelD *= mix( 1.0, 1.0 / 1.51, ROUGHNESS );
 	@end @property( legacy_math_brdf )
 		float Rs = blinnPhong;
 		float fresnelD = 1.0;
@@ -232,4 +235,6 @@ vec3 BRDF_IR( vec3 lightDir, vec3 lightDiffuse )
 	@piece( DeclareObjLightMask )uint objLightMask = instance.worldMaterialIdx[inPs.drawId].z;@end
 	@piece( ObjLightMaskCmp )if( (objLightMask & floatBitsToUint( passBuf.lights[@counter(fineMaskLightIdx)].position.w )) != 0u )@end
 	@piece( andObjLightMaskCmp )&& ((objLightMask & floatBitsToUint( passBuf.lights[@counter(fineMaskLightIdx)].position.w )) != 0u)@end
+	@piece( andObjAreaApproxLightMaskCmp )&& ((objLightMask & floatBitsToUint( passBuf.areaApproxLights[@counter(fineMaskAreaApproxLightIdx)].position.w )) != 0u)@end
+	@piece( andObjAreaLtcLightMaskCmp )&& ((objLightMask & floatBitsToUint( passBuf.areaLtcLights[@counter(fineMaskAreaLtcLightIdx)].position.w )) != 0u)@end
 @end

@@ -2,7 +2,28 @@
 @property( hlms_forwardplus_fine_light_mask )
 	@piece( andObjLightMaskFwdPlusCmp )&& ((inPs.objLightMask & as_type<uint>( lightDiffuse.w )) != 0u)@end
 @end
-@piece( forward3dLighting )
+
+@property( hlms_enable_decals )
+@piece( DeclDecalsSamplers )
+	, sampler decalsSampler	[[sampler(@value(decalsTexUnit))]]
+	@property( hlms_decals_diffuse ), texture2d_array<float> decalsDiffuseTex	[[texture(@counter(decalsTexUnit))]]@end
+	@property( hlms_decals_normals ), texture2d_array<float> decalsNormalsTex	[[texture(@counter(decalsTexUnit))]]@end
+	@property( hlms_decals_diffuse == hlms_decals_emissive )
+		#define decalsEmissiveTex decalsDiffuseTex
+	@end
+	@property( hlms_decals_emissive && hlms_decals_diffuse != hlms_decals_emissive )
+		, texture2d_array<float> decalsEmissiveTex	[[texture(@counter(decalsTexUnit))]]
+	@end
+@end
+@end
+
+/// The header is automatically inserted. Whichever subsystem needs it first, will call it
+@piece( forward3dHeader )
+	@property( hlms_forwardplus_covers_entire_target )
+		#define FWDPLUS_APPLY_OFFSET_Y(v) (v)
+		#define FWDPLUS_APPLY_OFFSET_X(v) (v)
+	@end
+
 	@property( hlms_forwardplus == forward3d )
 		float f3dMinDistance	= passBuf.f3dData.x;
 		float f3dInvMaxDistance	= passBuf.f3dData.y;
@@ -24,13 +45,20 @@
 		float lightsPerCell = passBuf.f3dGridHWW[0].w;
 		float windowHeight = passBuf.f3dGridHWW[1].w; //renderTarget->height
 
+		@property( !hlms_forwardplus_covers_entire_target )
+			#define FWDPLUS_APPLY_OFFSET_Y(v) (v - passBuf.f3dViewportOffset.y)
+			#define FWDPLUS_APPLY_OFFSET_X(v) (v - passBuf.f3dViewportOffset.x)
+		@end
+
 		//passBuf.f3dGridHWW[slice].x = grid_width / renderTarget->width;
 		//passBuf.f3dGridHWW[slice].y = grid_height / renderTarget->height;
 		//passBuf.f3dGridHWW[slice].z = grid_width * lightsPerCell;
 		//uint sampleOffset = 0;
 		uint sampleOffset = offset +
-							uint(floor( (windowHeight - inPs.gl_FragCoord.y) * passBuf.f3dGridHWW[slice].y ) * passBuf.f3dGridHWW[slice].z) +
-							uint(floor( inPs.gl_FragCoord.x * passBuf.f3dGridHWW[slice].x ) * lightsPerCell);
+							uint(floor( (windowHeight - FWDPLUS_APPLY_OFFSET_Y(inPs.gl_FragCoord.y)) *
+										passBuf.f3dGridHWW[slice].y ) * passBuf.f3dGridHWW[slice].z) +
+							uint(floor( FWDPLUS_APPLY_OFFSET_X(inPs.gl_FragCoord.x) *
+										passBuf.f3dGridHWW[slice].x ) * lightsPerCell);
 	@end @property( hlms_forwardplus != forward3d )
 		float f3dMinDistance	= passBuf.f3dData.x;
 		float f3dInvExponentK	= passBuf.f3dData.y;
@@ -41,18 +69,37 @@
 		fSlice = floor( min( fSlice, f3dNumSlicesSub1 ) );
 		uint sliceSkip = uint( fSlice * @value( fwd_clustered_width_x_height ) );
 
+		@property( !hlms_forwardplus_covers_entire_target )
+			#define FWDPLUS_APPLY_OFFSET_Y(v) (v - passBuf.fwdScreenToGrid.w)
+			#define FWDPLUS_APPLY_OFFSET_X(v) (v - passBuf.fwdScreenToGrid.z)
+		@end
+
 		uint sampleOffset = sliceSkip +
-							uint(floor( inPs.gl_FragCoord.x * passBuf.fwdScreenToGrid.x ));
+							uint(floor( FWDPLUS_APPLY_OFFSET_X(inPs.gl_FragCoord.x) *
+										passBuf.fwdScreenToGrid.x ));
 		float windowHeight = passBuf.f3dData.w; //renderTarget->height
-		sampleOffset += uint(floor( (windowHeight - inPs.gl_FragCoord.y) * passBuf.fwdScreenToGrid.y ) *
+		sampleOffset += uint(floor( (windowHeight - FWDPLUS_APPLY_OFFSET_Y(inPs.gl_FragCoord.y)) *
+									passBuf.fwdScreenToGrid.y ) *
 							 @value( fwd_clustered_width ));
 
 		sampleOffset *= @value( fwd_clustered_lights_per_cell )u;
 	@end
 
-	ushort numLightsInGrid = f3dGrid[int(sampleOffset)];
+	@property( hlms_forwardplus_debug )ushort totalNumLightsInGrid = 0u;@end
+@end
 
-	@property( hlms_forwardplus_debug )uint totalNumLightsInGrid = numLightsInGrid;@end
+@piece( forward3dLighting )
+	@property( !hlms_enable_decals )
+		@insertpiece( forward3dHeader )
+		ushort numLightsInGrid;
+	@end
+
+	@property( hlms_decals_emissive )
+		finalColour += finalDecalEmissive;
+	@end
+	numLightsInGrid = f3dGrid[int(sampleOffset)];
+
+	@property( hlms_forwardplus_debug )totalNumLightsInGrid += numLightsInGrid;@end
 
 	for( ushort i=0u; i<numLightsInGrid; ++i )
 	{
