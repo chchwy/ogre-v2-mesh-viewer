@@ -4,6 +4,7 @@
 @end
 @property( hlms_amd_trinary_minmax )#extension GL_AMD_shader_trinary_minmax: require@end
 @insertpiece( SetCompatibilityLayer )
+@insertpiece( DeclareUvModifierMacros )
 
 layout(std140) uniform;
 #define FRAG_COLOR		0
@@ -36,6 +37,7 @@ layout(std140) uniform;
 @end
 
 @insertpiece( DeclPlanarReflTextures )
+@insertpiece( DeclAreaApproxTextures )
 
 @property( hlms_vpos )
 in vec4 gl_FragCoord;
@@ -77,7 +79,7 @@ in block
 	uniform sampler3D irradianceVolume;
 @end
 
-@property( !roughness_map )#define ROUGHNESS material.kS.w@end
+@property( !roughness_map && !hlms_decals_diffuse )#define ROUGHNESS material.kS.w@end
 @property( num_textures )uniform sampler2DArray textureMaps[@value( num_textures )];@end
 @property( use_envprobe_map )uniform samplerCube	texEnvProbeMap;@end
 
@@ -90,12 +92,13 @@ in block
 	@property( detail_map@n )uint detailMapIdx@n;@end @end
 @foreach( 4, n )
 	@property( detail_map_nm@n )uint detailNormMapIdx@n;@end @end
+@property( emissive_map )	uint emissiveMapIdx;@end
 @property( use_envprobe_map )	uint envMapIdx;@end
 
 vec4 diffuseCol;
-@property( specular_map && !metallic_workflow && !fresnel_workflow )vec3 specularCol;@end
-@property( metallic_workflow || (specular_map && fresnel_workflow) )@insertpiece( FresnelType ) F0;@end
-@property( roughness_map )float ROUGHNESS;@end
+@property( (specular_map && !metallic_workflow && !fresnel_workflow) || hlms_decals_diffuse )vec3 specularCol;@end
+@property( metallic_workflow || (specular_map && fresnel_workflow) || hlms_decals_diffuse )@insertpiece( FresnelType ) F0;@end
+@property( roughness_map || hlms_decals_diffuse )float ROUGHNESS;@end
 
 Material material;
 @property( hlms_normal || hlms_qtangent )vec3 nNormal;@end
@@ -128,7 +131,7 @@ vec3 qmul( vec4 q, vec3 v )
 	return tsNormal;
 }
 @end
-@property( normal_weight_tex )#define normalMapWeight uintBitsToFloat( material.indices4_7.w )@end
+@property( normal_weight_tex )#define normalMapWeight material.emissive.w@end
 @property( detail_maps_normal )vec3 getTSDetailNormal( sampler2DArray normalMap, vec3 uv )
 {
 	vec3 tsNormal;
@@ -153,15 +156,23 @@ vec3 qmul( vec4 q, vec3 v )
 @property( (hlms_normal || hlms_qtangent) && !hlms_prepass )
 @insertpiece( DeclareBRDF )
 @insertpiece( DeclareBRDF_InstantRadiosity )
+@insertpiece( DeclareBRDF_AreaLightApprox )
 @end
 
 @property( use_parallax_correct_cubemaps )
 @insertpiece( DeclParallaxLocalCorrect )
 @end
 
+@insertpiece( DeclDecalsSamplers )
+
 @insertpiece( DeclShadowMapMacros )
 @insertpiece( DeclShadowSamplers )
 @insertpiece( DeclShadowSamplingFuncs )
+
+@insertpiece( DeclAreaLtcTextures )
+@insertpiece( DeclAreaLtcLightFuncs )
+
+@insertpiece( custom_ps_functions )
 
 void main()
 {
@@ -177,7 +188,7 @@ void main()
 @property( normal_map_tex )	normalIdx			= material.indices0_3.x >> 16u;@end
 @property( specular_map )	specularIdx			= material.indices0_3.y & 0x0000FFFFu;@end
 @property( roughness_map )	roughnessIdx		= material.indices0_3.y >> 16u;@end
-@property( detail_weight_map )	weightMapIdx		= material.indices0_3.z & 0x0000FFFFu;@end
+@property( detail_weight_map )	weightMapIdx	= material.indices0_3.z & 0x0000FFFFu;@end
 @property( detail_map0 )	detailMapIdx0		= material.indices0_3.z >> 16u;@end
 @property( detail_map1 )	detailMapIdx1		= material.indices0_3.w & 0x0000FFFFu;@end
 @property( detail_map2 )	detailMapIdx2		= material.indices0_3.w >> 16u;@end
@@ -186,7 +197,8 @@ void main()
 @property( detail_map_nm1 )	detailNormMapIdx1	= material.indices4_7.y & 0x0000FFFFu;@end
 @property( detail_map_nm2 )	detailNormMapIdx2	= material.indices4_7.y >> 16u;@end
 @property( detail_map_nm3 )	detailNormMapIdx3	= material.indices4_7.z & 0x0000FFFFu;@end
-@property( use_envprobe_map )	envMapIdx			= material.indices4_7.z >> 16u;@end
+@property( emissive_map )	emissiveMapIdx		= material.indices4_7.z >> 16u;@end
+@property( use_envprobe_map )	envMapIdx		= material.indices4_7.w & 0x0000FFFFu;@end
 
 	@insertpiece( DeclareObjLightMask )
 
@@ -205,7 +217,9 @@ void main()
 
 	/// Sample detail maps and weight them against the weight map in the next foreach loop.
 @foreach( detail_maps_diffuse, n )@property( detail_map@n )
-	vec4 detailCol@n	= texture( textureMaps[@value(detail_map@n_idx)], vec3( inPs.uv@value(uv_detail@n).xy@insertpiece( offsetDetailD@n ), detailMapIdx@n ) );
+	vec4 detailCol@n	= texture( textureMaps[@value(detail_map@n_idx)],
+									vec3( UV_DETAIL@n( inPs.uv@value(uv_detail@n).xy@insertpiece( offsetDetail@n ) ),
+										  detailMapIdx@n ) );
 	@property( !hw_gamma_read )//Gamma to linear space
 		detailCol@n.xyz = detailCol@n.xyz * detailCol@n.xyz;@end
 	detailWeights.@insertpiece(detail_swizzle@n) *= detailCol@n.w;
@@ -224,18 +238,23 @@ void main()
 	@foreach( detail_maps_diffuse, n )
 		@insertpiece( blend_mode_idx@n ) @add( t, 1 ) @end
 
-		/// Apply the material's diffuse over the textures
-		@property( !transparent_mode )
-			diffuseCol.xyz *= material.kD.xyz;
-		@end @property( transparent_mode )
-			diffuseCol.xyz *= material.kD.xyz * diffuseCol.w * diffuseCol.w;
-		@end
+	/// Apply the material's diffuse over the textures
+	@property( !transparent_mode )
+	    diffuseCol.xyz *= material.kD.xyz;
+	@end @property( transparent_mode )
+	    diffuseCol.xyz *= material.kD.xyz * diffuseCol.w * diffuseCol.w;
+	@end
 
-	@property( alpha_test )
+	@property( alpha_test && !alpha_test_shadow_caster_only )
 		if( material.kD.w @insertpiece( alpha_test_cmp_func ) diffuseCol.a )
 			discard;
 	@end
 @end
+
+	@insertpiece( SampleSpecularMap )
+	@insertpiece( SampleRoughnessMap )
+
+	@insertpiece( forwardPlusDoDecals )
 
 @property( !hlms_use_prepass )
 	@property( !normal_map )
@@ -250,7 +269,8 @@ void main()
 		vec3 vBinormal	= normalize( cross( geomNormal, vTangent )@insertpiece( tbnApplyReflection ) );
 		mat3 TBN		= mat3( vTangent, vBinormal, geomNormal );
 
-		@property( normal_map_tex )nNormal = getTSNormal( vec3( inPs.uv@value(uv_normal).xy, normalIdx ) );@end
+		@property( normal_map_tex )nNormal = getTSNormal( vec3( UV_NORMAL( inPs.uv@value(uv_normal).xy ),
+																normalIdx ) );@end
 		@property( normal_weight_tex )
 			// Apply the weight to the main normal map
 			nNormal = mix( vec3( 0.0, 0.0, 1.0 ), nNormal, normalMapWeight );
@@ -277,13 +297,15 @@ void main()
 		nNormal.xy	+= vDetail.xy;
 		nNormal.z	*= vDetail.z + 1.0 - detailWeights.@insertpiece(detail_swizzle@n) @insertpiece( detail@n_nm_weight_mul );@end @end
 
+	@insertpiece( custom_ps_posSampleNormal )
+
+	@insertpiece( forwardPlusApplyDecalsNormal )
+
 	@property( normal_map )
 		nNormal = normalize( TBN * nNormal );
 	@end
 
 	@insertpiece( DoDirectionalShadowMaps )
-
-	@insertpiece( SampleRoughnessMap )
 
 @end @property( hlms_use_prepass )
 	ivec2 iFragCoord = ivec2( gl_FragCoord.x,
@@ -334,11 +356,9 @@ void main()
 	@end
 @end
 
-@insertpiece( SampleSpecularMap )
-
 @property( !hlms_prepass )
 	//Everything's in Camera space
-@property( hlms_lights_spot || use_envprobe_map || hlms_use_ssr || use_planar_reflections || hlms_forwardplus )
+@property( hlms_lights_spot || use_envprobe_map || hlms_use_ssr || use_planar_reflections || ambient_hemisphere || hlms_forwardplus )
 	vec3 viewDir	= normalize( -inPs.pos );
 	float NdotV		= clamp( dot( nNormal, viewDir ), 0.0, 1.0 );
 @end
@@ -364,7 +384,7 @@ void main()
 		finalColour += BRDF( passBuf.lights[@n].position.xyz, viewDir, NdotV, passBuf.lights[@n].diffuse, passBuf.lights[@n].specular );@end
 @end
 
-@property( hlms_lights_point || hlms_lights_spot )	vec3 lightDir;
+@property( hlms_lights_point || hlms_lights_spot || hlms_lights_area_approx || hlms_lights_area_ltc )	vec3 lightDir;
 	float fDistance;
 	vec3 tmpColour;
 	float spotCosAngle;@end
@@ -388,7 +408,7 @@ void main()
 @foreach( hlms_lights_spot, n, hlms_lights_point )
 	lightDir = passBuf.lights[@n].position.xyz - inPs.pos;
 	fDistance= length( lightDir );
-@property( !hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), passBuf.lights[@n].spotDirection );@end
+@property( !hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), passBuf.lights[@n].spotDirection.xyz );@end
 @property( hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), zAxis( passBuf.lights[@n].spotQuaternion ) );@end
 	if( fDistance <= passBuf.lights[@n].attenuation.x && spotCosAngle >= passBuf.lights[@n].spotParams.y @insertpiece( andObjLightMaskCmp ) )
 	{
@@ -406,8 +426,17 @@ void main()
 		finalColour += tmpColour * (atten * spotAtten);
 	}@end
 
+	//Custom 2D shape lights
+	@insertpiece( DoAreaApproxLights )
+	@insertpiece( DoAreaLtcLights )
+
 @insertpiece( forward3dLighting )
 @insertpiece( applyIrradianceVolumes )
+
+@property( emissive_map || emissive_constant )
+	@insertpiece( SampleEmissiveMap )
+	finalColour += emissiveCol.xyz;
+@end
 
 @property( use_envprobe_map || hlms_use_ssr || use_planar_reflections || ambient_hemisphere )
 	vec3 reflDir = 2.0 * dot( viewDir, nNormal ) * nNormal - viewDir;
@@ -563,7 +592,9 @@ void main()
 
 	/// Sample detail maps and weight them against the weight map in the next foreach loop.
 @foreach( detail_maps_diffuse, n )@property( detail_map@n )
-	float detailCol@n	= texture( textureMaps[@value(detail_map@n_idx)], vec3( inPs.uv@value(uv_detail@n).xy@insertpiece( offsetDetailD@n ), detailMapIdx@n ) ).w;
+	float detailCol@n	= texture( textureMaps[@value(detail_map@n_idx)],
+									vec3( UV_DETAIL@n( inPs.uv@value(uv_detail@n).xy@insertpiece( offsetDetail@n ) ),
+										  detailMapIdx@n ) ).w;
 	detailCol@n = detailWeights.@insertpiece(detail_swizzle@n) * detailCol@n;@end
 @end
 

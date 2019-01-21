@@ -40,9 +40,11 @@ Buffer<uint> f3dGrid : register(t3);
 Buffer<float4> f3dLightList : register(t4);@end
 
 @property( num_textures )Texture2DArray textureMaps[@value( num_textures )] : register(t@value(textureRegStart));@end
-@property( envprobe_map )TextureCube	texEnvProbeMap : register(t@value(envMapReg));@end
+@property( envprobe_map )TextureCube	texEnvProbeMap : register(t@value(envMapReg));
+SamplerState envMapSamplerState : register(s@value(envMapReg));@end
 
-@property( numSamplerStates || envprobe_map )SamplerState samplerStates[@value(numSamplerStates)] : register(s@value(samplerStateStart));@end
+@foreach( numSamplerStates, n )
+	SamplerState samplerState@n : register(s@counter(samplerStateStart));@end
 
 
 @property( hlms_lights_spot_textured )@insertpiece( DeclQuat_zAxis )
@@ -98,7 +100,7 @@ float3 qmul( float4 q, float3 v )
 //Prepare weight map for the detail maps.
 @property( detail_weight_map )
 	float4 detailWeights = textureMaps[@value( detail_weight_map_idx )].Sample(
-									samplerStates[@value(detail_weight_map_idx)],
+									samplerState@value(detail_weight_map_idx),
 									float3( inPs.uv0.xy, @value(detail_weight_map_idx_slice) ) );
 @end @property( !detail_weight_map )
 	float4 detailWeights = float4( 1.0, 1.0, 1.0, 1.0 );
@@ -106,7 +108,7 @@ float3 qmul( float4 q, float3 v )
 
 @property( diffuse_map )
 	diffuseCol = textureMaps[@value( diffuse_map_idx )].Sample(
-									samplerStates[@value(diffuse_map_idx)],
+									samplerState@value(diffuse_map_idx),
 									float3( inPs.uv0.xy, @value(diffuse_map_idx_slice) ) );
 @end
 
@@ -114,7 +116,7 @@ float3 qmul( float4 q, float3 v )
 @foreach( 4, n )
 	@property( detail_map@n )
 		float3 detailCol@n = textureMaps[@value(detail_map@n_idx)].Sample(
-								samplerStates[@value(detail_map@n_idx)],
+								samplerState@value(detail_map@n_idx),
 								float3( inPs.uv0.xy * material.detailOffsetScale[@value(currOffsetDetail)].zw +
 										material.detailOffsetScale[@value(currOffsetDetail)].xy,
 										@value(detail_map@n_idx_slice) ) ).xyz;
@@ -124,7 +126,7 @@ float3 qmul( float4 q, float3 v )
 
 	@property( metalness_map@n )
 		float metalness@n = textureMaps[@value( metalness_map@n_idx )].Sample(
-									samplerStates[@value(metalness_map@n_idx)],
+									samplerState@value(metalness_map@n_idx),
 									float3( inPs.uv0.xy * material.detailOffsetScale[@value(currOffsetDetail)].zw +
 											material.detailOffsetScale[@value(currOffsetDetail)].xy,
 											@value( metalness_map@n_idx_slice ) ) ).x;
@@ -134,7 +136,7 @@ float3 qmul( float4 q, float3 v )
 
 	@property( roughness_map@n )
 		float roughness@n = textureMaps[@value( roughness_map@n_idx )].Sample(
-									samplerStates[@value(roughness_map@n_idx)],
+									samplerState@value(roughness_map@n_idx),
 									float3( inPs.uv0.xy * material.detailOffsetScale[@value(currOffsetDetail)].zw +
 											material.detailOffsetScale[@value(currOffsetDetail)].xy,
 											@value( roughness_map@n_idx_slice ) ) ).x;
@@ -244,7 +246,7 @@ float3 qmul( float4 q, float3 v )
 
 	//Point lights
 @foreach( hlms_lights_point, n, hlms_lights_directional_non_caster )
-	lightDir = passBuf.lights[@n].position - inPs.pos;
+	lightDir = passBuf.lights[@n].position.xyz - inPs.pos;
 	fDistance= length( lightDir );
 	if( fDistance <= passBuf.lights[@n].attenuation.x )
 	{
@@ -259,10 +261,10 @@ float3 qmul( float4 q, float3 v )
 	//spotParams[@value(spot_params)].y = cos( OuterAngle / 2 )
 	//spotParams[@value(spot_params)].z = falloff
 @foreach( hlms_lights_spot, n, hlms_lights_point )
-	lightDir = passBuf.lights[@n].position - inPs.pos;
+	lightDir = passBuf.lights[@n].position.xyz - inPs.pos;
 	fDistance= length( lightDir );
-@property( !hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position ), passBuf.lights[@n].spotDirection );@end
-@property( hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position ), zAxis( passBuf.lights[@n].spotQuaternion ) );@end
+@property( !hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), passBuf.lights[@n].spotDirection );@end
+@property( hlms_lights_spot_textured )	spotCosAngle = dot( normalize( inPs.pos - passBuf.lights[@n].position.xyz ), zAxis( passBuf.lights[@n].spotQuaternion ) );@end
 	if( fDistance <= passBuf.lights[@n].attenuation.x && spotCosAngle >= passBuf.lights[@n].spotParams.y )
 	{
 		lightDir *= 1.0 / fDistance;
@@ -285,8 +287,8 @@ float3 qmul( float4 q, float3 v )
 	float3 reflDir = 2.0 * dot( viewDir, nNormal ) * nNormal - viewDir;
 	
 	@property( envprobe_map )
-		float3 envColourS = texEnvProbeMap.SampleLevel( samplerStates[@value(num_textures)], mul( reflDir, passBuf.invViewMatCubemap ), ROUGHNESS * 12.0 ).xyz @insertpiece( ApplyEnvMapScale );
-		float3 envColourD = texEnvProbeMap.SampleLevel( samplerStates[@value(num_textures)], mul( nNormal, passBuf.invViewMatCubemap ), 11.0 ).xyz @insertpiece( ApplyEnvMapScale );
+		float3 envColourS = texEnvProbeMap.SampleLevel( envMapSamplerState, mul( reflDir, passBuf.invViewMatCubemap ), ROUGHNESS * 12.0 ).xyz @insertpiece( ApplyEnvMapScale );
+		float3 envColourD = texEnvProbeMap.SampleLevel( envMapSamplerState, mul( nNormal, passBuf.invViewMatCubemap ), 11.0 ).xyz @insertpiece( ApplyEnvMapScale );
 		@property( !hw_gamma_read )	//Gamma to linear space
 			envColourS = envColourS * envColourS;
 			envColourD = envColourD * envColourD;
@@ -326,7 +328,7 @@ float3 qmul( float4 q, float3 v )
 @end
 
 	@property( debug_pssm_splits )
-		outPs.colour0.xyz = lerp( outPs.colour0.xyz, debugPssmSplit.xyz, 0.2f );
+		psOut.colour0.xyz = lerp( psOut.colour0.xyz, debugPssmSplit.xyz, 0.2f );
 	@end
 
 	@insertpiece( custom_ps_posExecution )

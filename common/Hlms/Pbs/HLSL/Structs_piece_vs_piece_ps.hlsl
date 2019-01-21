@@ -22,6 +22,33 @@ struct Light
 @end
 };
 
+#define areaLightDiffuseMipmapStart areaApproxLights[0].diffuse.w
+#define areaLightNumMipmapsSpecFactor areaApproxLights[0].specular.w
+
+struct AreaLight
+{
+	float4 position;	//.w contains the objLightMask
+	float4 diffuse;		//[0].w contains diffuse mipmap start
+	float4 specular;	//[0].w contains mipmap scale
+	float4 attenuation;	//.w contains texture array idx
+	//Custom 2D Shape:
+	//  direction.xyz direction
+	//  direction.w invHalfRectSize.x
+	//  tangent.xyz tangent
+	//  tangent.w invHalfRectSize.y
+	float4 direction;
+	float4 tangent;
+	float4 doubleSided;
+};
+
+struct AreaLtcLight
+{
+	float4 position;		//.w contains the objLightMask
+	float4 diffuse;		//.w contains attenuation range
+	float4 specular;		//.w contains doubleSided
+	float3 points[4];
+};
+
 @insertpiece( DeclCubemapProbeStruct )
 
 //Uniforms that change per pass
@@ -32,7 +59,7 @@ cbuffer PassBuffer : register(b0)
 	//Vertex shader (common to both receiver and casters)
 	float4x4 viewProj;
 
-@property( hlms_global_clip_distances )
+@property( hlms_global_clip_planes )
 	float4 clipPlane0;
 @end
 
@@ -54,7 +81,7 @@ cbuffer PassBuffer : register(b0)
 @property( hlms_use_prepass )
 	float4 windowHeight;
 @end
-	
+
 @property( ambient_hemisphere || ambient_fixed || envmap_scale )
 	float4 ambientUpperHemi;
 @end
@@ -67,9 +94,15 @@ cbuffer PassBuffer : register(b0)
 	float4 irradianceSize;		//.w = 1.0f / irradianceTexture->getHeight()
 	float4x4 invView;
 @end
-@property( hlms_pssm_splits )@foreach( hlms_pssm_splits, n )
+@property( hlms_pssm_splits )@psub( hlms_pssm_splits_minus_one, hlms_pssm_splits, 1 )@foreach( hlms_pssm_splits, n )
 	float pssmSplitPoints@n;@end @end
+@property( hlms_pssm_blend )@foreach( hlms_pssm_splits_minus_one, n )
+	float pssmBlendPoints@n;@end @end
+@property( hlms_pssm_fade )
+	float pssmFadePoint;@end
 	@property( hlms_lights_spot )Light lights[@value(hlms_lights_spot)];@end
+	@property( hlms_lights_area_approx )AreaLight areaApproxLights[@value(hlms_lights_area_approx)];@end
+	@property( hlms_lights_area_ltc )AreaLtcLight areaLtcLights[@value(hlms_lights_area_ltc)];@end
 @end @property( hlms_shadowcaster )
 	//Vertex shader
 	@property( exponential_shadow_maps )float4 viewZRow;@end
@@ -91,6 +124,7 @@ cbuffer PassBuffer : register(b0)
 	float4 f3dData;
 	@property( hlms_forwardplus == forward3d )
 		float4 f3dGridHWW[@value( forward3d_num_slices )];
+		float4 f3dViewportOffset;
 	@end
 	@property( hlms_forwardplus != forward3d )
 		float4 fwdScreenToGrid;
@@ -126,12 +160,14 @@ struct Material
 	float4 F0;
 	float4 normalWeights;
 	float4 cDetailWeights;
-	float4 detailOffsetScaleD[4];
-	float4 detailOffsetScaleN[4];
+	float4 detailOffsetScale[4];
+	float4 emissive;		//emissive.w contains mNormalMapWeight.
+	float4 userValue[3];
 
 	uint4 indices0_3;
-	//asfloat( indices4_7.w ) contains mNormalMapWeight.
 	uint4 indices4_7;
+
+	@insertpiece( custom_materialBuffer )
 };
 
 cbuffer MaterialBuf : register(b1)
@@ -191,14 +227,14 @@ cbuffer ManualProbe : register(b3)
 		@foreach( hlms_num_shadow_map_lights, n )
 			@property( !hlms_shadowmap@n_is_point_light )
 				float4 posL@n	: TEXCOORD@counter(texcoord);@end @end
-			
+
 		@property( hlms_pssm_splits )float depth	: TEXCOORD@counter(texcoord);@end
 
 		@property( hlms_use_prepass_msaa > 1 )
 			float2 zwDepth	: TEXCOORD@counter(texcoord);
 		@end
 	@end
-	
+
 	@property( hlms_shadowcaster )
 		@property( alpha_test )
 			nointerpolation uint drawId	: TEXCOORD@counter(texcoord);
