@@ -60,31 +60,31 @@
 
 OgreManager::OgreManager()
 {
-	mGlContext = 0;
+    mGlContext = 0;
 
-    QDir exePath( QApplication::applicationDirPath() );
+    QDir exePath(QApplication::applicationDirPath());
 
-	mResourcesCfg = exePath.filePath( "resources2.cfg" ).toStdString();
-	mPluginsCfg = exePath.filePath( "plugins.cfg" ).toStdString();
+    mResourcesCfg = exePath.filePath("resources2.cfg").toStdString();
+    mPluginsCfg = exePath.filePath("plugins.cfg").toStdString();
 
-	// Create Ogre and initialize it
-	mRoot = new Ogre::Root( mPluginsCfg, "ogre.cfg", "Ogre.log" );
+    // Create Ogre and initialize it
+    mRoot = new Ogre::Root(mPluginsCfg, "ogre.cfg", "Ogre.log");
 
     if (!mRoot->restoreConfig())
     {
         if (!mRoot->showConfigDialog())
             OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS, "Abort render system configuration", "OgreManager::OgreManager");
-	}
+    }
 
-	mCurrentRenderSystem = mRoot->getRenderSystem();
-    mRoot->initialise( false );
+    mCurrentRenderSystem = mRoot->getRenderSystem();
+    mRoot->initialise(false);
 
-	// Initialize resources
-	setupResources();
+    // Initialize resources
+    setupResources();
 
-	// Start timer
-	mTimer = new Ogre::Timer();
-	mTimer->reset();
+    // Start timer
+    mTimer = new Ogre::Timer();
+    mTimer->reset();
 }
 
 OgreManager::~OgreManager()
@@ -92,7 +92,7 @@ OgreManager::~OgreManager()
     mLoadedV1Meshes.clear();
     mLoadedV2Meshes.clear();
 
-	delete mRoot;
+    delete mRoot;
     mRoot = nullptr;
 
     delete mTimer;
@@ -115,56 +115,56 @@ void OgreManager::initialize()
     mOverlaySystem = OGRE_NEW Ogre::v1::OverlaySystem;
     mSceneManager->addRenderQueueListener(mOverlaySystem);
 
-	// After resources have been setup and renderwindows created (in ogre widget), the Hlms managers are registered
-	registerHlms();
+    // After resources have been setup and renderwindows created (in ogre widget), the Hlms managers are registered
+    registerHlms();
 
-	// Initialise, parse scripts etc
-	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups( false );
+    // Initialise, parse scripts etc
+    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(false);
 }
 
 void OgreManager::setupResources()
 {
-	// Load resource paths from config file
-	Ogre::ConfigFile cf;
-	cf.load( mResourcesCfg );
+    // Load resource paths from config file
+    Ogre::ConfigFile cf;
+    cf.load(mResourcesCfg);
 
-	// Go through all sections & settings in the file
-	Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
+    // Go through all sections & settings in the file
+    Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
 
-	Ogre::String secName, typeName, archName;
-	while ( seci.hasMoreElements() )
-	{
-		secName = seci.peekNextKey();
-		Ogre::ConfigFile::SettingsMultiMap *settings = seci.getNext();
+    Ogre::String secName, typeName, archName;
+    while (seci.hasMoreElements())
+    {
+        secName = seci.peekNextKey();
+        Ogre::ConfigFile::SettingsMultiMap *settings = seci.getNext();
 
         if (secName == "Hlms") continue;
-		
-		Ogre::ConfigFile::SettingsMultiMap::iterator i;
-		for ( i = settings->begin(); i != settings->end(); ++i )
-		{
-		    typeName = i->first;
-			archName = i->second;
-			Ogre::ResourceGroupManager::getSingleton().addResourceLocation( archName, typeName, secName );
-		}
-	}
+
+        Ogre::ConfigFile::SettingsMultiMap::iterator i;
+        for (i = settings->begin(); i != settings->end(); ++i)
+        {
+            typeName = i->first;
+            archName = i->second;
+            Ogre::ResourceGroupManager::getSingleton().addResourceLocation(archName, typeName, secName);
+        }
+    }
 }
 
 bool OgreManager::isRenderSystemGL() const
 {
-	if ( mCurrentRenderSystem )
-		return ( mCurrentRenderSystem->getName() == OGRE_RENDERSYSTEM_OPENGL3PLUS );
+    if (mCurrentRenderSystem)
+        return (mCurrentRenderSystem->getName() == OGRE_RENDERSYSTEM_OPENGL3PLUS);
 
-	return false;
+    return false;
 }
 
-HGLRC OgreManager::getGlContext() const 
+HGLRC OgreManager::getGlContext() const
 {
-	return mGlContext;
+    return mGlContext;
 }
 
-void OgreManager::setGlContext( HGLRC glContext )
+void OgreManager::setGlContext(HGLRC glContext)
 {
-	mGlContext = glContext;
+    mGlContext = glContext;
 }
 
 bool OgreManager::loadMesh(const QString& sFileName)
@@ -221,9 +221,8 @@ bool OgreManager::loadMesh(const QString& sFileName)
 
 void OgreManager::clearScene()
 {
-    auto v1Mgr = Ogre::v1::MeshManager::getSingletonPtr();
-    auto v2Mgr = Ogre::MeshManager::getSingletonPtr();
-
+    //auto v1Mgr = Ogre::v1::MeshManager::getSingletonPtr();
+    //auto v2Mgr = Ogre::MeshManager::getSingletonPtr();
     //qDebug() << "v1 before:" << v1Mgr->getMemoryUsage() << "bytes";
     //qDebug() << "v2 before:" << v2Mgr->getMemoryUsage() << "bytes";
 
@@ -233,7 +232,7 @@ void OgreManager::clearScene()
         qDebug() << node->getName().c_str();
 
         Ogre::SceneNode* sceneNode = dynamic_cast<Ogre::SceneNode*>(node);
-        
+
         std::vector<Ogre::MovableObject*> objToReleaseVec;
         for (int k = 0; k < sceneNode->numAttachedObjects(); ++k)
         {
@@ -267,9 +266,9 @@ void OgreManager::clearScene()
     //qDebug() << "v2 after:" << v2Mgr->getMemoryUsage() << "bytes";
 }
 
-Ogre::Mesh* OgreManager::currentMesh(int index /*= 0*/)
+Ogre::Mesh* OgreManager::currentMesh(int index)
 {
-    if ( mLoadedV2Meshes.size() > index )
+    if (mLoadedV2Meshes.size() > index)
         return mLoadedV2Meshes[index].get();
 
     //Q_ASSERT(false);
@@ -281,74 +280,99 @@ void OgreManager::registerHlms()
     QDir exePath(QApplication::applicationDirPath());
     exePath.cd("../common/");
 
-	Ogre::String dataFolder = exePath.absolutePath().toStdString();
+    Ogre::String dataFolder = exePath.absolutePath().toStdString();
 
-	if ( dataFolder.empty() )
-		dataFolder = "./";
-	else if ( *( dataFolder.end() - 1 ) != '/' )
-		dataFolder += "/";
+    if (dataFolder.empty())
+        dataFolder = "./";
+    else if (*(dataFolder.end() - 1) != '/')
+        dataFolder += "/";
 
-	Ogre::RenderSystem* renderSystem = mRoot->getRenderSystem();
-	Ogre::String shaderSyntax = "GLSL";
-	if ( renderSystem->getName() == OGRE_RENDERSYSTEM_DIRECTX11 )
-		shaderSyntax = "HLSL";
+    Ogre::String rootHlmsFolder = dataFolder;
+
+    Ogre::HlmsUnlit* hlmsUnlit = nullptr;
+    Ogre::HlmsPbs* hlmsPbs = nullptr;
 
     Ogre::ArchiveManager& archMgr = Ogre::ArchiveManager::getSingleton();
+    {
+        // Create & Register HlmsUnlit
+        // Get the path to all the subdirectories used by HlmsUnlit
+        Ogre::String mainFolderPath;
+        Ogre::StringVector libraryFoldersPaths;
+        Ogre::HlmsUnlit::getDefaultPaths(mainFolderPath, libraryFoldersPaths);
+        Ogre::Archive *archiveUnlit = archMgr.load(rootHlmsFolder + mainFolderPath, "FileSystem", true);
+        Ogre::ArchiveVec archiveUnlitLibraryFolders;
+        
+        for (const Ogre::String& path : libraryFoldersPaths)
+        {
+            Ogre::Archive* archive = archMgr.load(rootHlmsFolder + path, "FileSystem", true);
+            archiveUnlitLibraryFolders.push_back(archive);
+        }
 
-	Ogre::Archive* archiveLibrary = archMgr.load( dataFolder + "Hlms/Common/" + shaderSyntax,
-                                                 "FileSystem", true );
-	Ogre::ArchiveVec library;
-	library.push_back( archiveLibrary );
+        //Create and register the unlit Hlms
+        hlmsUnlit = OGRE_NEW Ogre::HlmsUnlit(archiveUnlit, &archiveUnlitLibraryFolders);
+        Ogre::Root::getSingleton().getHlmsManager()->registerHlms(hlmsUnlit);
+    }
+    {
+        // Create & Register HlmsPbs
+        // Do the same for HlmsPbs:
+        Ogre::String mainFolderPath;
+        Ogre::StringVector libraryFoldersPaths;
+        Ogre::HlmsPbs::getDefaultPaths(mainFolderPath, libraryFoldersPaths);
+        Ogre::Archive *archivePbs = archMgr.load(rootHlmsFolder + mainFolderPath, "FileSystem", true);
 
-	Ogre::Archive* archiveUnlit = archMgr.load( dataFolder + "Hlms/Unlit/" + shaderSyntax, 
-                                               "FileSystem", true );
+        //Get the library archive(s)
+        Ogre::ArchiveVec archivePbsLibraryFolders;
+        auto libraryFolderPathIt = libraryFoldersPaths.begin();
+        auto libraryFolderPathEn = libraryFoldersPaths.end();
+        for (const Ogre::String& path : libraryFoldersPaths)
+        {
+            Ogre::Archive* archive = archMgr.load(rootHlmsFolder + path, "FileSystem", true);
+            archivePbsLibraryFolders.push_back(archive);
+        }
 
-	Ogre::HlmsUnlit* hlmsUnlit = OGRE_NEW Ogre::HlmsUnlit( archiveUnlit, &library );
-	mRoot->getHlmsManager()->registerHlms( hlmsUnlit );
+        //Create and register
+        hlmsPbs = OGRE_NEW Ogre::HlmsPbs(archivePbs, &archivePbsLibraryFolders);
+        Ogre::Root::getSingleton().getHlmsManager()->registerHlms(hlmsPbs);
+    }
 
-	Ogre::Archive* archivePbs = archMgr.load( dataFolder + "Hlms/Pbs/" + shaderSyntax, 
-                                             "FileSystem", true );
+    Ogre::RenderSystem* renderSystem = mRoot->getRenderSystem();
+    if (renderSystem->getName() == "Direct3D11 Rendering Subsystem")
+    {
+        //Set lower limits 512kb instead of the default 4MB per Hlms in D3D 11.0
+        //and below to avoid saturating AMD's discard limit (8MB) or
+        //saturate the PCIE bus in some low end machines.
+        bool supportsNoOverwriteOnTextureBuffers;
+        renderSystem->getCustomAttribute("MapNoOverwriteOnDynamicBufferSRV",
+                                         &supportsNoOverwriteOnTextureBuffers);
 
-	Ogre::HlmsPbs* hlmsPbs = OGRE_NEW Ogre::HlmsPbs( archivePbs, &library );
-	mRoot->getHlmsManager()->registerHlms( hlmsPbs );
-
-	if ( renderSystem->getName() == "Direct3D11 Rendering Subsystem" )
-	{
-		//Set lower limits 512kb instead of the default 4MB per Hlms in D3D 11.0
-		//and below to avoid saturating AMD's discard limit (8MB) or
-		//saturate the PCIE bus in some low end machines.
-		bool supportsNoOverwriteOnTextureBuffers;
-		renderSystem->getCustomAttribute( "MapNoOverwriteOnDynamicBufferSRV",
-			&supportsNoOverwriteOnTextureBuffers );
-
-		if ( !supportsNoOverwriteOnTextureBuffers )
-		{
-			hlmsPbs->setTextureBufferDefaultSize( 512 * 1024 );
-			hlmsUnlit->setTextureBufferDefaultSize( 512 * 1024 );
-		}
-	}
+        if (!supportsNoOverwriteOnTextureBuffers)
+        {
+            hlmsPbs->setTextureBufferDefaultSize(512 * 1024);
+            hlmsUnlit->setTextureBufferDefaultSize(512 * 1024);
+        }
+    }
 }
 
 void OgreManager::renderOgreWidgetsOneFrame()
 {
-	if ( mRoot && !mOgreWidgets.empty() )
-	{
-		// Determine time since last frame
-		Ogre::Real timeSinceLastFrame = 0.0f;
-		unsigned long startTime = 0;
+    if (mRoot && !mOgreWidgets.empty())
+    {
+        // Determine time since last frame
+        Ogre::Real timeSinceLastFrame = 0.0f;
+        unsigned long startTime = 0;
 
-		// Render an one frame
-		startTime = mTimer->getMillisecondsCPU();
-		mRoot->renderOneFrame();
-		timeSinceLastFrame = ( mTimer->getMillisecondsCPU() - startTime ) / 1000.0f;
+        // Render an one frame
+        startTime = mTimer->getMillisecondsCPU();
+        mRoot->renderOneFrame();
+        timeSinceLastFrame = (mTimer->getMillisecondsCPU() - startTime) / 1000.0f;
 
-		// Update all QOgreWidgets
-		for ( auto it = mOgreWidgets.begin(); it != mOgreWidgets.end(); ++it )
-		{
+        // Update all QOgreWidgets
+        for (auto it = mOgreWidgets.begin(); it != mOgreWidgets.end(); ++it)
+        {
             OgreWidget* widget = *it;
-            widget->updateOgre( timeSinceLastFrame );
-		}
-	}
+            widget->updateOgre(timeSinceLastFrame);
+        }
+    }
 }
 
 void OgreManager::createScene()
@@ -368,7 +392,7 @@ void OgreManager::createScene()
     Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
     hlmsPbs->setShadowSettings(Ogre::HlmsPbs::PCF_4x4);
 
-    mSceneManager->setForwardClustered(true, 
+    mSceneManager->setForwardClustered(true,
                                        16, 8,    // wight & height 
                                        24,       // num of slices
                                        96, 5,    // light per cell, decal per cell
@@ -388,18 +412,18 @@ void OgreManager::createScene()
     emit sceneCreated();
 }
 
-int OgreManager::registerOgreWidget( OgreWidget* ogreWidget )
+int OgreManager::registerOgreWidget(OgreWidget* ogreWidget)
 {
     int nextId = mIdCount;
     mIdCount += 1;
 
     ogreWidget->setId(nextId);
-	mOgreWidgets.push_back( ogreWidget );
+    mOgreWidgets.push_back(ogreWidget);
 
     return nextId;
 }
 
-void OgreManager::unregisterOgreWidget( int ogreWidgetId )
+void OgreManager::unregisterOgreWidget(int ogreWidgetId)
 {
     for (int i = 0; i < mOgreWidgets.size(); ++i)
     {
@@ -412,7 +436,7 @@ void OgreManager::unregisterOgreWidget( int ogreWidgetId )
     }
 }
 
-OgreWidget* OgreManager::getOgreWidget( int ogreWidgetId ) const
+OgreWidget* OgreManager::getOgreWidget(int ogreWidgetId) const
 {
     for (int i = 0; i < mOgreWidgets.size(); ++i)
     {
@@ -424,18 +448,18 @@ OgreWidget* OgreManager::getOgreWidget( int ogreWidgetId ) const
 
 void OgreManager::createBall(int x, int y)
 {
-    Ogre::Item *item = mSceneManager->createItem( "Sphere1000.mesh",
-    Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC );
+    Ogre::Item *item = mSceneManager->createItem("Sphere1000.mesh",
+                                                 Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
     Ogre::HlmsManager* hlmsManager = mRoot->getHlmsManager();
     Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
 
-    assert( dynamic_cast<Ogre::HlmsPbs*>( hlmsManager->getHlms( Ogre::HLMS_PBS ) ) );
+    assert(dynamic_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS)));
 
-    Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>( hlmsManager->getHlms( Ogre::HLMS_PBS ) );
+    Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
 
-    char buff[ 128 ];
-    sprintf( buff, "PBS_%d_%d", x, y );
-    std::string strBlockName( buff );
+    char buff[128];
+    sprintf(buff, "PBS_%d_%d", x, y);
+    std::string strBlockName(buff);
     Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(
         hlmsPbs->createDatablock(strBlockName, strBlockName,
                                  Ogre::HlmsMacroblock(),
@@ -443,22 +467,22 @@ void OgreManager::createBall(int x, int y)
                                  Ogre::HlmsParamVec()));
 
     //auto tex = Ogre::TextureManager::getSingleton().getByName( "wood.png", "OgreSpooky" );
-    auto skybox = Ogre::TextureManager::getSingleton().getByName( "env.dds", "OgreSpooky" );
+    auto skybox = Ogre::TextureManager::getSingleton().getByName("env.dds", "OgreSpooky");
 
-    datablock->setWorkflow( Ogre::HlmsPbsDatablock::MetallicWorkflow );
+    datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
     //datablock->setTexture( Ogre::PBSM_DIFFUSE, 0, tex );
-    datablock->setTexture( Ogre::PBSM_REFLECTION, 0, skybox );
-    datablock->setDiffuse( Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
-    datablock->setSpecular( Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
-    datablock->setRoughness( x / 4.0f );
-    datablock->setMetalness( y / 4.0f  );
+    datablock->setTexture(Ogre::PBSM_REFLECTION, 0, skybox);
+    datablock->setDiffuse(Ogre::Vector3(1.0f, 1.0f, 1.0f));
+    datablock->setSpecular(Ogre::Vector3(1.0f, 1.0f, 1.0f));
+    datablock->setRoughness(x / 4.0f);
+    datablock->setMetalness(y / 4.0f);
 
-    item->setDatablock( datablock );
+    item->setDatablock(datablock);
 
     Ogre::SceneNode* sceneNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
-    sceneNode->setScale( 30, 30, 30 );
-    sceneNode->setPosition( x * 40 - 100, y * 40 - 100, 0 );
-    sceneNode->attachObject( item );
+    sceneNode->setScale(30, 30, 30);
+    sceneNode->setPosition(x * 40 - 100, y * 40 - 100, 0);
+    sceneNode->attachObject(item);
 }
 
 Ogre::Item* OgreManager::loadV2Mesh(QString meshName)
@@ -510,6 +534,6 @@ Ogre::Item* OgreManager::loadV1Mesh(QString meshName)
         qDebug() << "Failed to load v1 mesh:" << meshName;
         item = nullptr;
     }
-   
+
     return item;
 }
