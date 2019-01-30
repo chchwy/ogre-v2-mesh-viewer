@@ -25,42 +25,42 @@ public:
     explicit LightWidget(QWidget* parent = 0);
     ~LightWidget();
 
-	void init(OgreManager*);
-	void connections();
+    void init(OgreManager*);
+    void connections();
 
 protected:
-	void hideEvent( QHideEvent* evt ) override;
+    void hideEvent(QHideEvent* evt) override;
 
 private:
-	Ogre::Light* findLightByName( std::string lightName );
-	
-	bool loadFromSettings();
-	void writeToSettings();
+    Ogre::Light* findLightByName(std::string lightName);
 
-	void createLight( QString name, QMap<QString, QVariant> attri );
-	void saveLight( Ogre::Light* light );
-	void createDefaultLights();
+    bool loadFromSettings();
+    void writeToSettings();
 
-	// slots
-	void currentLightChanged();
-	void positionChanged( double v );
-	void directionChanged( double v );
-	void colorChanged();
-	void typeChanged( int index );
-	void powerScaleChanged( float v );
-	void addLight();
-	void removeLight();
-	void lightAttenuationChanged();
-	void lightAngleChanged();
+    void createLight(QString name, QMap<QString, QVariant> attri);
+    void saveLight(Ogre::Light* light);
+    void createDefaultLights();
+
+    // slots
+    void currentLightChanged();
+    void positionChanged(double v);
+    void directionChanged(double v);
+    void colorChanged();
+    void typeChanged(int index);
+    void powerScaleChanged(float v);
+    void addLight();
+    void removeLight();
+    void lightAttenuationChanged();
+    void lightAngleChanged();
 
 
 private:
     Ui::LightWidget *ui;
 
-	Ogre::SceneManager* mSceneManager = nullptr;
-	Ogre::Root* mRoot = nullptr;
+    Ogre::SceneManager* mSceneManager = nullptr;
+    Ogre::Root* mRoot = nullptr;
 
-	Ogre::Light* mCurrentLight = nullptr;
+    Ogre::Light* mCurrentLight = nullptr;
 };
 
 #endif // LIGHTWIDGET_H
