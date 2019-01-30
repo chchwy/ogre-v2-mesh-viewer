@@ -41,7 +41,7 @@ private:
     void saveLight(Ogre::Light* light);
     void createDefaultLights();
 
-    // slots
+private slots:
     void currentLightChanged();
     void positionChanged(double v);
     void directionChanged(double v);
@@ -53,13 +53,11 @@ private:
     void lightAttenuationChanged();
     void lightAngleChanged();
 
-
 private:
     Ui::LightWidget *ui;
 
     Ogre::SceneManager* mSceneManager = nullptr;
     Ogre::Root* mRoot = nullptr;
-
     Ogre::Light* mCurrentLight = nullptr;
 };
 

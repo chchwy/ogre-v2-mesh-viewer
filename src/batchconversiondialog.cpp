@@ -32,7 +32,7 @@ void BatchConversionDialog::showEvent(QShowEvent*)
 
 void BatchConversionDialog::AddFileButtonClicked()
 {
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
 
     QString sMyDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QString sDefaultDir = settings.value("BatchConverterAddFile", sMyDoc).toString();
@@ -58,7 +58,7 @@ void BatchConversionDialog::ClearButtonClicked()
 
 void BatchConversionDialog::BrowserOutputFolderButtonClicked()
 {
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
 
     QString sMyDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QString sDefaultDir = settings.value("BatchConverterOutputFolder", sMyDoc).toString();

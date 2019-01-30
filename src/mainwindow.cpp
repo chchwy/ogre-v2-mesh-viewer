@@ -96,7 +96,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
     mTimer->stop();
 
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
     QMainWindow::closeEvent(event);
@@ -104,7 +104,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::readSettings()
 {
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
 }
@@ -148,7 +148,7 @@ void MainWindow::actionOpenMesh()
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     QString sLastOpenLocation = settings.value("actionOpenMesh", sUserDoc).toString();
 
     QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open Ogre Mesh", sLastOpenLocation, "Ogre Mesh (*.mesh)");
@@ -190,7 +190,7 @@ void MainWindow::actionSaveMesh()
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     QString sLastOpenLocation = settings.value("actionSaveMesh", sUserDoc).toString();
 
     QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
@@ -228,7 +228,7 @@ void MainWindow::actionImportObj()
     ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     QString sLastOpenLocation = settings.value("actionImportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getOpenFileName(this, "Open Obj",
@@ -283,7 +283,7 @@ void MainWindow::actionExportObj()
     ON_SCOPE_EXIT(mTimer->start());
 
     QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     QString sLastOpenLocation = settings.value("actionExportObj", sUserDoc).toString();
 
     QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",
