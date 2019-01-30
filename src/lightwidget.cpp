@@ -21,7 +21,6 @@ double getMapDoubleValue(QMap<QString, QVariant>& m, QString key, double default
     {
         return m[key].toDouble();
     }
-
     return defaultValue;
 }
 

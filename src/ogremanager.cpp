@@ -41,15 +41,7 @@
 #include "OgreHlmsTextureManager.h"
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreHlmsPbs.h"
-
-
 #include "Overlay/OgreOverlaySystem.h"
-/*
-#include "Overlay/OgreOverlayManager.h"
-#include "Overlay/OgreOverlay.h"
-#include "Overlay/OgreTextAreaOverlayElement.h"
-#include "Overlay/OgreOverlayContainer.h"
-*/
 
 #include <QDir>
 #include <QDirIterator>

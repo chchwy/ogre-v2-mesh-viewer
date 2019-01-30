@@ -29,17 +29,18 @@
 #include "OgreTimer.h"
 
 
-OgreWidget::OgreWidget( QWidget* parent ) : QWidget( parent )
+OgreWidget::OgreWidget(QWidget* parent) : QWidget(parent)
 {
-	setAttribute( Qt::WA_OpaquePaintEvent );
-	setAttribute( Qt::WA_PaintOnScreen );
-	setMinimumSize( 240, 240 );
+    setAttribute(Qt::WA_OpaquePaintEvent);
+    setAttribute(Qt::WA_PaintOnScreen);
+    setMinimumSize(240, 240);
 
-	setFocusPolicy( Qt::StrongFocus );
-	setMouseTracking( true );
-	mBackground = Ogre::ColourValue( 0.2f, 0.2f, 0.2f );
-	mAbsolute = Ogre::Vector2::ZERO;
-	mRelative = Ogre::Vector2::ZERO;
+    setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);
+
+    mBackground = Ogre::ColourValue(0.2f, 0.2f, 0.2f);
+    mAbsolute = Ogre::Vector2::ZERO;
+    mRelative = Ogre::Vector2::ZERO;
 }
 
 OgreWidget::~OgreWidget()
@@ -48,64 +49,64 @@ OgreWidget::~OgreWidget()
 
 HGLRC OgreWidget::getCurrentGlContext()
 {
-#if defined(Q_OS_WIN)
-	return wglGetCurrentContext(); // Windows
+#ifdef _WIN32
+    return wglGetCurrentContext(); // Windows
 #else
-	return glXGetCurrentContext(); // Linux
+    return glXGetCurrentContext(); // Linux
 #endif
-
-	return 0;
+    assert(false);
+    return 0;
 }
 
-void OgreWidget::createRenderWindow( OgreManager* ogreManager )
+void OgreWidget::createRenderWindow(OgreManager* ogreManager)
 {
     Q_ASSERT(ogreManager);
     mOgreManager = ogreManager;
 
-	Ogre::Root* root = ogreManager->getOgreRoot();
+    Ogre::Root* root = ogreManager->getOgreRoot();
     Q_ASSERT(root);
 
-	// Get render system and assign window handle
-	mRoot = root;
-	Ogre::RenderSystem* renderSystem = mRoot->getRenderSystem();
-	Ogre::NameValuePairList parameters;
+    // Get render system and assign window handle
+    mRoot = root;
+    Ogre::RenderSystem* renderSystem = mRoot->getRenderSystem();
+    Ogre::NameValuePairList parameters;
 
-	// Reuse the glContext if available
-	HGLRC glContext = 0;
-	if ( ogreManager->isRenderSystemGL() )
-	{
-		parameters[ "currentGLContext" ] = Ogre::String( "false" );
-		glContext = ogreManager->getGlContext();
-		if ( glContext )
-		{
-			parameters[ "externalGLContext" ] = Ogre::StringConverter::toString( (size_t)( glContext ) );
-			parameters[ "vsync" ] = "No";
-		}
-	}
+    // Reuse the glContext if available
+    HGLRC glContext = 0;
+    if (ogreManager->isRenderSystemGL())
+    {
+        parameters["currentGLContext"] = Ogre::String("false");
+        glContext = ogreManager->getGlContext();
+        if (glContext)
+        {
+            parameters["externalGLContext"] = Ogre::StringConverter::toString((size_t)(glContext));
+            parameters["vsync"] = "No";
+        }
+    }
 
-	std::string sWindowHandle = std::to_string( (size_t)( winId() ) );;
-	parameters[ "externalWindowHandle" ] = sWindowHandle;
-	parameters[ "parentWindowHandle" ] = sWindowHandle;
+    std::string sWindowHandle = std::to_string((size_t)(winId()));;
+    parameters["externalWindowHandle"] = sWindowHandle;
+    parameters["parentWindowHandle"] = sWindowHandle;
 
-	Ogre::ConfigOptionMap& cfgOpts = renderSystem->getConfigOptions();
-	parameters["gamma"] = "true";
-	parameters["FSAA"] = cfgOpts[ "FSAA" ].currentValue;
-	parameters["vsync"] = cfgOpts[ "VSync" ].currentValue;
+    Ogre::ConfigOptionMap& cfgOpts = renderSystem->getConfigOptions();
+    parameters["gamma"] = "true";
+    parameters["FSAA"] = cfgOpts["FSAA"].currentValue;
+    parameters["vsync"] = cfgOpts["VSync"].currentValue;
 
-	mOgreRenderWindow = mRoot->createRenderWindow(
+    mOgreRenderWindow = mRoot->createRenderWindow(
         "MainRenderWin",
-		width(), height(),
-		false, // full screen
-		&parameters );
-	mOgreRenderWindow->setVisible( true );
+        width(), height(),
+        false, // full screen
+        &parameters);
+    mOgreRenderWindow->setVisible(true);
 
-	// Determine whether the GL context can be reused
-	if ( ogreManager->isRenderSystemGL() && !glContext )
-	{
-		// Store the glContext in the ogre manager
-		glContext = getCurrentGlContext();
-		ogreManager->setGlContext( glContext );
-	}
+    // Determine whether the GL context can be reused
+    if (ogreManager->isRenderSystemGL() && !glContext)
+    {
+        // Store the glContext in the ogre manager
+        glContext = getCurrentGlContext();
+        ogreManager->setGlContext(glContext);
+    }
 }
 
 void OgreWidget::createCompositor()
@@ -115,87 +116,87 @@ void OgreWidget::createCompositor()
     mCamera->setAspectRatio(Ogre::Real(mOgreRenderWindow->getWidth()) / Ogre::Real(mOgreRenderWindow->getHeight()));
     mCameraManager = new CameraManager(mCamera);
 
-	const Ogre::String workspaceName = "PbsMaterialsWorkspace";
-	const Ogre::IdString workspaceNameHash = workspaceName;
+    const Ogre::String workspaceName = "PbsMaterialsWorkspace";
+    const Ogre::IdString workspaceNameHash = workspaceName;
 
     Ogre::CompositorManager2* compositorManager = mRoot->getCompositorManager2();
-	compositorManager->addWorkspace(mOgreManager->getSceneManager(), mOgreRenderWindow, mCamera, workspaceNameHash, true );
+    compositorManager->addWorkspace(mOgreManager->getSceneManager(), mOgreRenderWindow, mCamera, workspaceNameHash, true);
 
     mInitialized = true;
 }
 
-void OgreWidget::updateOgre( float timeSinceLastFrame )
+void OgreWidget::updateOgre(float timeSinceLastFrame)
 {
     mTimeSinceLastFrame = timeSinceLastFrame;
 }
 
 QPaintEngine* OgreWidget::paintEngine() const
 {
-	// We don't want another paint engine to get in the way for our Ogre based paint engine.
-	// So we return nothing.
-	return 0;
+    // We don't want another paint engine to get in the way for our Ogre based paint engine.
+    // So we return nothing.
+    return 0;
 }
 
-void OgreWidget::paintEvent( QPaintEvent* e )
+void OgreWidget::paintEvent(QPaintEvent* e)
 {
 }
 
-void OgreWidget::resizeEvent( QResizeEvent* e )
+void OgreWidget::resizeEvent(QResizeEvent* e)
 {
-	if ( e->isAccepted() )
-	{
-		const QSize& newSize = e->size();
-		if ( mCamera && mOgreRenderWindow )
-		{	
-			Ogre::Real aspectRatio = Ogre::Real( newSize.width() ) / Ogre::Real( newSize.height() );
-			mCamera->setAspectRatio( aspectRatio );
+    if (e->isAccepted())
+    {
+        const QSize& newSize = e->size();
+        if (mCamera && mOgreRenderWindow)
+        {
+            Ogre::Real aspectRatio = Ogre::Real(newSize.width()) / Ogre::Real(newSize.height());
+            mCamera->setAspectRatio(aspectRatio);
 
-			mOgreRenderWindow->resize( newSize.width(), newSize.height() );
-			mOgreRenderWindow->windowMovedOrResized();
-			
-			//qDebug() << "Window resize=" << newSize << ", Ratio=" << aspectRatio;
-		}
-	}
+            mOgreRenderWindow->resize(newSize.width(), newSize.height());
+            mOgreRenderWindow->windowMovedOrResized();
+
+            //qDebug() << "Window resize=" << newSize << ", Ratio=" << aspectRatio;
+        }
+    }
 }
 
-void OgreWidget::keyPressEvent( QKeyEvent* ev )
+void OgreWidget::keyPressEvent(QKeyEvent* ev)
 {
-	if ( mInitialized )
-		mCameraManager->injectKeyDown( ev );
+    if (mInitialized)
+        mCameraManager->injectKeyDown(ev);
 }
 
-void OgreWidget::keyReleaseEvent( QKeyEvent* ev )
+void OgreWidget::keyReleaseEvent(QKeyEvent* ev)
 {
-	if ( mInitialized )
-		mCameraManager->injectKeyUp( ev );
+    if (mInitialized)
+        mCameraManager->injectKeyUp(ev);
 }
 
-void OgreWidget::mouseMoveEvent( QMouseEvent* e )
+void OgreWidget::mouseMoveEvent(QMouseEvent* e)
 {
-	if ( mInitialized )
-	{
-		Ogre::Vector2 oldPos = mAbsolute;
-		mAbsolute = Ogre::Vector2( e->pos().x(), e->pos().y() );
-		mRelative = mAbsolute - oldPos;
-		mCameraManager->injectMouseMove( mRelative );
-	}
+    if (mInitialized)
+    {
+        Ogre::Vector2 oldPos = mAbsolute;
+        mAbsolute = Ogre::Vector2(e->pos().x(), e->pos().y());
+        mRelative = mAbsolute - oldPos;
+        mCameraManager->injectMouseMove(mRelative);
+    }
 }
 
-void OgreWidget::wheelEvent( QWheelEvent* e )
+void OgreWidget::wheelEvent(QWheelEvent* e)
 {
-	if ( mInitialized )
-		mCameraManager->injectMouseWheel( e );
+    if (mInitialized)
+        mCameraManager->injectMouseWheel(e);
 }
 
-void OgreWidget::mousePressEvent( QMouseEvent* e )
+void OgreWidget::mousePressEvent(QMouseEvent* e)
 {
-	if ( mInitialized )
-		mCameraManager->injectMouseDown( e );
+    if (mInitialized)
+        mCameraManager->injectMouseDown(e);
 }
 
-void OgreWidget::mouseReleaseEvent( QMouseEvent* e )
+void OgreWidget::mouseReleaseEvent(QMouseEvent* e)
 {
-	if ( mInitialized )
-		mCameraManager->injectMouseUp( e );
+    if (mInitialized)
+        mCameraManager->injectMouseUp(e);
 }
 
