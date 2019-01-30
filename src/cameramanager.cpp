@@ -1,10 +1,10 @@
 #include "cameramanager.h"
 
 
-CameraManager::CameraManager( Ogre::Camera* cam )
+CameraManager::CameraManager(Ogre::Camera* cam)
 {
-    setCamera( cam );
-    setMode( CM_BLENDER );
+    setCamera(cam);
+    setMode(CM_BLENDER);
 }
 
 CameraManager::~CameraManager()

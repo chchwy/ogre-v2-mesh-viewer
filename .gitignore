@@ -42,6 +42,7 @@ CMakeLists.txt.user*
 # Visual Studio
 /debug
 /release
+/x64/*
 .vs
 *.log
 *.vc.db
