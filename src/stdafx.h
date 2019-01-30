@@ -14,6 +14,7 @@
 #endif 
 
 // common ogre headers
+#include "OgrePrerequisites.h"
 #include "OgreString.h"
 #include "OgreRoot.h"
 #include "OgreRenderWindow.h"
