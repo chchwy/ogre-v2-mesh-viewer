@@ -1,7 +1,8 @@
-QT += widgets
 
 message(Qt version: $$[QT_VERSION])
 
+QT += widgets
+CONFIG -= flat
 DEFINES += APP_VERSION_NUMBER=\\\"0.1.0\\\"
 
 OGREHOME = $$(OGREHOME)
@@ -10,8 +11,6 @@ isEmpty(OGREHOME) {
 }
 
 message(OGRE_HOME: $$OGREHOME)
-
-PRECOMPILED_HEADER = src/stdafx.h
 
 HEADERS = \
     src/mainwindow.h \
@@ -76,6 +75,8 @@ FORMS += \
     src/lightwidget.ui \
     src/batchconversiondialog.ui
 
+PRECOMPILED_HEADER = src/stdafx.h
+
 INCLUDEPATH += "src"
 INCLUDEPATH += "$$OGREHOME/include"
 INCLUDEPATH += "$$OGREHOME/include/OGRE"
@@ -107,7 +108,6 @@ CONFIG(release, debug|release):LIBS += \
     -lOgreHlmsPbs \
     -lOgreHlmsUnlit \
     -lOgreOverlay
-
 
 Release:DESTDIR = ./bin
 Debug:DESTDIR = ./dbin
