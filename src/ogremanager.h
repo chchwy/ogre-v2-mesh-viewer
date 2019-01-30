@@ -56,9 +56,9 @@ public:
     void createScene();
 
     int  registerOgreWidget(OgreWidget* ogreWidget);
-    void unregisterOgreWidget(int ogreWidgetId);
+    void unregisterOgreWidget(int id);
+    OgreWidget* getOgreWidget(int id) const;
 
-    OgreWidget* getOgreWidget(int ogreWidgetId) const;
     Ogre::Root* getOgreRoot() const { return mRoot; }
     Ogre::SceneManager* getSceneManager() const { return mSceneManager; }
 

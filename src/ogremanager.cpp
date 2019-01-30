@@ -115,6 +115,8 @@ void OgreManager::initialize()
 
 void OgreManager::setupResources()
 {
+    QDir appDir(QApplication::applicationDirPath());
+
     // Load resource paths from config file
     Ogre::ConfigFile cf;
     cf.load(mResourcesCfg);
@@ -122,20 +124,24 @@ void OgreManager::setupResources()
     // Go through all sections & settings in the file
     Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
 
-    Ogre::String secName, typeName, archName;
+    Ogre::String secName;
     while (seci.hasMoreElements())
     {
         secName = seci.peekNextKey();
-        Ogre::ConfigFile::SettingsMultiMap *settings = seci.getNext();
+        Ogre::ConfigFile::SettingsMultiMap* settings = seci.getNext();
 
         if (secName == "Hlms") continue;
 
         Ogre::ConfigFile::SettingsMultiMap::iterator i;
         for (i = settings->begin(); i != settings->end(); ++i)
         {
-            typeName = i->first;
-            archName = i->second;
-            Ogre::ResourceGroupManager::getSingleton().addResourceLocation(archName, typeName, secName);
+            Ogre::String rescType = i->first;
+            Ogre::String rescPath = i->second;
+
+            QString s = appDir.filePath(QString::fromStdString(rescPath));
+            qDebug() << s;
+
+            Ogre::ResourceGroupManager::getSingleton().addResourceLocation(s.toStdString(), rescType, secName);
         }
     }
 }
@@ -271,14 +277,13 @@ void OgreManager::registerHlms()
     QDir exePath(QApplication::applicationDirPath());
     exePath.cd("../common/");
 
-    Ogre::String dataFolder = exePath.absolutePath().toStdString();
+    qDebug() << "Hlms Path:" << exePath.absolutePath();
 
-    if (dataFolder.empty())
-        dataFolder = "./";
-    else if (*(dataFolder.end() - 1) != '/')
-        dataFolder += "/";
+    QString dataFolder = exePath.absolutePath();
+    if (!dataFolder.endsWith('/'))
+        dataFolder.append("/");
 
-    Ogre::String rootHlmsFolder = dataFolder;
+    Ogre::String rootHlmsFolder = dataFolder.toStdString();
 
     Ogre::HlmsUnlit* hlmsUnlit = nullptr;
     Ogre::HlmsPbs* hlmsPbs = nullptr;
@@ -389,7 +394,11 @@ void OgreManager::createScene()
     Q_ASSERT(mMeshRootNode == nullptr);
     mMeshRootNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
 
-    QDirIterator d(QDir::currentPath() + "/../mesh", QStringList() << "*.mesh");
+    QDir meshDir(QApplication::applicationDirPath());
+    meshDir.cd("../mesh");
+
+    qDebug() << meshDir.absolutePath();
+    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh"); // FIXME:
     while (d.hasNext())
     {
         QString strMesh = d.next();
@@ -409,11 +418,11 @@ int OgreManager::registerOgreWidget(OgreWidget* ogreWidget)
     return nextId;
 }
 
-void OgreManager::unregisterOgreWidget(int ogreWidgetId)
+void OgreManager::unregisterOgreWidget(int id)
 {
     for (int i = 0; i < mOgreWidgets.size(); ++i)
     {
-        if (mOgreWidgets[i]->id() == ogreWidgetId)
+        if (mOgreWidgets[i]->id() == id)
         {
             // no need to release widget, just remove from list
             mOgreWidgets[i] = mOgreWidgets.back();
@@ -422,11 +431,11 @@ void OgreManager::unregisterOgreWidget(int ogreWidgetId)
     }
 }
 
-OgreWidget* OgreManager::getOgreWidget(int ogreWidgetId) const
+OgreWidget* OgreManager::getOgreWidget(int id) const
 {
     for (OgreWidget* mOgreWidget : mOgreWidgets)
     {
-        if (mOgreWidget->id() == ogreWidgetId)
+        if (mOgreWidget->id() == id)
             return mOgreWidget;
     }
     return nullptr;
@@ -518,6 +527,5 @@ Ogre::Item* OgreManager::loadV1Mesh(QString meshName)
         qDebug() << "Failed to load v1 mesh:" << meshName;
         item = nullptr;
     }
-
     return item;
 }
