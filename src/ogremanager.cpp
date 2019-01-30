@@ -249,13 +249,13 @@ void OgreManager::clearScene()
 
     mMeshRootNode->removeAndDestroyAllChildren();
 
-    for (Ogre::MeshPtr v2Mesh : mLoadedV2Meshes)
+    for (const Ogre::MeshPtr& v2Mesh : mLoadedV2Meshes)
     {
         Ogre::MeshManager::getSingleton().remove(v2Mesh->getHandle());
     }
     mLoadedV2Meshes.clear();
 
-    for (Ogre::v1::MeshPtr v1Mesh : mLoadedV1Meshes)
+    for (const Ogre::v1::MeshPtr& v1Mesh : mLoadedV1Meshes)
     {
         Ogre::v1::MeshManager::getSingleton().remove(v1Mesh->getHandle());
     }
@@ -298,9 +298,8 @@ void OgreManager::registerHlms()
         Ogre::String mainFolderPath;
         Ogre::StringVector libraryFoldersPaths;
         Ogre::HlmsUnlit::getDefaultPaths(mainFolderPath, libraryFoldersPaths);
-        Ogre::Archive *archiveUnlit = archMgr.load(rootHlmsFolder + mainFolderPath, "FileSystem", true);
+
         Ogre::ArchiveVec archiveUnlitLibraryFolders;
-        
         for (const Ogre::String& path : libraryFoldersPaths)
         {
             Ogre::Archive* archive = archMgr.load(rootHlmsFolder + path, "FileSystem", true);
@@ -308,6 +307,7 @@ void OgreManager::registerHlms()
         }
 
         //Create and register the unlit Hlms
+        Ogre::Archive* archiveUnlit = archMgr.load(rootHlmsFolder + mainFolderPath, "FileSystem", true);
         hlmsUnlit = OGRE_NEW Ogre::HlmsUnlit(archiveUnlit, &archiveUnlitLibraryFolders);
         Ogre::Root::getSingleton().getHlmsManager()->registerHlms(hlmsUnlit);
     }
@@ -317,12 +317,9 @@ void OgreManager::registerHlms()
         Ogre::String mainFolderPath;
         Ogre::StringVector libraryFoldersPaths;
         Ogre::HlmsPbs::getDefaultPaths(mainFolderPath, libraryFoldersPaths);
-        Ogre::Archive *archivePbs = archMgr.load(rootHlmsFolder + mainFolderPath, "FileSystem", true);
 
         //Get the library archive(s)
         Ogre::ArchiveVec archivePbsLibraryFolders;
-        auto libraryFolderPathIt = libraryFoldersPaths.begin();
-        auto libraryFolderPathEn = libraryFoldersPaths.end();
         for (const Ogre::String& path : libraryFoldersPaths)
         {
             Ogre::Archive* archive = archMgr.load(rootHlmsFolder + path, "FileSystem", true);
@@ -330,6 +327,7 @@ void OgreManager::registerHlms()
         }
 
         //Create and register
+        Ogre::Archive* archivePbs = archMgr.load(rootHlmsFolder + mainFolderPath, "FileSystem", true);
         hlmsPbs = OGRE_NEW Ogre::HlmsPbs(archivePbs, &archivePbsLibraryFolders);
         Ogre::Root::getSingleton().getHlmsManager()->registerHlms(hlmsPbs);
     }
@@ -366,9 +364,8 @@ void OgreManager::renderOgreWidgetsOneFrame()
         timeSinceLastFrame = (mTimer->getMillisecondsCPU() - startTime) / 1000.0f;
 
         // Update all QOgreWidgets
-        for (auto it = mOgreWidgets.begin(); it != mOgreWidgets.end(); ++it)
+        for (OgreWidget* widget : mOgreWidgets)
         {
-            OgreWidget* widget = *it;
             widget->updateOgre(timeSinceLastFrame);
         }
     }
@@ -404,10 +401,8 @@ void OgreManager::createScene()
     while (d.hasNext())
     {
         QString strMesh = d.next();
-        //strMesh = QFileInfo(strMesh).fileName();
         loadMesh(strMesh);
     }
-
     emit sceneCreated();
 }
 
@@ -437,20 +432,19 @@ void OgreManager::unregisterOgreWidget(int ogreWidgetId)
 
 OgreWidget* OgreManager::getOgreWidget(int ogreWidgetId) const
 {
-    for (int i = 0; i < mOgreWidgets.size(); ++i)
+    for (OgreWidget* mOgreWidget : mOgreWidgets)
     {
-        if (mOgreWidgets[i]->id() == ogreWidgetId)
-            return mOgreWidgets[i];
+        if (mOgreWidget->id() == ogreWidgetId)
+            return mOgreWidget;
     }
     return nullptr;
 }
 
 void OgreManager::createBall(int x, int y)
 {
-    Ogre::Item *item = mSceneManager->createItem("Sphere1000.mesh",
+    Ogre::Item* item = mSceneManager->createItem("Sphere1000.mesh",
                                                  Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
     Ogre::HlmsManager* hlmsManager = mRoot->getHlmsManager();
-    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
 
     assert(dynamic_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS)));
 
@@ -512,10 +506,9 @@ Ogre::Item* OgreManager::loadV1Mesh(QString meshName)
     try
     {
         Ogre::v1::MeshManager& meshV1Mgr = Ogre::v1::MeshManager::getSingleton();
-        Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.load(
-            sMeshName, "OgreSpooky",
-            Ogre::v1::HardwareBuffer::HBU_STATIC,
-            Ogre::v1::HardwareBuffer::HBU_STATIC);
+        Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.load(sMeshName, "OgreSpooky",
+                                                  Ogre::v1::HardwareBuffer::HBU_STATIC,
+                                                  Ogre::v1::HardwareBuffer::HBU_STATIC);
 
         Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
 
