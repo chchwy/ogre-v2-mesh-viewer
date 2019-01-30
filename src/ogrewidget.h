@@ -46,54 +46,55 @@ class CameraManager;
 
 class OgreWidget : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	OgreWidget( QWidget* parent = 0 );
-	virtual ~OgreWidget();
+    OgreWidget(QWidget* parent = 0);
+    virtual ~OgreWidget();
 
     QPaintEngine* paintEngine() const override; // Turn off QTs paint engine for the Ogre widget.
 
-	void updateOgre( float timeSinceLastFrame );
-	void createRenderWindow( OgreManager* ogreManager );
-	void createCompositor();
+    void updateOgre(float timeSinceLastFrame);
+    void createRenderWindow(OgreManager* ogreManager);
+    void createCompositor();
 
-	Ogre::Root* getRoot() { return mRoot; }
+    Ogre::Root* getRoot() { return mRoot; }
     int id() { return mId; }
     void setId(int id) { mId = id; }
 
 signals:
-	void sceneCreated();
+    void sceneCreated();
 
 protected:
-	virtual void paintEvent( QPaintEvent* );
-	virtual void resizeEvent( QResizeEvent* );
-	virtual void keyPressEvent( QKeyEvent* );
-	virtual void keyReleaseEvent( QKeyEvent* );
-	virtual void mouseMoveEvent( QMouseEvent* );
+    void paintEvent(QPaintEvent*) override;
+    void resizeEvent(QResizeEvent*) override;
+    void keyPressEvent(QKeyEvent*) override;
+    void keyReleaseEvent(QKeyEvent*) override;
+    void mouseMoveEvent(QMouseEvent*) override;
 
-	virtual void wheelEvent( QWheelEvent* );
-	virtual void mousePressEvent( QMouseEvent* );
-	virtual void mouseReleaseEvent( QMouseEvent* );
-	HGLRC getCurrentGlContext();
+    void wheelEvent(QWheelEvent*) override;
+    void mousePressEvent(QMouseEvent*) override;
+    void mouseReleaseEvent(QMouseEvent*) override;
+
+    HGLRC getCurrentGlContext();
 
 private:
     OgreManager* mOgreManager = nullptr;
 
-	Ogre::Root* mRoot = nullptr;
-	Ogre::RenderWindow* mOgreRenderWindow = nullptr;
+    Ogre::Root* mRoot = nullptr;
+    Ogre::RenderWindow* mOgreRenderWindow = nullptr;
 
-	Ogre::Camera* mCamera = nullptr;
+    Ogre::Camera* mCamera = nullptr;
 
-	Ogre::ColourValue mBackground;
-	Ogre::Real mTimeSinceLastFrame = 0.0;
+    Ogre::ColourValue mBackground;
+    Ogre::Real mTimeSinceLastFrame = 0.0;
 
-	CameraManager* mCameraManager = nullptr;
-	bool mSceneCreated = false;
-	
+    CameraManager* mCameraManager = nullptr;
+    bool mSceneCreated = false;
+
     Ogre::Vector2 mAbsolute;
-	Ogre::Vector2 mRelative;
-	
+    Ogre::Vector2 mRelative;
+
     bool mInitialized = false;
     int mId = 0;
 };

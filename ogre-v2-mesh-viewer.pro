@@ -21,13 +21,9 @@ HEADERS = \
     src/tiny_obj_loader.h \
     src/objimporter.h \
     src/cameramanager.h \
-    src/OgreXML/OgreXMLMeshSerializer.h \
-    src/OgreXML/tinyxml.h \
-    src/OgreXML/tinystr.h \
     src/objexporter.h \
-	src/scopeguard.h \
+    src/scopeguard.h \
     src/batchconversiondialog.h
-
 
 SOURCES = \
     src/main.cpp \
@@ -37,21 +33,34 @@ SOURCES = \
     src/lightwidget.cpp \
     src/objimporter.cpp \
     src/cameramanager.cpp \
-    src/OgreXML/OgreXMLMeshSerializer.cpp \
-    src/OgreXML/tinyxml.cpp \
-    src/OgreXML/tinystr.cpp \
-    src/OgreXML/tinyxmlerror.cpp \
-    src/OgreXML/tinyxmlparser.cpp \
     src/objexporter.cpp \
     src/batchconversiondialog.cpp
 
+HEADERS += \
+    src/OgreXML/OgreXMLMeshSerializer.h \
+    src/TinyXML/tinyxml.h \
+    src/TinyXML/tinystr.h
+
+SOURCES += \
+    src/OgreXML/OgreXMLMeshSerializer.cpp \
+    src/TinyXML/tinyxml.cpp \
+    src/TinyXML/tinystr.cpp \
+    src/TinyXML/tinyxmlerror.cpp \
+    src/TinyXML/tinyxmlparser.cpp
+
+FORMS += \
+    src/mainwindow.ui \
+    src/lightwidget.ui \
+    src/batchconversiondialog.ui
 
 INCLUDEPATH += "src"
-INCLUDEPATH += "src/OgreXML"
 INCLUDEPATH += "$$OGREHOME/include"
 INCLUDEPATH += "$$OGREHOME/include/OGRE"
 INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Pbs"
 INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Unlit"
+INCLUDEPATH += "src/OgreXML"
+INCLUDEPATH += "src/TinyXML"
+INCLUDEPATH += "src/TinyObjLoader"
 
 DEFINES += TIXML_USE_STL
 
@@ -79,9 +88,4 @@ Release:DESTDIR = ./bin
 Debug:DESTDIR = ./dbin
 target.path = $$[QTDIR]/
 INSTALLS += target
-
-FORMS += \
-    src/mainwindow.ui \
-    src/lightwidget.ui \
-    src/batchconversiondialog.ui
 

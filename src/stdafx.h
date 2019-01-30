@@ -8,8 +8,10 @@
 #include <functional>
 
 // windows header
+#ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#endif 
 
 // common ogre headers
 #include "OgreString.h"
