@@ -23,7 +23,22 @@ HEADERS = \
     src/cameramanager.h \
     src/objexporter.h \
     src/scopeguard.h \
-    src/batchconversiondialog.h
+    src/batchconversiondialog.h \
+    src/OgreGLTF/Ogre_glTF.hpp \
+    src/OgreGLTF/Ogre_glTF_common.hpp \
+    src/OgreGLTF/Ogre_glTF_DLL.hpp \
+    src/OgreGLTF/Ogre_glTF_internal_utils.hpp \
+    src/OgreGLTF/Ogre_glTF_materialLoader.hpp \
+    src/OgreGLTF/Ogre_glTF_modelConverter.hpp \
+    src/OgreGLTF/Ogre_glTF_OgrePlugin.hpp \
+    src/OgreGLTF/Ogre_glTF_OgreResource.hpp \
+    src/OgreGLTF/Ogre_glTF_skeletonImporter.hpp \
+    src/OgreGLTF/Ogre_glTF_textureImporter.hpp \
+    src/TinyGLTF/tiny_gltf.h \
+    src/TinyGLTF/stb_image.h \
+    src/TinyGLTF/stb_image_write.h \
+    src/TinyGLTF/tiny_gltf.h \
+    src/TinyGLTF/json.hpp
 
 SOURCES = \
     src/main.cpp \
@@ -34,7 +49,15 @@ SOURCES = \
     src/objimporter.cpp \
     src/cameramanager.cpp \
     src/objexporter.cpp \
-    src/batchconversiondialog.cpp
+    src/batchconversiondialog.cpp \
+    src/OgreGLTF/Ogre_glTF.cpp \
+    src/OgreGLTF/Ogre_glTF_common.cpp \
+    src/OgreGLTF/Ogre_glTF_materialLoader.cpp \
+    src/OgreGLTF/Ogre_glTF_modelConverter.cpp \
+    src/OgreGLTF/Ogre_glTF_OgrePlugin.cpp \
+    src/OgreGLTF/Ogre_glTF_OgreResource.cpp \
+    src/OgreGLTF/Ogre_glTF_skeletonImporter.cpp \
+    src/OgreGLTF/Ogre_glTF_textureImporter.cpp
 
 HEADERS += \
     src/OgreXML/OgreXMLMeshSerializer.h \
@@ -59,8 +82,10 @@ INCLUDEPATH += "$$OGREHOME/include/OGRE"
 INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Pbs"
 INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Unlit"
 INCLUDEPATH += "src/OgreXML"
+INCLUDEPATH += "src/OgreGLTF"
 INCLUDEPATH += "src/TinyXML"
 INCLUDEPATH += "src/TinyObjLoader"
+INCLUDEPATH += "src/TinyGLTF"
 
 DEFINES += TIXML_USE_STL
 
