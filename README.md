@@ -13,9 +13,17 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 
 - [ ] Improve performance by converting obj data to ogre mesh directly. (Currently it uses mesh.xml as intermediate data format)
 - [x] Automatically generate normals if there are no normal vectors in obj
+- [ ] glTF import/export
 
 [0]: https://www.qt.io/download-qt-installer "Qt download"
 
 ## Known issues
 
 - [ ] Normals will be broken when converting a v2-mesh to obj format.
+
+## Third Party Libraries
+
+- Ogre3D: <https://www.ogre3d.org/>
+- Qt: <https://www.qt.io/>
+- Magus Toolkit: <https://github.com/spookyboo/Magus>
+- tinyobjloader: <https://github.com/syoyo/tinyobjloader> 
