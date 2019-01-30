@@ -151,11 +151,11 @@ Ogre::Light* LightWidget::findLightByName(std::string lightName)
 
 bool LightWidget::loadFromSettings()
 {
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
 
     settings.beginGroup("lights");
 
-    if (settings.allKeys().size() == 0)
+    if (settings.allKeys().empty())
     {
         return false;
     }
@@ -546,7 +546,7 @@ void LightWidget::removeLight()
 
     rootNode->removeAndDestroyChild(light->getParentSceneNode());
 
-    QSettings settings("DisplaySweet", "OgreModelViewer");
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     settings.beginGroup("lights");
     settings.remove(QString::fromStdString(light->getName()));
 
