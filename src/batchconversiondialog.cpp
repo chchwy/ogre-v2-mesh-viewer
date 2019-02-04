@@ -16,7 +16,6 @@ BatchConversionDialog::BatchConversionDialog(QWidget* parent) :
 
     connect(ui->AddFileButton, &QPushButton::clicked, this, &BatchConversionDialog::AddFileButtonClicked);
     connect(ui->ClearButton, &QPushButton::clicked, this, &BatchConversionDialog::ClearButtonClicked);
-
     connect(ui->BrowserOutputFolderButton, &QPushButton::clicked, this, &BatchConversionDialog::BrowserOutputFolderButtonClicked);
     connect(ui->ConvertButton, &QPushButton::clicked, this, &BatchConversionDialog::ConvertButtonClicked);
 }

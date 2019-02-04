@@ -51,23 +51,21 @@ public:
     OgreManager();
     virtual ~OgreManager();
     void initialize();
-    void renderOgreWidgetsOneFrame();
+    void render();
 
     void createScene();
+    void clearScene();    
 
     int  registerOgreWidget(OgreWidget* ogreWidget);
     void unregisterOgreWidget(int id);
-    OgreWidget* ogreWidget(int id) const;
 
     Ogre::Root* ogreRoot() const { return mRoot; }
     Ogre::SceneManager* sceneManager() const { return mSceneManager; }
+    Ogre::SceneNode* meshRootNode() const;
 
     bool isRenderSystemGL() const;
     HGLRC getGlContext() const;
     void setGlContext(HGLRC glContext);
-
-    bool loadMesh(const QString& sFileName);
-    void clearScene();
 
     Ogre::Mesh* currentMesh(int index = 0);
 

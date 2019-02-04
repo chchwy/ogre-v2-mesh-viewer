@@ -14,8 +14,12 @@ public:
     LoadFromFolderDialog(QWidget* parent);
     ~LoadFromFolderDialog();
 
+    void setSourceFolder(const QString& s);
+    void listAllMeshesInFolder();
 
 private:
+    QString mFolder;
+
     Ui::LoadFromFolderDialog* ui = nullptr;
 };
 

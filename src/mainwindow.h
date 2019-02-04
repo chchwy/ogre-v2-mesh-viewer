@@ -30,6 +30,8 @@ class QCloseEvent;
 class LightWidget;
 class Dock1DockWidget;
 class Dock2DockWidget;
+class MeshLoader;
+
 
 namespace Ui {
 class MainWindow;
@@ -59,20 +61,21 @@ private:
     void Tick();
 
 private:
-    void actionOpenMesh();
+    void actionOpen();
     void actionSaveMesh();
-    void actionImportObj();
     void actionExportObj();
     void actionLoadFromFolder();
     void actionBatchConverter();
 
     OgreWidget* mOgreWidget = nullptr;
     OgreManager* mOgreManager = nullptr;
+    MeshLoader* mMeshLoader = nullptr;
 
     LightWidget* mLightWidget = nullptr;
     Dock2DockWidget* mDock2DockWidget = nullptr;
 
     QTimer* mTimer = nullptr;
+    QString mUserDocumentPath;
 
     Ui::MainWindow* ui = nullptr;
 };
