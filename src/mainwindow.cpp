@@ -43,6 +43,7 @@
 #include "objexporter.h"
 #include "OgreMesh2Serializer.h"
 #include "batchconversiondialog.h"
+#include "loadfromfolderdialog.h"
 
 #define _STR(x) #x
 #define STR(X)  _STR(x)
@@ -80,6 +81,7 @@ MainWindow::MainWindow()
     connect(ui->actionImportObj, &QAction::triggered, this, &MainWindow::actionImportObj);
     connect(ui->actionExportObj, &QAction::triggered, this, &MainWindow::actionExportObj);
     connect(ui->actionBatchConverter, &QAction::triggered, this, &MainWindow::actionBatchConverter);
+    connect(ui->actionLoad_From_Folder, &QAction::triggered, this, &MainWindow::actionLoadFromFolder);
 
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
 }
@@ -121,12 +123,11 @@ void MainWindow::Tick()
 
 void MainWindow::createDockWindows()
 {
-    QDockWidget* pDockWidget1 = new QDockWidget("Lights", this);
-    addDockWidget(Qt::LeftDockWidgetArea, pDockWidget1);
+    QDockWidget* dockWidget = new QDockWidget("Lights", this);
+    addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
 
     mLightWidget = new LightWidget(this);
-    pDockWidget1->setWidget(mLightWidget);
-
+    dockWidget->setWidget(mLightWidget);
     mLightWidget->init(mOgreManager);
 }
 
@@ -210,7 +211,7 @@ void MainWindow::actionSaveMesh()
     Ogre::Mesh* mesh = mOgreManager->currentMesh();
     if (mesh != nullptr)
     {
-        Ogre::Root* root = Ogre::Root::getSingletonPtr();
+        Ogre::Root* root = mOgreManager->ogreRoot();
         Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
         meshSerializer2.exportMesh(mesh, sMeshFileName.toStdString());
 
@@ -255,11 +256,11 @@ void MainWindow::actionImportObj()
 
     ObjImporter objImporter;
     objImporter.setZUpToYUp(ret == QMessageBox::Yes);
-    bool b = objImporter.import(sObjFileName, sOutFile);
+    bool ok = objImporter.import(sObjFileName, sOutFile);
 
-    qDebug() << "Obj=" << sObjFileName << ", Success=" << b;
+    qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
 
-    if (b)
+    if (ok)
     {
         try
         {
@@ -317,6 +318,13 @@ void MainWindow::actionExportObj()
             QMessageBox::information(this, "Error", "Filed to export obj model");
         }
     }
+}
+
+void MainWindow::actionLoadFromFolder()
+{
+    LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this);
+    dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog->exec();
 }
 
 void MainWindow::actionBatchConverter()

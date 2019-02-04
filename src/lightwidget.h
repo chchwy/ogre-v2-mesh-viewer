@@ -13,7 +13,8 @@ class SceneManager;
 class Light;
 }
 
-namespace Ui {
+namespace Ui
+{
 class LightWidget;
 }
 
