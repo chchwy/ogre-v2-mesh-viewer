@@ -146,6 +146,11 @@ void OgreManager::setupResources()
     }
 }
 
+Ogre::SceneNode* OgreManager::meshRootNode() const
+{
+    return mMeshRootNode;
+}
+
 bool OgreManager::isRenderSystemGL() const
 {
     if (mCurrentRenderSystem)
@@ -162,58 +167,6 @@ HGLRC OgreManager::getGlContext() const
 void OgreManager::setGlContext(HGLRC glContext)
 {
     mGlContext = glContext;
-}
-
-bool OgreManager::loadMesh(const QString& sFileName)
-{
-    QFileInfo info(sFileName);
-
-    std::string sNewResourceLocation = info.absolutePath().toStdString();
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sNewResourceLocation, "FileSystem", "OgreSpooky");
-
-    QString sNewMeshFile = info.fileName();
-
-    Ogre::Item* pItem = loadV2Mesh(sNewMeshFile);
-    if (pItem == nullptr)
-    {
-        pItem = loadV1Mesh(sNewMeshFile);
-    }
-
-    if (pItem == nullptr)
-    {
-        return false;
-    }
-
-    auto pNode = mMeshRootNode->createChildSceneNode();
-    pNode->attachObject(pItem);
-
-    Ogre::HlmsManager* hlmsMgr = mRoot->getHlmsManager();
-    for (int i = 0; i < pItem->getNumSubItems(); ++i)
-    {
-        auto datablock = dynamic_cast<Ogre::HlmsPbsDatablock*>(pItem->getSubItem(i)->getDatablock());
-        if (datablock == nullptr)
-        {
-            continue;
-        }
-
-        if (datablock == hlmsMgr->getDefaultDatablock())
-        {
-            pItem->getSubItem(i)->setDatablock("viewer_default_mtl");
-        }
-
-        if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
-        {
-            auto hlmsTextureManager = mRoot->getHlmsManager()->getTextureManager();
-            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
-        }
-        /*
-        Ogre::HlmsMacroblock macro;
-        macro.mPolygonMode = Ogre::PM_WIREFRAME;
-        datablock->setMacroblock(macro);
-        */
-    }
-    return true;
 }
 
 void OgreManager::clearScene()
@@ -347,7 +300,7 @@ void OgreManager::registerHlms()
     }
 }
 
-void OgreManager::renderOgreWidgetsOneFrame()
+void OgreManager::render()
 {
     if (mRoot && !mOgreWidgets.empty())
     {
@@ -394,16 +347,6 @@ void OgreManager::createScene()
     Q_ASSERT(mMeshRootNode == nullptr);
     mMeshRootNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
 
-    QDir meshDir(QApplication::applicationDirPath());
-    meshDir.cd("../mesh");
-
-    qDebug() << meshDir.absolutePath();
-    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh"); // FIXME:
-    while (d.hasNext())
-    {
-        QString strMesh = d.next();
-        loadMesh(strMesh);
-    }
     emit sceneCreated();
 }
 
@@ -429,16 +372,6 @@ void OgreManager::unregisterOgreWidget(int id)
             mOgreWidgets.pop_back();
         }
     }
-}
-
-OgreWidget* OgreManager::ogreWidget(int id) const
-{
-    for (OgreWidget* mOgreWidget : mOgreWidgets)
-    {
-        if (mOgreWidget->id() == id)
-            return mOgreWidget;
-    }
-    return nullptr;
 }
 
 void OgreManager::createBall(int x, int y)

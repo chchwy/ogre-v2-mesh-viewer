@@ -41,7 +41,8 @@ HEADERS = \
     src/TinyGLTF/stb_image.h \
     src/TinyGLTF/stb_image_write.h \
     src/TinyGLTF/tiny_gltf.h \
-    src/TinyGLTF/json.hpp
+    src/TinyGLTF/json.hpp \
+    src/meshloader.h
 
 SOURCES = \
     src/main.cpp \
@@ -66,7 +67,8 @@ SOURCES = \
     src/OgreGLTF/Ogre_glTF_OgrePlugin.cpp \
     src/OgreGLTF/Ogre_glTF_OgreResource.cpp \
     src/OgreGLTF/Ogre_glTF_skeletonImporter.cpp \
-    src/OgreGLTF/Ogre_glTF_textureImporter.cpp
+    src/OgreGLTF/Ogre_glTF_textureImporter.cpp \
+    src/meshloader.cpp
 
 FORMS += \
     src/mainwindow.ui \

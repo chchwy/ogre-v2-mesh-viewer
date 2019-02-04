@@ -32,18 +32,18 @@
 #include <QSettings>
 #include <QFileDialog>
 #include <QStandardPaths>
-#include <QSettings>
-#include <QDebug>
 #include <QMessageBox>
+#include <QDirIterator>
 
 #include "lightwidget.h"
 #include "ogremanager.h"
 #include "ogrewidget.h"
-#include "objimporter.h"
+#include "meshloader.h"
 #include "objexporter.h"
 #include "OgreMesh2Serializer.h"
 #include "batchconversiondialog.h"
 #include "loadfromfolderdialog.h"
+
 
 #define _STR(x) #x
 #define STR(X)  _STR(x)
@@ -63,9 +63,7 @@ MainWindow::MainWindow()
     mOgreManager->initialize();
     mOgreWidget->createCompositor();
 
-    mTimer = new QTimer(this);
-    mTimer->setInterval(16);
-    connect(mTimer, &QTimer::timeout, this, &MainWindow::Tick);
+    mMeshLoader = new MeshLoader(this, mOgreManager);
 
     createDockWindows();
 
@@ -76,14 +74,18 @@ MainWindow::MainWindow()
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
 
     // actions
-    connect(ui->actionOpenOgreMesh, &QAction::triggered, this, &MainWindow::actionOpenMesh);
+    connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);
     connect(ui->actionSaveOgreMesh, &QAction::triggered, this, &MainWindow::actionSaveMesh);
-    connect(ui->actionImportObj, &QAction::triggered, this, &MainWindow::actionImportObj);
-    connect(ui->actionExportObj, &QAction::triggered, this, &MainWindow::actionExportObj);
     connect(ui->actionBatchConverter, &QAction::triggered, this, &MainWindow::actionBatchConverter);
     connect(ui->actionLoad_From_Folder, &QAction::triggered, this, &MainWindow::actionLoadFromFolder);
-
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
+
+    // setup the timer
+    mTimer = new QTimer(this);
+    mTimer->setInterval(16);
+    connect(mTimer, &QTimer::timeout, this, &MainWindow::Tick);
+
+    mUserDocumentPath = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
 }
 
 MainWindow::~MainWindow()
@@ -113,12 +115,22 @@ void MainWindow::readSettings()
 
 void MainWindow::onSceneLoaded()
 {
+    QDir meshDir(QApplication::applicationDirPath());
+    meshDir.cd("../mesh");
+
+    qDebug() << "Search for meshes in" << meshDir.absolutePath();
+    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh");
+    while (d.hasNext())
+    {
+        QString meshFile = d.next();
+        mMeshLoader->load(meshFile);
+    }
 }
 
 void MainWindow::Tick()
 {
     if (mOgreManager)
-        mOgreManager->renderOgreWidgetsOneFrame();
+        mOgreManager->render();
 }
 
 void MainWindow::createDockWindows()
@@ -142,17 +154,21 @@ void MainWindow::doQuitMenuAction()
     close();
 }
 
-void MainWindow::actionOpenMesh()
+void MainWindow::actionOpen()
 {
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
-    QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
-    QString sLastOpenLocation = settings.value("actionOpenMesh", sUserDoc).toString();
+    QString lastOpenLocation = settings.value("actionOpen", mUserDocumentPath).toString();
 
-    QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open Ogre Mesh", sLastOpenLocation, "Ogre Mesh (*.mesh)");
+    QString fileFilters =
+        "All supported formats (*.mesh *.mesh.xml *.obj *.gltf *.glb);;"
+        "Ogre Mesh (*.mesh *.mesh.xml);;"
+        "Wavefront Obj (*.obj);;"
+        "glTF (*.gltf *.glb);;All Files (*)";
+
+    QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open", lastOpenLocation, fileFilters);
     if (sMeshFileName.isEmpty())
     {
         return;
@@ -160,27 +176,22 @@ void MainWindow::actionOpenMesh()
 
     Q_ASSERT(QFile::exists(sMeshFileName));
     QFileInfo info(sMeshFileName);
-    settings.setValue("actionOpenMesh", info.absolutePath());
-
-    mOgreManager->clearScene();
+    settings.setValue("actionOpen", info.absolutePath());
 
     auto& manager = Ogre::ResourceGroupManager::getSingleton();
     manager.addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "OgreSpooky");
-
-    auto all_mtl = manager.findResourceNames("OgreSpooky", "*.material.json");
-    for (const std::string& m : *all_mtl)
+    
+    auto allMaterials = manager.findResourceNames("OgreSpooky", "*.material.json");
+    for (const std::string& sMtlName : *allMaterials)
     {
-        Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(m, "OgreSpooky", nullptr, "");
+        Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "OgreSpooky", nullptr, "");
     }
 
-    try
+    bool ok = mMeshLoader->load(sMeshFileName);
+    if (!ok)
     {
-        mOgreManager->loadMesh(sMeshFileName);
-    }
-    catch (...)
-    {
-        qDebug() << "Ogre mesh load failed";
-        QMessageBox::information(this, "Error", "Filed to load ogre mesh");
+        qDebug() << "Mesh load failed";
+        QMessageBox::information(this, "Error", "Filed to open" + sMeshFileName);
     }
 }
 
@@ -189,10 +200,8 @@ void MainWindow::actionSaveMesh()
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
-    QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
-    QString sLastOpenLocation = settings.value("actionSaveMesh", sUserDoc).toString();
+    QString sLastOpenLocation = settings.value("actionSaveMesh", mUserDocumentPath).toString();
 
     QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
                                                          sLastOpenLocation + "/a.mesh",
@@ -223,69 +232,13 @@ void MainWindow::actionSaveMesh()
     }
 }
 
-void MainWindow::actionImportObj()
-{
-    mTimer->stop();
-    ON_SCOPE_EXIT(mTimer->start());
-
-    QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
-    QString sLastOpenLocation = settings.value("actionImportObj", sUserDoc).toString();
-
-    QString sObjFileName = QFileDialog::getOpenFileName(this, "Open Obj",
-                                                        sLastOpenLocation,
-                                                        "Wavefront obj (*.obj)");
-    if (sObjFileName.isEmpty())
-    {
-        return;
-    }
-
-    auto ret = QMessageBox::question(this, "Coordinate system", "Convert from Z-up to Y-up?",
-                                     QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-
-    Q_ASSERT(QFile::exists(sObjFileName));
-
-    QFileInfo info(sObjFileName);
-    settings.setValue("actionImportObj", info.absolutePath());
-
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "OgreSpooky");
-
-    QString sOutFile = info.absolutePath() + "/" + info.baseName() + ".mesh";
-
-    mOgreManager->clearScene();
-
-    ObjImporter objImporter;
-    objImporter.setZUpToYUp(ret == QMessageBox::Yes);
-    bool ok = objImporter.import(sObjFileName, sOutFile);
-
-    qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
-
-    if (ok)
-    {
-        try
-        {
-            mOgreManager->loadMesh(sOutFile);
-        }
-        catch (...)
-        {
-            qDebug() << "Failed to Load obj.";
-        }
-    }
-    else
-    {
-        qDebug() << "Failed to import obj model.";
-        QMessageBox::information(this, "Error", "Filed to import obj model");
-    }
-}
-
 void MainWindow::actionExportObj()
 {
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
-    QString sUserDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
-    QString sLastOpenLocation = settings.value("actionExportObj", sUserDoc).toString();
+    QString sLastOpenLocation = settings.value("actionExportObj", mUserDocumentPath).toString();
 
     QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",
                                                         sLastOpenLocation + "/a.obj",
@@ -322,6 +275,13 @@ void MainWindow::actionExportObj()
 
 void MainWindow::actionLoadFromFolder()
 {
+    mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
+
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
+    QString initialPath = settings.value("actionLoadFromFolder", mUserDocumentPath).toString();
+    QString folder = QFileDialog::getExistingDirectory(this, "Open a folder", initialPath);
+
     LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this);
     dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dialog->exec();

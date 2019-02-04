@@ -20,7 +20,7 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 
 ## Known issues
 
-- [ ] Normals will be broken when converting a v2-mesh to obj format.
+- [ ] Normals are broken when converting a v2-mesh to a obj.
 
 ## Third Party Libraries
 

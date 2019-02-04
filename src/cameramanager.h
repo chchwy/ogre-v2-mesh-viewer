@@ -85,180 +85,21 @@ public:
     void rotatePerspective(Direction dir);
     void numpadViewSwitch(const QKeyEvent* evt);
 
-    /*-----------------------------------------------------------------------------
-    | Per-frame updates.
-    -----------------------------------------------------------------------------*/
-    bool frameRenderingQueued(const Ogre::FrameEvent &evt)
-    {
-        if (mMode == CM_FLY)
-        {
-            // build our acceleration vector based on keyboard input composite
-            Ogre::Vector3		accel = Ogre::Vector3::ZERO;
-            if (mGoingForward)	accel += mCamera->getDirection();
-            if (mGoingBack)		accel -= mCamera->getDirection();
-            if (mGoingRight)	accel += mCamera->getRight();
-            if (mGoingLeft)		accel -= mCamera->getRight();
-            if (mGoingUp)		accel += mCamera->getUp();
-            if (mGoingDown)		accel -= mCamera->getUp();
+    // Per-frame updates.
+    bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-            // if accelerating, try to reach top speed in a certain time
-            Ogre::Real topSpeed = mShiftDown ? mTopSpeed * 20 : mTopSpeed;
-            if (accel.squaredLength() != 0)
-            {
-                accel.normalise();
-                mVelocity += accel * topSpeed * evt.timeSinceLastFrame * 10;
-            }
-            // if not accelerating, try to stop in a certain time
-            else mVelocity -= mVelocity * evt.timeSinceLastFrame * 10;
+    void injectKeyDown(const QKeyEvent* evt);
+    void injectKeyUp(const QKeyEvent* evt);
 
-            Ogre::Real tooSmall = std::numeric_limits<Ogre::Real>::epsilon();
-
-            // keep camera velocity below top speed and above epsilon
-            if (mVelocity.squaredLength() > topSpeed * topSpeed)
-            {
-                mVelocity.normalise();
-                mVelocity *= topSpeed;
-            }
-            else if (mVelocity.squaredLength() < tooSmall * tooSmall)
-                mVelocity = Ogre::Vector3::ZERO;
-
-            if (mVelocity != Ogre::Vector3::ZERO) mCamera->move(mVelocity * evt.timeSinceLastFrame);
-        }
-        return true;
-    }
+    void injectMouseMove(Ogre::Vector2 mousePos);
+    void injectMouseWheel(const QWheelEvent* evt);
+    void injectMouseDown(const QMouseEvent* evt);
 
     /*-----------------------------------------------------------------------------
-    | Processes key presses for free-look style movement.
-    -----------------------------------------------------------------------------*/
-    void injectKeyDown(const QKeyEvent *evt)
-    {
-        if (mMode == CM_FLY)
-        {
-            if (evt->key() == Qt::Key_W)
-            {
-                mGoingForward = true;
-            }
-            else if (evt->key() == Qt::Key_A)
-            {
-                mGoingLeft = true;
-            }
-            else if (evt->key() == Qt::Key_S)
-            {
-                mGoingBack = true;
-            }
-            else if (evt->key() == Qt::Key_D)
-            {
-                mGoingRight = true;
-            }
-        }
-        if (evt->key() == Qt::Key_Shift)
-        {
-            mShiftDown = true;
-        }
-        if (mMode == CM_BLENDER)
-        {
-            Ogre::Vector3 accel = Ogre::Vector3::ZERO;
-            if (evt->key() == Qt::Key_W)
-            {
-                accel += mCamera->getDirection();
-            }
-            else if (evt->key() == Qt::Key_A)
-            {
-                accel -= mCamera->getRight();
-            }
-            else if (evt->key() == Qt::Key_S)
-            {
-                accel -= mCamera->getDirection();
-            }
-            else if (evt->key() == Qt::Key_D)
-            {
-                accel += mCamera->getRight();
-            }
-            if (accel != Ogre::Vector3::ZERO)
-            {
-                accel.normalise();
-                mCamera->move(accel * 1.5);
-            }
-
-            numpadViewSwitch(evt);
-        }
-    }
-
-    /*-----------------------------------------------------------------------------
-    | Processes key releases for free-look style movement.
-    -----------------------------------------------------------------------------*/
-    void injectKeyUp(const QKeyEvent* evt)
-    {
-        if (evt->key() == Qt::Key_W)
-            mGoingForward = false;
-        else if (evt->key() == Qt::Key_A)
-            mGoingLeft = false;
-        else if (evt->key() == Qt::Key_S)
-            mGoingBack = false;
-        else if (evt->key() == Qt::Key_D)
-            mGoingRight = false;
-        if (evt->key() == Qt::Key_Shift)
-            mShiftDown = false;
-    }
-
-    /*-----------------------------------------------------------------------------
-    | Processes mouse movement differently for each style.
-    -----------------------------------------------------------------------------*/
-    void injectMouseMove(Ogre::Vector2 mousePos)
-    {
-        if (mMode == CM_FLY)
-        {
-            mCamera->yaw(Ogre::Degree(-mousePos.x * 0.15f));
-            mCamera->pitch(Ogre::Degree(-mousePos.y * 0.15f));
-        }
-        if (mMode == CM_BLENDER || mMode == CM_ORBIT)
-        {
-            if (mOrbiting && !mShiftDown)
-            {
-                rotate(mousePos.x, mousePos.y);
-                if (mCurrentView != VI_USER)
-                    mCurrentView = VI_USER;
-            }
-            else if ((mOrbiting && mShiftDown) && mMode == CM_BLENDER)
-            {
-                pan(mousePos.x, mousePos.y);
-            }
-        }
-    }
-
-    void injectMouseWheel(const QWheelEvent* evt)
-    {
-        mMouseWheelDelta = evt->delta();
-        //qDebug() << (uint64_t)mCamera << ", " << (uint64_t)mTarget;
-        mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
-        mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0008f * mDistFromTarget));
-    }
-
-    void injectMouseDown(const QMouseEvent* evt)
-    {
-        if (mMode == CM_BLENDER || mMode == CM_ORBIT)
-        {
-            if (evt->button() == Qt::MiddleButton || evt->button() == Qt::LeftButton)
-            {
-                mOrbiting = true;
-            }
-        }
-    }
-
-    /*-----------------------------------------------------------------------------
-    | Processes mouse releases. Only applies for orbit style.
+    | Processes mouse releases. 
     | Left button is for orbiting, and right button is for zooming.
     -----------------------------------------------------------------------------*/
-    void injectMouseUp(const QMouseEvent* evt)
-    {
-        if (mMode == CM_BLENDER || mMode == CM_ORBIT)
-        {
-            if (evt->button() == Qt::MiddleButton || evt->button() == Qt::LeftButton)
-            {
-                mOrbiting = false;
-            }
-        }
-    }
+    void injectMouseUp(const QMouseEvent* evt); // Only applies for orbit style.
 
     void rotate(int x, int y)
     {
