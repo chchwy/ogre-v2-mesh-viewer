@@ -14,8 +14,8 @@ message(OGRE_HOME: $$OGREHOME)
 
 HEADERS = \
     src/mainwindow.h \
-    src/ogremanager.h \ 
-    src/ogrewidget.h \ 
+    src/ogremanager.h \
+    src/ogrewidget.h \
     src/lightwidget.h \
     src/tiny_obj_loader.h \
     src/objimporter.h \
@@ -23,6 +23,10 @@ HEADERS = \
     src/objexporter.h \
     src/scopeguard.h \
     src/batchconversiondialog.h \
+    src/loadfromfolderdialog.h \
+    src/OgreXML/OgreXMLMeshSerializer.h \
+    src/TinyXML/tinyxml.h \
+    src/TinyXML/tinystr.h \
     src/OgreGLTF/Ogre_glTF.hpp \
     src/OgreGLTF/Ogre_glTF_common.hpp \
     src/OgreGLTF/Ogre_glTF_DLL.hpp \
@@ -42,13 +46,19 @@ HEADERS = \
 SOURCES = \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/ogremanager.cpp \ 
+    src/ogremanager.cpp \
     src/ogrewidget.cpp \ 
     src/lightwidget.cpp \
     src/objimporter.cpp \
     src/cameramanager.cpp \
     src/objexporter.cpp \
     src/batchconversiondialog.cpp \
+    src/loadfromfolderdialog.cpp \
+    src/OgreXML/OgreXMLMeshSerializer.cpp \
+    src/TinyXML/tinyxml.cpp \
+    src/TinyXML/tinystr.cpp \
+    src/TinyXML/tinyxmlerror.cpp \
+    src/TinyXML/tinyxmlparser.cpp \
     src/OgreGLTF/Ogre_glTF.cpp \
     src/OgreGLTF/Ogre_glTF_common.cpp \
     src/OgreGLTF/Ogre_glTF_materialLoader.cpp \
@@ -58,22 +68,11 @@ SOURCES = \
     src/OgreGLTF/Ogre_glTF_skeletonImporter.cpp \
     src/OgreGLTF/Ogre_glTF_textureImporter.cpp
 
-HEADERS += \
-    src/OgreXML/OgreXMLMeshSerializer.h \
-    src/TinyXML/tinyxml.h \
-    src/TinyXML/tinystr.h
-
-SOURCES += \
-    src/OgreXML/OgreXMLMeshSerializer.cpp \
-    src/TinyXML/tinyxml.cpp \
-    src/TinyXML/tinystr.cpp \
-    src/TinyXML/tinyxmlerror.cpp \
-    src/TinyXML/tinyxmlparser.cpp
-
 FORMS += \
     src/mainwindow.ui \
     src/lightwidget.ui \
-    src/batchconversiondialog.ui
+    src/batchconversiondialog.ui \
+    src/loadfromfolderdialog.ui
 
 PRECOMPILED_HEADER = src/stdafx.h
 

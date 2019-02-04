@@ -58,7 +58,6 @@ public:
     void createRenderWindow(OgreManager* ogreManager);
     void createCompositor();
 
-    //Ogre::Root* getRoot() { return mRoot; }
     int id() { return mId; }
     void setId(int id) { mId = id; }
 
