@@ -57,10 +57,10 @@ public:
 
     int  registerOgreWidget(OgreWidget* ogreWidget);
     void unregisterOgreWidget(int id);
-    OgreWidget* getOgreWidget(int id) const;
+    OgreWidget* ogreWidget(int id) const;
 
-    Ogre::Root* getOgreRoot() const { return mRoot; }
-    Ogre::SceneManager* getSceneManager() const { return mSceneManager; }
+    Ogre::Root* ogreRoot() const { return mRoot; }
+    Ogre::SceneManager* sceneManager() const { return mSceneManager; }
 
     bool isRenderSystemGL() const;
     HGLRC getGlContext() const;
@@ -90,7 +90,7 @@ private:
     Ogre::RenderSystem* mCurrentRenderSystem = nullptr;
 
     Ogre::SceneManager* mSceneManager = nullptr;
-    Ogre::v1::OverlaySystem * mOverlaySystem = nullptr;
+    Ogre::v1::OverlaySystem* mOverlaySystem = nullptr;
     MyHlmsListener* myHlmsListener = nullptr;
 
     std::string mResourcesCfg;

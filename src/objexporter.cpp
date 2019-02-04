@@ -34,7 +34,7 @@ ObjExporter::ObjExporter()
 {
 }
 
-bool ObjExporter::exportFile(Ogre::Mesh* srcMesh, const QString& sOutFile)
+bool ObjExporter::writeToFile(Ogre::Mesh* srcMesh, const QString& sOutFile)
 {
     Q_ASSERT(srcMesh);
     auto& meshV1Mgr = Ogre::v1::MeshManager::getSingleton();

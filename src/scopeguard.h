@@ -5,24 +5,22 @@ class ScopeGuard
 {
 public:
     explicit ScopeGuard(std::function<void()> onExitScope)
-        : onExitScope_(onExitScope) {}
+        : onExitScope(onExitScope) {}
 
     ~ScopeGuard()
     {
-        if (!dismissed_)
-        {
-            onExitScope_();
-        }
+        if (!mDismissed)
+            onExitScope();
     }
 
     void Dismiss()
     {
-        dismissed_ = true;
+        mDismissed = true;
     }
 
 private:
-    std::function<void()> onExitScope_;
-    bool dismissed_ = false;
+    std::function<void()> onExitScope;
+    bool mDismissed = false;
 };
 
 #define SCOPEGUARD_LINENAME_CAT(name, line) name##line

@@ -63,12 +63,11 @@ void OgreWidget::createRenderWindow(OgreManager* ogreManager)
     Q_ASSERT(ogreManager);
     mOgreManager = ogreManager;
 
-    Ogre::Root* root = ogreManager->getOgreRoot();
+    Ogre::Root* root = ogreManager->ogreRoot();
     Q_ASSERT(root);
 
     // Get render system and assign window handle
-    mRoot = root;
-    Ogre::RenderSystem* renderSystem = mRoot->getRenderSystem();
+    Ogre::RenderSystem* renderSystem = root->getRenderSystem();
     Ogre::NameValuePairList parameters;
 
     // Reuse the glContext if available
@@ -93,11 +92,10 @@ void OgreWidget::createRenderWindow(OgreManager* ogreManager)
     parameters["FSAA"] = cfgOpts["FSAA"].currentValue;
     parameters["vsync"] = cfgOpts["VSync"].currentValue;
 
-    mOgreRenderWindow = mRoot->createRenderWindow(
-        "MainRenderWin",
-        width(), height(),
-        false, // full screen
-        &parameters);
+    mOgreRenderWindow = root->createRenderWindow("MainRenderWin",
+                                                  width(), height(),
+                                                  false, // full screen
+                                                  &parameters);
     mOgreRenderWindow->setVisible(true);
 
     // Determine whether the GL context can be reused
@@ -112,15 +110,15 @@ void OgreWidget::createRenderWindow(OgreManager* ogreManager)
 void OgreWidget::createCompositor()
 {
     // Create camera
-    mCamera = mOgreManager->getSceneManager()->createCamera("MainCamera");
+    mCamera = mOgreManager->sceneManager()->createCamera("MainCamera");
     mCamera->setAspectRatio(Ogre::Real(mOgreRenderWindow->getWidth()) / Ogre::Real(mOgreRenderWindow->getHeight()));
     mCameraManager = new CameraManager(mCamera);
 
     const Ogre::String workspaceName = "PbsMaterialsWorkspace";
     const Ogre::IdString workspaceNameHash = workspaceName;
 
-    Ogre::CompositorManager2* compositorManager = mRoot->getCompositorManager2();
-    compositorManager->addWorkspace(mOgreManager->getSceneManager(), mOgreRenderWindow, mCamera, workspaceNameHash, true);
+    Ogre::CompositorManager2* compositorManager = mOgreManager->ogreRoot()->getCompositorManager2();
+    compositorManager->addWorkspace(mOgreManager->sceneManager(), mOgreRenderWindow, mCamera, workspaceNameHash, true);
 
     mInitialized = true;
 }

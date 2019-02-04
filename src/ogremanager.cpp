@@ -431,7 +431,7 @@ void OgreManager::unregisterOgreWidget(int id)
     }
 }
 
-OgreWidget* OgreManager::getOgreWidget(int id) const
+OgreWidget* OgreManager::ogreWidget(int id) const
 {
     for (OgreWidget* mOgreWidget : mOgreWidgets)
     {
