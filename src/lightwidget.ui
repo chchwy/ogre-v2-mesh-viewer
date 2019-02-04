@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>428</width>
+    <width>341</width>
     <height>490</height>
    </rect>
   </property>
@@ -398,46 +398,46 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <layout class="QFormLayout" name="formLayout">
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item>
+        <item row="0" column="0">
          <widget class="QLabel" name="label_6">
           <property name="text">
            <string>Spotlight Inner Angle</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
          <widget class="QDoubleSpinBox" name="innerAngleSpin">
           <property name="maximum">
            <double>180.000000000000000</double>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>Outer Angle</string>
-          </property>
-         </widget>
-        </item>
-        <item>
+        <item row="1" column="1">
          <widget class="QDoubleSpinBox" name="outerAngleSpin">
           <property name="maximum">
            <double>180.000000000000000</double>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Outer Angle</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
            <string>Falloff</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="2" column="1">
          <widget class="QDoubleSpinBox" name="falloffSpin">
           <property name="singleStep">
            <double>0.100000000000000</double>

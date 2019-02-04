@@ -32,7 +32,7 @@ protected:
     void hideEvent(QHideEvent* evt) override;
 
 private:
-    Ogre::Light* findLightByName(std::string lightName);
+    Ogre::Light* getLightByName(std::string lightName);
 
     bool loadFromSettings();
     void writeToSettings();
@@ -54,7 +54,7 @@ private slots:
     void lightAngleChanged();
 
 private:
-    Ui::LightWidget *ui;
+    Ui::LightWidget* ui;
 
     Ogre::SceneManager* mSceneManager = nullptr;
     Ogre::Light* mCurrentLight = nullptr;
