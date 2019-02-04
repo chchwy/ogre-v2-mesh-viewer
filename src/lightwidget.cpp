@@ -131,7 +131,7 @@ void LightWidget::hideEvent(QHideEvent* evt)
     writeToSettings();
 }
 
-Ogre::Light* LightWidget::findLightByName(std::string lightName)
+Ogre::Light* LightWidget::getLightByName(std::string lightName)
 {
     auto it = mSceneManager->getMovableObjectIterator(Ogre::LightFactory::FACTORY_TYPE_NAME);
     while (it.hasMoreElements())
@@ -333,7 +333,7 @@ void LightWidget::currentLightChanged()
         return;
 
     std::string strLightName = curItem->text().toStdString();
-    Ogre::Light* light = findLightByName(strLightName);
+    Ogre::Light* light = getLightByName(strLightName);
     mCurrentLight = light;
     if (light == nullptr)
     {
@@ -539,7 +539,7 @@ void LightWidget::removeLight()
 
     std::string strLightName = curItem->text().toStdString();
 
-    Ogre::Light* light = findLightByName(strLightName);
+    Ogre::Light* light = getLightByName(strLightName);
     Ogre::SceneNode* rootNode = mSceneManager->getRootSceneNode();
 
     rootNode->removeAndDestroyChild(light->getParentSceneNode());
@@ -561,7 +561,7 @@ void LightWidget::lightAttenuationChanged()
         return;
     }
     std::string strLightName = curItem->text().toStdString();
-    Ogre::Light* light = findLightByName(strLightName);
+    Ogre::Light* light = getLightByName(strLightName);
 
     float range = ui->rangeSpin->value();
     float constant = ui->constantSpin->value();
@@ -579,7 +579,7 @@ void LightWidget::lightAngleChanged()
         return;
     }
     std::string strLightName = curItem->text().toStdString();
-    Ogre::Light* light = findLightByName(strLightName);
+    Ogre::Light* light = getLightByName(strLightName);
 
     Ogre::Degree inner(ui->innerAngleSpin->value());
     Ogre::Degree outer(ui->outerAngleSpin->value());
