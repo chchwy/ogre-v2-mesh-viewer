@@ -36,7 +36,7 @@ class ObjExporter
 public:
     ObjExporter();
 
-    bool exportFile(Ogre::Mesh* srcMesh, const QString& sOutFile);
+    bool writeToFile(Ogre::Mesh* srcMesh, const QString& sOutFile);
 
 private:
     bool convertToOgreData(const QString& sXmlFile);

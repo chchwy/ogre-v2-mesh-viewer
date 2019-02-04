@@ -58,7 +58,7 @@ public:
     void createRenderWindow(OgreManager* ogreManager);
     void createCompositor();
 
-    Ogre::Root* getRoot() { return mRoot; }
+    //Ogre::Root* getRoot() { return mRoot; }
     int id() { return mId; }
     void setId(int id) { mId = id; }
 
@@ -79,9 +79,11 @@ protected:
     HGLRC getCurrentGlContext();
 
 private:
+    int mId = 0;
+    bool mInitialized = false;
+
     OgreManager* mOgreManager = nullptr;
 
-    Ogre::Root* mRoot = nullptr;
     Ogre::RenderWindow* mOgreRenderWindow = nullptr;
 
     Ogre::Camera* mCamera = nullptr;
@@ -90,11 +92,7 @@ private:
     Ogre::Real mTimeSinceLastFrame = 0.0;
 
     CameraManager* mCameraManager = nullptr;
-    bool mSceneCreated = false;
 
     Ogre::Vector2 mAbsolute;
     Ogre::Vector2 mRelative;
-
-    bool mInitialized = false;
-    int mId = 0;
 };

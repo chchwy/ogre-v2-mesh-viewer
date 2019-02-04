@@ -57,7 +57,6 @@ private:
     Ui::LightWidget *ui;
 
     Ogre::SceneManager* mSceneManager = nullptr;
-    Ogre::Root* mRoot = nullptr;
     Ogre::Light* mCurrentLight = nullptr;
 };
 

@@ -71,8 +71,7 @@ void LightWidget::init(OgreManager* ogreMgr)
 {
     Q_ASSERT(ogreMgr);
 
-    mRoot = ogreMgr->getOgreRoot();
-    mSceneManager = ogreMgr->getSceneManager();
+    mSceneManager = ogreMgr->sceneManager();
 
     bool b = loadFromSettings();
     if (b == false)

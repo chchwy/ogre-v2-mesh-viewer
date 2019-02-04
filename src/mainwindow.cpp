@@ -307,7 +307,7 @@ void MainWindow::actionExportObj()
     if (mesh != nullptr)
     {
         ObjExporter objExporter;
-        bool ok = objExporter.exportFile(mesh, sObjFileName);
+        bool ok = objExporter.writeToFile(mesh, sObjFileName);
 
         qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
 
