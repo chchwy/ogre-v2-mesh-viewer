@@ -22,9 +22,12 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 
 - [ ] Normals are broken when converting a v2-mesh to a obj.
 
-## Third Party Libraries
+## Acknowledgements
 
 - Ogre3D: <https://www.ogre3d.org/>
 - Qt: <https://www.qt.io/>
 - Magus Toolkit: <https://github.com/spookyboo/Magus>
-- tinyobjloader: <https://github.com/syoyo/tinyobjloader> 
+- tinyobjloader: <https://github.com/syoyo/tinyobjloader>
+- Ogre glTF: <https://github.com/Ybalrid/Ogre_glTF>
+- tinygltf: <https://github.com/syoyo/tinygltf>
+- PRB Pistol: <http://artisaverb.info/PBT.html>
