@@ -14,7 +14,7 @@
 
 #include "ogremanager.h"
 #include "objimporter.h"
-
+#include "OgreXMLMeshSerializer.h"
 
 
 MeshLoader::MeshLoader(QObject* parent, OgreManager* ogre) : QObject(parent)
@@ -57,6 +57,36 @@ bool MeshLoader::load(QString filePath)
 
 bool MeshLoader::loadOgreMeshXML(QString filePath)
 {
+    QFileInfo info(filePath);
+
+    //static int convertionCount = 0; // just for avoiding name conflicts
+    //std::ostringstream sout;
+    //sout << "conversion_" << convertionCount++;
+
+    QString meshName = info.completeBaseName();
+
+    Ogre::v1::MeshPtr meshV1Ptr = Ogre::v1::MeshManager::getSingleton().createManual(
+        meshName.toStdString(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+    std::string strFilePath = filePath.toStdString();
+
+    Ogre::v1::XMLMeshSerializer xmlMeshSerializer;
+    Ogre::VertexElementType colourElementType = Ogre::VET_COLOUR_ABGR;
+    xmlMeshSerializer.importMesh(strFilePath, colourElementType, meshV1Ptr.get());
+
+    // Make sure animation types are up to date first
+    meshV1Ptr->_determineAnimationTypes();
+    meshV1Ptr->buildTangentVectors();
+
+    Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
+
+    QString strV2Name = meshName +"_xml";
+    Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "OgreSpooky");
+    v2Mesh->importV1(meshV1Ptr.get(), true, true, true);
+    Ogre::Item* item = mOgre->sceneManager()->createItem(v2Mesh);
+
+    attachMeshToSceneTree(item);
+
     return true;
 }
 
@@ -69,46 +99,16 @@ bool MeshLoader::loadOgreMesh(QString filePath)
 
     QString sNewMeshFile = info.fileName();
 
-    Ogre::Item* pItem = loadOgreV2(sNewMeshFile);
-    if (pItem == nullptr)
+    Ogre::Item* item = loadOgreV2(sNewMeshFile);
+    if (item == nullptr)
     {
-        pItem = loadOgreV1(sNewMeshFile);
+        item = loadOgreV1(sNewMeshFile);
     }
 
-    if (pItem == nullptr)
+    if (item == nullptr)
         return false;
 
-    auto meshRootNode = mOgre->meshRootNode();
-    auto node = meshRootNode->createChildSceneNode();
-    node->attachObject(pItem);
-
-    Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
-    for (int i = 0; i < pItem->getNumSubItems(); ++i)
-    {
-        auto datablock = dynamic_cast<Ogre::HlmsPbsDatablock*>(pItem->getSubItem(i)->getDatablock());
-        if (datablock == nullptr)
-        {
-            continue;
-        }
-
-        if (datablock == hlmsMgr->getDefaultDatablock())
-        {
-            pItem->getSubItem(i)->setDatablock("viewer_default_mtl");
-        }
-
-        if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
-        {
-            auto hlmsTextureManager = hlmsMgr->getTextureManager();
-            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
-        }
-        /*
-        Ogre::HlmsMacroblock macro;
-        macro.mPolygonMode = Ogre::PM_WIREFRAME;
-        datablock->setMacroblock(macro);
-        */
-    }
-    return true;
+    attachMeshToSceneTree(item);
     return true;
 }
 
@@ -168,4 +168,37 @@ Ogre::Item* MeshLoader::loadOgreV2(QString meshName)
     }
     catch(Ogre::Exception& e) {}
     return item;
+}
+
+void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
+{
+     auto meshRootNode = mOgre->meshRootNode();
+    auto node = meshRootNode->createChildSceneNode();
+    node->attachObject(item);
+
+    Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
+    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsMgr->getTextureManager();
+
+    for (int i = 0; i < item->getNumSubItems(); ++i)
+    {
+        auto datablock = dynamic_cast<Ogre::HlmsPbsDatablock*>(item->getSubItem(i)->getDatablock());
+        if (datablock == nullptr)
+            continue;
+
+        if (datablock == hlmsMgr->getDefaultDatablock())
+        {
+            item->getSubItem(i)->setDatablock("viewer_default_mtl");
+        }
+
+        if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
+        {
+            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
+            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+        }
+        /*
+        Ogre::HlmsMacroblock macro;
+        macro.mPolygonMode = Ogre::PM_WIREFRAME;
+        datablock->setMacroblock(macro);
+        */
+    }
 }
