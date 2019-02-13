@@ -14,7 +14,8 @@
 
 #include "ogremanager.h"
 #include "objimporter.h"
-#include "OgreXMLMeshSerializer.h"
+#include "OgreXML/OgreXMLMeshSerializer.h"
+#include "OgreGLTF/Ogre_glTF.hpp"
 
 
 MeshLoader::MeshLoader(QObject* parent, OgreManager* ogre) : QObject(parent)
@@ -114,6 +115,14 @@ bool MeshLoader::loadOgreMesh(QString filePath)
 
 bool MeshLoader::loadGLTF(QString filePath)
 {
+    auto gltf = Ogre_glTF::gltfPluginAccessor::findPlugin()->getLoader();
+    Ogre_glTF::ModelInformation modelInfo = gltf->getModelData(filePath.toStdString(), Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem);
+    Ogre::Item* item = modelInfo.makeItem(mOgre->sceneManager());
+
+    //Ogre::SceneNode* sceneNode = ogre->mSceneManager->getRootSceneNode(Ogre::SCENE_DYNAMIC)->createChildSceneNode(Ogre::SCENE_DYNAMIC);
+    //sceneNode->setScale(1, 1, 1);
+    //sceneNode->setPosition(0, 0, 0);
+    attachMeshToSceneTree(item);
     return true;
 }
 

@@ -19,7 +19,6 @@
 
 #include "stdafx.h"
 #include "ogremanager.h"
-#include "ogrewidget.h"
 
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
@@ -48,6 +47,9 @@
 #include <QDebug>
 #include <QApplication>
 
+#include "ogrewidget.h"
+#include "OgreGLTF/Ogre_glTF.hpp"
+
 
 OgreManager::OgreManager()
 {
@@ -66,6 +68,9 @@ OgreManager::OgreManager()
         if (!mRoot->showConfigDialog())
             OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS, "Abort render system configuration", "OgreManager::OgreManager");
     }
+    
+    Ogre_glTF::glTFLoaderPlugin* gltfPlugin = OGRE_NEW Ogre_glTF::glTFLoaderPlugin;
+    mRoot->installPlugin(gltfPlugin);
 
     mCurrentRenderSystem = mRoot->getRenderSystem();
     mRoot->initialise(false);
@@ -83,11 +88,8 @@ OgreManager::~OgreManager()
     mLoadedV1Meshes.clear();
     mLoadedV2Meshes.clear();
 
-    delete mRoot;
-    mRoot = nullptr;
-
-    delete mTimer;
-    mTimer = nullptr;
+    delete mRoot; mRoot = nullptr;
+    delete mTimer; mTimer = nullptr;
 
     mCurrentRenderSystem = nullptr;
     mGlContext = 0;
