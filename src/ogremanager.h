@@ -74,9 +74,6 @@ public:
 private:
     void setupResources();
     void registerHlms();
-
-    Ogre::Item* loadV2Mesh(QString meshName);
-    Ogre::Item* loadV1Mesh(QString meshName);
     void createBall(int x, int y);
 
 private:
@@ -89,7 +86,6 @@ private:
 
     Ogre::SceneManager* mSceneManager = nullptr;
     Ogre::v1::OverlaySystem* mOverlaySystem = nullptr;
-    MyHlmsListener* myHlmsListener = nullptr;
 
     std::string mResourcesCfg;
     std::string mPluginsCfg;
