@@ -30,4 +30,4 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 - tinyobjloader: <https://github.com/syoyo/tinyobjloader>
 - Ogre glTF: <https://github.com/Ybalrid/Ogre_glTF>
 - tinygltf: <https://github.com/syoyo/tinygltf>
-- PRB Pistol: <http://artisaverb.info/PBT.html>
+- PBR Pistol: <http://artisaverb.info/PBT.html>
