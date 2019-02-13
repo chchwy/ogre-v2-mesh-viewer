@@ -29,6 +29,8 @@ private:
     Ogre::Item* loadOgreV1(QString meshName);
     Ogre::Item* loadOgreV2(QString meshName);
 
+    void attachMeshToSceneTree(Ogre::Item* item);
+
     OgreManager* mOgre = nullptr;
 };
 
