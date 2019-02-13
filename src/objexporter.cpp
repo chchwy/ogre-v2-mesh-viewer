@@ -1,7 +1,6 @@
 
 #include "stdafx.h"
 #include "objexporter.h"
-#include "OgreXMLMeshSerializer.h"
 
 #include "OgreMesh.h"
 #include "OgreMesh2.h"
@@ -11,6 +10,8 @@
 
 #include "OgreHlmsPbs.h"
 #include "OgreHlmsPbsDatablock.h"
+
+#include "OgreXML/OgreXMLMeshSerializer.h"
 
 #include <QFile>
 #include <QFileInfo>
