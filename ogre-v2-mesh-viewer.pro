@@ -43,7 +43,8 @@ HEADERS = \
     src/TinyGLTF/tiny_gltf.h \
     src/TinyGLTF/json.hpp \
     src/meshloader.h \
-    src/scenetreewidget.h
+    src/scenetreewidget.h \
+    src/scenetreemodel.h
 
 SOURCES = \
     src/main.cpp \
@@ -70,7 +71,8 @@ SOURCES = \
     src/OgreGLTF/Ogre_glTF_skeletonImporter.cpp \
     src/OgreGLTF/Ogre_glTF_textureImporter.cpp \
     src/meshloader.cpp \
-    src/scenetreewidget.cpp
+    src/scenetreewidget.cpp \
+    src/scenetreemodel.cpp
 
 FORMS += \
     src/mainwindow.ui \

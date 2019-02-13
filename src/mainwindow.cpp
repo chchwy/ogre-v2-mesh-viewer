@@ -38,7 +38,7 @@
 #include "OgreMesh2Serializer.h"
 
 #include "ogremanager.h"
-#include "ogrewidget.h""
+#include "ogrewidget.h"
 #include "meshloader.h"
 #include "objexporter.h"
 #include "batchconversiondialog.h"
