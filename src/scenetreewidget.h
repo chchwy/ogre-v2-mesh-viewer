@@ -7,6 +7,8 @@ namespace Ui
 {
 class SceneTreeWidget;
 }
+class OgreManager;
+
 
 class SceneTreeWidget : public QWidget
 {
@@ -16,7 +18,11 @@ public:
     explicit SceneTreeWidget(QWidget* parent = nullptr);
     ~SceneTreeWidget();
 
+    void setOgre(OgreManager* ogre);
+
 private:
+    OgreManager* mOgre = nullptr;
+
     Ui::SceneTreeWidget* ui = nullptr;
 };
 

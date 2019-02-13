@@ -11,3 +11,9 @@ SceneTreeWidget::~SceneTreeWidget()
 {
     delete ui;
 }
+
+void SceneTreeWidget::setOgre(OgreManager* ogre)
+{
+    Q_ASSERT(ogre != nullptr);
+    mOgre = ogre;
+}
