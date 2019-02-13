@@ -35,14 +35,16 @@
 #include <QMessageBox>
 #include <QDirIterator>
 
-#include "lightwidget.h"
+#include "OgreMesh2Serializer.h"
+
 #include "ogremanager.h"
-#include "ogrewidget.h"
+#include "ogrewidget.h""
 #include "meshloader.h"
 #include "objexporter.h"
-#include "OgreMesh2Serializer.h"
 #include "batchconversiondialog.h"
 #include "loadfromfolderdialog.h"
+#include "lightwidget.h"
+#include "scenetreewidget.h"
 
 
 #define _STR(x) #x
@@ -135,12 +137,18 @@ void MainWindow::Tick()
 
 void MainWindow::createDockWindows()
 {
-    QDockWidget* dockWidget = new QDockWidget("Lights", this);
-    addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
-
+    /*
     mLightWidget = new LightWidget(this);
-    dockWidget->setWidget(mLightWidget);
     mLightWidget->init(mOgreManager);
+    QDockWidget* dockWidget = new QDockWidget("Lights", this);
+    dockWidget->setWidget(mLightWidget);
+    addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
+    */
+    
+    SceneTreeWidget* sceneTreeWidget = new SceneTreeWidget();
+    QDockWidget* sceneTreeDock = new QDockWidget("Scene Tree", this);
+    sceneTreeDock->setWidget(sceneTreeWidget);
+    addDockWidget(Qt::LeftDockWidgetArea, sceneTreeDock);
 }
 
 void MainWindow::startTimer()

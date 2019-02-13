@@ -42,7 +42,8 @@ HEADERS = \
     src/TinyGLTF/stb_image_write.h \
     src/TinyGLTF/tiny_gltf.h \
     src/TinyGLTF/json.hpp \
-    src/meshloader.h
+    src/meshloader.h \
+    src/scenetreewidget.h
 
 SOURCES = \
     src/main.cpp \
@@ -68,13 +69,15 @@ SOURCES = \
     src/OgreGLTF/Ogre_glTF_OgreResource.cpp \
     src/OgreGLTF/Ogre_glTF_skeletonImporter.cpp \
     src/OgreGLTF/Ogre_glTF_textureImporter.cpp \
-    src/meshloader.cpp
+    src/meshloader.cpp \
+    src/scenetreewidget.cpp
 
 FORMS += \
     src/mainwindow.ui \
     src/lightwidget.ui \
     src/batchconversiondialog.ui \
-    src/loadfromfolderdialog.ui
+    src/loadfromfolderdialog.ui \
+    src/scenetreewidget.ui
 
 PRECOMPILED_HEADER = src/stdafx.h
 

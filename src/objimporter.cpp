@@ -14,7 +14,6 @@
 #include "OgreMesh2.h"
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"
-#include "OgreXMLMeshSerializer.h"
 #include "OgreMesh2Serializer.h"
 
 #include "OgreHlmsManager.h"
@@ -23,6 +22,7 @@
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreHlmsJsonPbs.h"
 
+#include "OgreXML/OgreXMLMeshSerializer.h"
 
 #define CLOCK_LINENUM_CAT( name, ln ) name##ln
 #define CLOCK_LINENUM( name, ln ) CLOCK_LINENUM_CAT( name, ln )
