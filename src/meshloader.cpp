@@ -121,13 +121,19 @@ bool MeshLoader::loadOgreMesh(QString filePath)
 bool MeshLoader::loadGLTF(QString filePath)
 {
     auto gltf = Ogre_glTF::gltfPluginAccessor::findPlugin()->getLoader();
-    Ogre_glTF::ModelInformation modelInfo = gltf->getModelData(filePath.toStdString(), Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem);
-    Ogre::Item* item = modelInfo.makeItem(mOgre->sceneManager());
+    //Ogre_glTF::ModelInformation modelInfo = gltf->getModelData(filePath.toStdString(), Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem);
+    //Ogre::Item* item = modelInfo.makeItem(mOgre->sceneManager());
+
+    gltf->createScene(filePath.toStdString(),
+                      Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem,
+                      mOgre->sceneManager(),
+                      mOgre->meshRootNode());
 
     //Ogre::SceneNode* sceneNode = ogre->mSceneManager->getRootSceneNode(Ogre::SCENE_DYNAMIC)->createChildSceneNode(Ogre::SCENE_DYNAMIC);
     //sceneNode->setScale(1, 1, 1);
     //sceneNode->setPosition(0, 0, 0);
-    attachMeshToSceneTree(item);
+
+    //attachMeshToSceneTree(item);
     return true;
 }
 
@@ -185,7 +191,7 @@ Ogre::Item* MeshLoader::loadOgreV2(QString meshName)
 
 void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
 {
-     auto meshRootNode = mOgre->meshRootNode();
+    auto meshRootNode = mOgre->meshRootNode();
     auto node = meshRootNode->createChildSceneNode();
     node->attachObject(item);
     node->setName(item->getName());

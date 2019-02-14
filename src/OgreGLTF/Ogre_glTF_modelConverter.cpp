@@ -58,11 +58,15 @@ Ogre::VertexBufferPackedVec modelConverter::constructVertexBuffer(const std::vec
 }
 
 //TODO make this method make the mesh id. Enumerate the meshes in the file before blindlessly loading the first one
-Ogre::MeshPtr modelConverter::getOgreMesh()
+Ogre::MeshPtr modelConverter::getOgreMesh(int index)
 {
 	OgreLog("Default scene" + std::to_string(model.defaultScene));
-	const auto mainMeshIndex = (model.defaultScene != 0 ? model.nodes[model.scenes[model.defaultScene].nodes.front()].mesh : 0);
+    
+    if (index < 0)
+	    index = (model.defaultScene != 0 ? model.nodes[model.scenes[model.defaultScene].nodes.front()].mesh : 0);
+    const auto mainMeshIndex = index;
 	const auto& mesh		 = model.meshes[mainMeshIndex];
+
 	Ogre::Aabb boundingBox;
 	OgreLog("Found mesh " + mesh.name + " in glTF file");
 
@@ -384,4 +388,9 @@ vertexBufferPart modelConverter::extractVertexBuffer(const std::pair<std::string
 
 	//geometryBuffer->_debugContentToLog();
 	return { std::move(geomBuffer), elementType, elementScemantic, vertexCount, numberOfElementPerVertex };
+}
+
+int Ogre_glTF::modelConverter::getMeshCount()
+{
+    return model.meshes.size();
 }
