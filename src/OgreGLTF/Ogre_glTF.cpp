@@ -84,6 +84,71 @@ Ogre::MeshPtr loaderAdapter::getMesh() const
 	return Mesh;
 }
 
+std::vector<Ogre::MeshPtr> loaderAdapter::getAllMeshes() const
+{
+    std::vector<Ogre::MeshPtr> result;
+
+    int numMesh = pimpl->modelConv.getMeshCount();
+    for (int i = 0; i < numMesh; ++i)
+    {
+        auto Mesh = pimpl->modelConv.getOgreMesh(i);
+        OgreLog("Convert Mesh = " + Mesh->getName());
+        /*
+        if (pimpl->modelConv.hasSkins())
+        {
+            //load skeleton information
+            auto skeleton = this->pimpl->skeletonImp.getSkeleton(this->adapterName);
+            Mesh->_notifySkeleton(skeleton);
+        }
+        */
+        result.push_back(Mesh);
+    }
+    return result;
+}
+
+void loaderAdapter::makeNode(Ogre::SceneNode* ogreNode, const tinygltf::Node& node, Ogre::SceneManager* smgr, const std::vector<Ogre::MeshPtr>& meshes)
+{
+    Ogre::SceneNode* ogreChildNode = ogreNode->createChildSceneNode();
+    if (node.mesh > -1)
+    {
+        Ogre::Item* item = smgr->createItem(meshes[node.mesh]);
+        ogreChildNode->attachObject(item);
+        
+        for (int i = 0; i < item->getNumSubItems(); ++i)
+        {
+            int materialIndex = pimpl->model.meshes[node.mesh].primitives[i].material;
+            Ogre::HlmsDatablock* datablock = pimpl->materialLoad.getDatablock(materialIndex);
+            item->getSubItem(i)->setDatablock(datablock);
+        }
+
+    }
+    if (!node.translation.empty())
+        ogreChildNode->translate(node.translation[0], node.translation[1], node.translation[2]);
+
+    if (!node.rotation.empty())
+        ogreChildNode->rotate(Ogre::Quaternion(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]));
+
+    if (!node.scale.empty())
+        ogreChildNode->scale(node.scale[0], node.scale[1], node.scale[2]);
+
+    for (int c : node.children)
+    {
+        tinygltf::Node childNode = pimpl->model.nodes[c];
+        makeNode(ogreChildNode, childNode, smgr, meshes);
+    }
+}
+
+void loaderAdapter::makeScene(Ogre::SceneManager* smgr, Ogre::SceneNode* parentNode)
+{
+    std::vector<Ogre::MeshPtr> meshes = getAllMeshes();
+    for (int index : pimpl->model.scenes[0].nodes)
+    {
+        const tinygltf::Node& node = pimpl->model.nodes[index];
+        makeNode(parentNode, node, smgr, meshes);
+    }
+}
+
+
 Ogre::HlmsDatablock* loaderAdapter::getDatablock(size_t index) const { return pimpl->materialLoad.getDatablock(index); }
 
 size_t loaderAdapter::getDatablockCount() { return pimpl->materialLoad.getDatablockCount(); }
@@ -212,17 +277,15 @@ loaderAdapter glTFLoader::loadGlbResource(const std::string& name) const
 
 ModelInformation glTFLoader::getModelData(const std::string& modelName, LoadFrom loadLocation)
 {
-	auto adapter = [&] {
-		switch(loadLocation)
-		{
-			case LoadFrom::FileSystem: return loadFromFileSystem(modelName);
-			case LoadFrom::ResourceManager: return loadGlbResource(modelName);
-		}
+    loaderAdapter adapter;
+    switch (loadLocation)
+    {
+    case LoadFrom::FileSystem: adapter = loadFromFileSystem(modelName);
+    case LoadFrom::ResourceManager: adapter = loadGlbResource(modelName);
+    }
 
-		return loaderAdapter {};
-	}();
-
-	if(!adapter.isOk()) OgreLog("adapter is signaling it isn't in \"ok\" state");
+	if(!adapter.isOk())
+        OgreLog("adapter is signaling it isn't in \"ok\" state");
 
 	adapter.pimpl->textureImp.loadTextures();
 
@@ -235,6 +298,40 @@ ModelInformation glTFLoader::getModelData(const std::string& modelName, LoadFrom
     }
 
 	return model;
+}
+
+bool glTFLoader::createScene(const std::string& modelName,
+                             LoadFrom loadLocation,
+                             Ogre::SceneManager* smgr,
+                             Ogre::SceneNode* parentNode)
+{
+    loaderAdapter adapter;
+    switch (loadLocation)
+    {
+    case LoadFrom::FileSystem: adapter = loadFromFileSystem(modelName); break;
+    case LoadFrom::ResourceManager: adapter = loadGlbResource(modelName); break;
+    }
+
+    if (!adapter.isOk())
+        OgreLog("adapter is signaling it isn't in \"ok\" state");
+
+    adapter.pimpl->textureImp.loadTextures();
+    
+    adapter.makeScene(smgr, parentNode);
+    //std::vector<Ogre::MeshPtr> meshes = adapter.getAllMeshes();
+    
+    //adapter.getMesh();
+    //ModelInformation model;
+    //model.mesh = adapter.getMesh();
+    //model.transform = adapter.getTransform();
+
+    /*
+    for (size_t i = 0; i < adapter.getDatablockCount(); i++)
+    {
+        model.pbrMaterialList.push_back(adapter.getDatablock(i));
+    }
+    */
+    return true;
 }
 
 glTFLoader::glTFLoader(glTFLoader&& other) noexcept : loaderImpl(std::move(other.loaderImpl)) {}
