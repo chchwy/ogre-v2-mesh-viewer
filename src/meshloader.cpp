@@ -56,6 +56,11 @@ bool MeshLoader::load(QString filePath)
     return false;
 }
 
+void MeshLoader::enableZupToYupConversion(bool b)
+{
+    mZupToYup = b;
+}
+
 bool MeshLoader::loadOgreMeshXML(QString filePath)
 {
     QFileInfo info(filePath);
@@ -132,14 +137,12 @@ bool MeshLoader::loadWavefrontObj(QString filePath)
     QString sOutFile = info.absolutePath() + "/" + info.baseName() + ".mesh";
 
     ObjImporter objImporter;
-    //objImporter.setZUpToYUp(ret == QMessageBox::Yes);
+    objImporter.setZUpToYUp(mZupToYup);
     bool ok = objImporter.import(filePath, sOutFile);
-    //qDebug() << "Obj=" << filePath << ", Success=" << ok;
 
     if (!ok)
-    {
         qDebug() << "Failed to import obj:" << filePath;
-    }
+
     return loadOgreMesh(sOutFile);
 }
 

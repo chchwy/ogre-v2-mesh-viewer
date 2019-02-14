@@ -185,6 +185,15 @@ void MainWindow::actionOpen()
     }
 
     Q_ASSERT(QFile::exists(sMeshFileName));
+
+    bool bConversionZupToYup = false;
+    if (sMeshFileName.endsWith(".obj"))
+    {
+        QMessageBox::StandardButton ret = QMessageBox::question(this, "Convert Z-up into Y-up",
+                                                                 "Do you want to do Z-up to Y-up conversion?");
+        bConversionZupToYup = (ret == QMessageBox::Yes);
+    }
+
     QFileInfo info(sMeshFileName);
     settings.setValue("actionOpen", info.absolutePath());
 
@@ -196,6 +205,8 @@ void MainWindow::actionOpen()
     {
         Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "OgreSpooky", nullptr, "");
     }
+
+    mMeshLoader->enableZupToYupConversion(bConversionZupToYup);
 
     bool ok = mMeshLoader->load(sMeshFileName);
     if (!ok)
