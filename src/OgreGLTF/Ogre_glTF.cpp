@@ -316,21 +316,7 @@ bool glTFLoader::createScene(const std::string& modelName,
         OgreLog("adapter is signaling it isn't in \"ok\" state");
 
     adapter.pimpl->textureImp.loadTextures();
-    
     adapter.makeScene(smgr, parentNode);
-    //std::vector<Ogre::MeshPtr> meshes = adapter.getAllMeshes();
-    
-    //adapter.getMesh();
-    //ModelInformation model;
-    //model.mesh = adapter.getMesh();
-    //model.transform = adapter.getTransform();
-
-    /*
-    for (size_t i = 0; i < adapter.getDatablockCount(); i++)
-    {
-        model.pbrMaterialList.push_back(adapter.getDatablock(i));
-    }
-    */
     return true;
 }
 
