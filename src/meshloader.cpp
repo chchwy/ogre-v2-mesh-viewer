@@ -157,10 +157,11 @@ Ogre::Item* MeshLoader::loadOgreV1(QString meshName)
 
         Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
 
-        QString strV2Name = meshName + "_v2import";
+        QString strV2Name = meshName + " (v1)";
         Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "OgreSpooky");
         v2Mesh->importV1(v1Mesh.get(), true, true, true);
         item = mOgre->sceneManager()->createItem(v2Mesh);
+        item->setName(v2Mesh->getName());
     }
     catch (Ogre::Exception& e) {}
     return item;
@@ -184,6 +185,8 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
      auto meshRootNode = mOgre->meshRootNode();
     auto node = meshRootNode->createChildSceneNode();
     node->attachObject(item);
+    node->setName(item->getName());
+    //qDebug() << "Item Name=" << item->getName().c_str();
 
     Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
     Ogre::HlmsTextureManager* hlmsTextureManager = hlmsMgr->getTextureManager();

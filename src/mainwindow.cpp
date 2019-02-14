@@ -127,6 +127,8 @@ void MainWindow::onSceneLoaded()
         QString meshFile = d.next();
         mMeshLoader->load(meshFile);
     }
+
+    mSeceneWidget->refresh();
 }
 
 void MainWindow::Tick()
@@ -145,9 +147,9 @@ void MainWindow::createDockWindows()
     addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
     */
     
-    SceneTreeWidget* sceneTreeWidget = new SceneTreeWidget();
+    mSeceneWidget = new SceneTreeWidget(this, mOgreManager);
     QDockWidget* sceneTreeDock = new QDockWidget("Scene Tree", this);
-    sceneTreeDock->setWidget(sceneTreeWidget);
+    sceneTreeDock->setWidget(mSeceneWidget);
     addDockWidget(Qt::LeftDockWidgetArea, sceneTreeDock);
 }
 

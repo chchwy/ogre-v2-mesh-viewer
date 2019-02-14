@@ -1,10 +1,16 @@
 #include "scenetreewidget.h"
 #include "ui_scenetreewidget.h"
 
-SceneTreeWidget::SceneTreeWidget(QWidget* parent) : QWidget(parent),
+#include "scenetreemodel.h"
+
+
+SceneTreeWidget::SceneTreeWidget(QWidget* parent, OgreManager* ogre) : QWidget(parent),
     ui(new Ui::SceneTreeWidget)
 {
     ui->setupUi(this);
+
+    mOgre = ogre;
+    mModel = new SceneTreeModel(this, ogre);
 }
 
 SceneTreeWidget::~SceneTreeWidget()
@@ -12,8 +18,9 @@ SceneTreeWidget::~SceneTreeWidget()
     delete ui;
 }
 
-void SceneTreeWidget::setOgre(OgreManager* ogre)
+void SceneTreeWidget::refresh()
 {
-    Q_ASSERT(ogre != nullptr);
-    mOgre = ogre;
+    mModel->refresh();
+    ui->treeView->setModel(mModel);
 }
+
