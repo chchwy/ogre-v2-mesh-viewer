@@ -28,8 +28,7 @@ class QMenu;
 class QAction;
 class QCloseEvent;
 class LightWidget;
-class Dock1DockWidget;
-class Dock2DockWidget;
+class SceneTreeWidget;
 class MeshLoader;
 
 
@@ -72,7 +71,7 @@ private:
     MeshLoader* mMeshLoader = nullptr;
 
     LightWidget* mLightWidget = nullptr;
-    Dock2DockWidget* mDock2DockWidget = nullptr;
+    SceneTreeWidget* mSeceneWidget = nullptr;
 
     QTimer* mTimer = nullptr;
     QString mUserDocumentPath;
