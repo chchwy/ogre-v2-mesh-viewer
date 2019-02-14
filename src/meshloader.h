@@ -20,6 +20,8 @@ public:
 
     bool load(QString filePath);
 
+    void enableZupToYupConversion(bool b);
+
 private:
     bool loadOgreMeshXML(QString filePath);
     bool loadOgreMesh(QString filePath);
@@ -32,6 +34,7 @@ private:
     void attachMeshToSceneTree(Ogre::Item* item);
 
     OgreManager* mOgre = nullptr;
+    bool mZupToYup = false;
 };
 
 #endif // MESHLOADER_H
