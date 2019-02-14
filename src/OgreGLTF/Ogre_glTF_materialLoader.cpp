@@ -207,7 +207,12 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 	//	OgreLog("extPBRValues");
 	//	for(const auto& content : material.extPBRValues)
 	//		OgreLog(content.first);
-
+    auto hlmsTextureManager = Ogre::Root::getSingleton().getHlmsManager()->getTextureManager();
+    if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
+    {
+        auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
+        datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+    }
 	return datablock;
 }
 
