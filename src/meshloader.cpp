@@ -225,4 +225,6 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
         datablock->setMacroblock(macro);
         */
     }
+
+    emit sceneNodeAdded(node);
 }
