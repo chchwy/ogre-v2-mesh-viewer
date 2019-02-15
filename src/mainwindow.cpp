@@ -74,6 +74,7 @@ MainWindow::MainWindow()
     readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
+    connect(mMeshLoader, &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
 
     // actions
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);

@@ -124,16 +124,19 @@ bool MeshLoader::loadGLTF(QString filePath)
     //Ogre_glTF::ModelInformation modelInfo = gltf->getModelData(filePath.toStdString(), Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem);
     //Ogre::Item* item = modelInfo.makeItem(mOgre->sceneManager());
 
-    gltf->createScene(filePath.toStdString(),
-                      Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem,
-                      mOgre->sceneManager(),
-                      mOgre->meshRootNode());
+    Ogre::SceneNode* node = gltf->createScene(filePath.toStdString(),
+                                              Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem,
+                                              mOgre->sceneManager(),
+                                              mOgre->meshRootNode());
 
-    //Ogre::SceneNode* sceneNode = ogre->mSceneManager->getRootSceneNode(Ogre::SCENE_DYNAMIC)->createChildSceneNode(Ogre::SCENE_DYNAMIC);
+    //Ogre::SceneNode* sceneNode = ogre->mSceneManager->getRootSceneNode()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
     //sceneNode->setScale(1, 1, 1);
     //sceneNode->setPosition(0, 0, 0);
-
     //attachMeshToSceneTree(item);
+    QFileInfo info(filePath);
+    node->setName(info.fileName().toStdString());
+
+    emit sceneNodeAdded(node);
     return true;
 }
 
