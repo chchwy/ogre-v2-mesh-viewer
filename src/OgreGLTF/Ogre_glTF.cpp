@@ -109,6 +109,9 @@ std::vector<Ogre::MeshPtr> loaderAdapter::getAllMeshes() const
 void loaderAdapter::makeNode(Ogre::SceneNode* ogreNode, const tinygltf::Node& node, Ogre::SceneManager* smgr, const std::vector<Ogre::MeshPtr>& meshes)
 {
     Ogre::SceneNode* ogreChildNode = ogreNode->createChildSceneNode();
+
+    ogreChildNode->setName(node.name);
+
     if (node.mesh > -1)
     {
         Ogre::Item* item = smgr->createItem(meshes[node.mesh]);
@@ -138,14 +141,17 @@ void loaderAdapter::makeNode(Ogre::SceneNode* ogreNode, const tinygltf::Node& no
     }
 }
 
-void loaderAdapter::makeScene(Ogre::SceneManager* smgr, Ogre::SceneNode* parentNode)
+Ogre::SceneNode* loaderAdapter::makeScene(Ogre::SceneManager* smgr, Ogre::SceneNode* parentNode)
 {
     std::vector<Ogre::MeshPtr> meshes = getAllMeshes();
+
+    Ogre::SceneNode* glTFNode = parentNode->createChildSceneNode();
     for (int index : pimpl->model.scenes[0].nodes)
     {
         const tinygltf::Node& node = pimpl->model.nodes[index];
-        makeNode(parentNode, node, smgr, meshes);
+        makeNode(glTFNode, node, smgr, meshes);
     }
+    return glTFNode;
 }
 
 
@@ -300,10 +306,10 @@ ModelInformation glTFLoader::getModelData(const std::string& modelName, LoadFrom
 	return model;
 }
 
-bool glTFLoader::createScene(const std::string& modelName,
-                             LoadFrom loadLocation,
-                             Ogre::SceneManager* smgr,
-                             Ogre::SceneNode* parentNode)
+Ogre::SceneNode* glTFLoader::createScene(const std::string& modelName,
+                                         LoadFrom loadLocation,
+                                         Ogre::SceneManager* smgr,
+                                         Ogre::SceneNode* parentNode)
 {
     loaderAdapter adapter;
     switch (loadLocation)
@@ -316,8 +322,8 @@ bool glTFLoader::createScene(const std::string& modelName,
         OgreLog("adapter is signaling it isn't in \"ok\" state");
 
     adapter.pimpl->textureImp.loadTextures();
-    adapter.makeScene(smgr, parentNode);
-    return true;
+    Ogre::SceneNode* node = adapter.makeScene(smgr, parentNode);
+    return node;
 }
 
 glTFLoader::glTFLoader(glTFLoader&& other) noexcept : loaderImpl(std::move(other.loaderImpl)) {}
