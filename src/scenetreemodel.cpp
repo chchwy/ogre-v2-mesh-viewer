@@ -83,8 +83,6 @@ int SceneTreeModel::rowCount(const QModelIndex& parent) const
 
 int SceneTreeModel::columnCount(const QModelIndex& parent) const
 {
-    if (!parent.isValid())
-        return 1;
     return 1;
 }
 
@@ -93,16 +91,68 @@ QVariant SceneTreeModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    if (role != Qt::DisplayRole)
+    if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
     Ogre::SceneNode* node = static_cast<Ogre::SceneNode*>(index.internalPointer());
     return QVariant(QString::fromStdString(node->getName()));
 }
 
+Qt::ItemFlags SceneTreeModel::flags(const QModelIndex& index) const
+{
+    if (!index.isValid())
+        return 0;
+
+    return /*Qt::ItemIsEditable |*/ QAbstractItemModel::flags(index);
+}
+
+bool SceneTreeModel::setData(const QModelIndex& index, const QVariant &value, int role /*= Qt::EditRole*/)
+{
+    if (role != Qt::EditRole)
+        return false;
+
+    //TreeItem *item = getItem(index);
+    //bool result = item->setData(index.column(), value);
+    bool result = false;
+    if (result)
+        emit dataChanged(index, index);
+
+    return result;
+}
+
+bool SceneTreeModel::setHeaderData(int, Qt::Orientation, const QVariant&, int)
+{
+    return false;
+}
+
+bool SceneTreeModel::insertRows(int position, int rows, const QModelIndex& parent)
+{
+    //qDebug() << "InsertRows pos:" << position << ", rows:" << rows << ", index:" << parent;
+
+    Ogre::SceneNode* parentNode = nullptr;
+    if (!parent.isValid())
+        parentNode = mRootNode;
+    else
+        parentNode = static_cast<Ogre::SceneNode*>(parent.internalPointer());
+
+    bool success = false;
+
+    beginInsertRows(parent, position, position + rows - 1);
+    //success = parentItem->insertChildren(position, rows, rootItem->columnCount());
+    endInsertRows();
+
+    return true;
+}
+
+bool SceneTreeModel::removeRows(int position, int rows, const QModelIndex& parent /*= QModelIndex()*/)
+{
+    return false;
+}
+
 void SceneTreeModel::refresh()
 {
     mRootNode = mOgre->meshRootNode();
+    // Not implemented yet
 }
 
 int SceneTreeModel::getSceneNodeRow(Ogre::SceneNode* node) const
@@ -122,7 +172,6 @@ int SceneTreeModel::getSceneNodeRow(Ogre::SceneNode* node) const
             return i;
         }
     }
-
     Q_ASSERT(false);
     return 0;
 }

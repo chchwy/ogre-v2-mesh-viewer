@@ -19,8 +19,10 @@ public:
     ~MeshLoader();
 
     bool load(QString filePath);
-
     void enableZupToYupConversion(bool b);
+
+signals:
+    void sceneNodeAdded(Ogre::SceneNode* node);
 
 private:
     bool loadOgreMeshXML(QString filePath);

@@ -7,6 +7,11 @@ namespace Ui
 {
 class SceneTreeWidget;
 }
+namespace Ogre
+{
+class SceneNode;
+}
+
 class OgreManager;
 class SceneTreeModel;
 
@@ -20,7 +25,11 @@ public:
 
     void refresh();
 
+    void sceneNodeAdded(Ogre::SceneNode*);
+
 private:
+    QModelIndex lookForSceneNode(Ogre::SceneNode* node, const QModelIndex& parent);
+
     OgreManager* mOgre = nullptr;
     SceneTreeModel* mModel = nullptr;
     Ui::SceneTreeWidget* ui = nullptr;
