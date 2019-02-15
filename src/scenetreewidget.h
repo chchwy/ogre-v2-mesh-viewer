@@ -25,7 +25,11 @@ public:
 
     void refresh();
 
+    void treeViewClicked(QModelIndex index);
     void sceneNodeAdded(Ogre::SceneNode*);
+
+signals:
+    void sceneNodeSelected(Ogre::SceneNode*);
 
 private:
     QModelIndex lookForSceneNode(Ogre::SceneNode* node, const QModelIndex& parent);

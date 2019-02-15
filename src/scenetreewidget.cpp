@@ -12,6 +12,8 @@ SceneTreeWidget::SceneTreeWidget(QWidget* parent, OgreManager* ogre) : QWidget(p
 
     mOgre = ogre;
     mModel = new SceneTreeModel(this, ogre);
+
+    connect(ui->treeView, &QTreeView::clicked, this, &SceneTreeWidget::treeViewClicked);
 }
 
 SceneTreeWidget::~SceneTreeWidget()
@@ -23,6 +25,16 @@ void SceneTreeWidget::refresh()
 {
     mModel->refresh();
     ui->treeView->setModel(mModel);
+}
+
+void SceneTreeWidget::treeViewClicked(QModelIndex index)
+{
+    if (index.isValid())
+    {
+        auto node = static_cast<Ogre::SceneNode*>(index.internalPointer());
+        if (node)
+            emit sceneNodeSelected(node);
+    }
 }
 
 void SceneTreeWidget::sceneNodeAdded(Ogre::SceneNode* node)

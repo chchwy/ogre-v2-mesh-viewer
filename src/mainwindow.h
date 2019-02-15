@@ -31,7 +31,7 @@ class LightWidget;
 class SceneTreeWidget;
 class TransformWidget;
 class MeshLoader;
-
+class Inspector;
 
 namespace Ui {
 class MainWindow;
@@ -71,6 +71,7 @@ private:
     OgreManager* mOgreManager = nullptr;
     MeshLoader* mMeshLoader = nullptr;
 
+    Inspector* mInspector = nullptr;
     LightWidget* mLightWidget = nullptr;
     SceneTreeWidget* mSeceneWidget = nullptr;
     TransformWidget* mTransformWidget = nullptr;

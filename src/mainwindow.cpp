@@ -46,6 +46,7 @@
 #include "lightwidget.h"
 #include "scenetreewidget.h"
 #include "transformwidget.h"
+#include "inspector.h"
 
 
 #define _STR(x) #x
@@ -76,6 +77,7 @@ MainWindow::MainWindow()
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
     connect(mMeshLoader, &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
+    //connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mTransformWidget, &s)
 
     // actions
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);
@@ -154,10 +156,13 @@ void MainWindow::createDockWindows()
     sceneTreeDock->setWidget(mSeceneWidget);
     addDockWidget(Qt::LeftDockWidgetArea, sceneTreeDock);
 
-    mTransformWidget = new TransformWidget(this);
-    QDockWidget* transformDock = new QDockWidget("Transform", this);
-    transformDock->setWidget(mTransformWidget);
-    addDockWidget(Qt::RightDockWidgetArea, transformDock);
+    mInspector = new Inspector(this);
+    QDockWidget* inspectorDock = new QDockWidget("Inspector", this);
+    inspectorDock->setWidget(mInspector);
+    addDockWidget(Qt::RightDockWidgetArea, inspectorDock);
+
+    mTransformWidget = new TransformWidget;
+    mInspector->addWidget(mTransformWidget);
 }
 
 void MainWindow::startTimer()

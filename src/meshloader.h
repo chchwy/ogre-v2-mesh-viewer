@@ -6,6 +6,7 @@
 namespace Ogre
 {
 class Item;
+class SceneNode;
 }
 
 class OgreManager;
