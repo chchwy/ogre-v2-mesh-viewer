@@ -348,6 +348,7 @@ void OgreManager::createScene()
 
     Q_ASSERT(mMeshRootNode == nullptr);
     mMeshRootNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
+    mMeshRootNode->setName("Root");
 
     emit sceneCreated();
 }
