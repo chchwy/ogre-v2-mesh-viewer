@@ -45,6 +45,7 @@
 #include "loadfromfolderdialog.h"
 #include "lightwidget.h"
 #include "scenetreewidget.h"
+#include "transformwidget.h"
 
 
 #define _STR(x) #x
@@ -152,6 +153,11 @@ void MainWindow::createDockWindows()
     QDockWidget* sceneTreeDock = new QDockWidget("Scene Tree", this);
     sceneTreeDock->setWidget(mSeceneWidget);
     addDockWidget(Qt::LeftDockWidgetArea, sceneTreeDock);
+
+    mTransformWidget = new TransformWidget(this);
+    QDockWidget* transformDock = new QDockWidget("Transform", this);
+    transformDock->setWidget(mTransformWidget);
+    addDockWidget(Qt::RightDockWidgetArea, transformDock);
 }
 
 void MainWindow::startTimer()
