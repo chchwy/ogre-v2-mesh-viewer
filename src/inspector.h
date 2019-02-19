@@ -13,6 +13,7 @@ public:
     Inspector(QWidget* parent);
 
     void addWidget(QWidget* w);
+    void endAddWidget();
 
 private:
     QScrollArea* mScrollArea = nullptr;

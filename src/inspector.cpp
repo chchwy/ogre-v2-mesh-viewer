@@ -8,11 +8,14 @@
 Inspector::Inspector(QWidget* parent) : QWidget(parent)
 {
     setLayout(new QVBoxLayout);
+    layout()->setSpacing(0);
+    layout()->setMargin(0);
 
     mScrollArea = new QScrollArea;
     mScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     mScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     mScrollArea->setWidgetResizable(true);
+    //mScrollArea->setBackgroundRole(QPalette::Dark);
     layout()->addWidget(mScrollArea);
 
     mInnerWidget = new QWidget;
@@ -26,4 +29,10 @@ void Inspector::addWidget(QWidget* w)
 {
     //mScrollArea
     mInnerWidget->layout()->addWidget(w);
+}
+
+void Inspector::endAddWidget()
+{
+    QVBoxLayout* vBoxLayout = static_cast<QVBoxLayout*>(mInnerWidget->layout());
+    vBoxLayout->addStretch();
 }
