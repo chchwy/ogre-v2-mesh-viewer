@@ -17,8 +17,12 @@ public:
 
 public slots:
     void sceneNodeSelected(Ogre::SceneNode*);
-
+    
 private:
+    void positionChanged();
+    void rotationChanged();
+    void scaleChanged();
+
     Ogre::SceneNode* mCurrentNode = nullptr;
     Ui::TransformWidget* ui;
 };
