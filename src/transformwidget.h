@@ -12,11 +12,15 @@ class TransformWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TransformWidget(QWidget *parent = nullptr);
+    explicit TransformWidget(QWidget* parent = nullptr);
     ~TransformWidget();
 
+public slots:
+    void sceneNodeSelected(Ogre::SceneNode*);
+
 private:
-    Ui::TransformWidget *ui;
+    Ogre::SceneNode* mCurrentNode = nullptr;
+    Ui::TransformWidget* ui;
 };
 
 #endif // TRANSFORMWIDGET_H

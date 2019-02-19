@@ -77,7 +77,7 @@ MainWindow::MainWindow()
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
     connect(mMeshLoader, &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
-    //connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mTransformWidget, &s)
+    connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mTransformWidget, &TransformWidget::sceneNodeSelected);
 
     // actions
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);
