@@ -163,6 +163,8 @@ void MainWindow::createDockWindows()
 
     mTransformWidget = new TransformWidget;
     mInspector->addWidget(mTransformWidget);
+
+    mInspector->endAddWidget();
 }
 
 void MainWindow::startTimer()
