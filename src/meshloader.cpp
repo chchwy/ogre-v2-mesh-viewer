@@ -121,23 +121,19 @@ bool MeshLoader::loadOgreMesh(QString filePath)
 bool MeshLoader::loadGLTF(QString filePath)
 {
     auto gltf = Ogre_glTF::gltfPluginAccessor::findPlugin()->getLoader();
-    //Ogre_glTF::ModelInformation modelInfo = gltf->getModelData(filePath.toStdString(), Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem);
-    //Ogre::Item* item = modelInfo.makeItem(mOgre->sceneManager());
 
     Ogre::SceneNode* node = gltf->createScene(filePath.toStdString(),
                                               Ogre_glTF::glTFLoaderInterface::LoadFrom::FileSystem,
                                               mOgre->sceneManager(),
                                               mOgre->meshRootNode());
-
-    //Ogre::SceneNode* sceneNode = ogre->mSceneManager->getRootSceneNode()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
-    //sceneNode->setScale(1, 1, 1);
-    //sceneNode->setPosition(0, 0, 0);
-    //attachMeshToSceneTree(item);
-    QFileInfo info(filePath);
-    node->setName(info.fileName().toStdString());
-
-    emit sceneNodeAdded(node);
-    return true;
+    if (node)
+    {
+        QFileInfo info(filePath);
+        node->setName(info.fileName().toStdString());
+        emit sceneNodeAdded(node);
+        return true;
+    }
+    return false;
 }
 
 bool MeshLoader::loadWavefrontObj(QString filePath)

@@ -254,7 +254,7 @@ loaderAdapter glTFLoader::loadFromFileSystem(const std::string& path) const
     adapter.adapterName = path;
     loaderImpl->loadInto(adapter, path);
 
-    //if (adapter.getLastError().empty())
+    if (adapter.getLastError().empty())
     {
         OgreLog("Debug : it looks like the file was loaded without error!");
         adapter.pimpl->valid = true;
@@ -319,7 +319,11 @@ Ogre::SceneNode* glTFLoader::createScene(const std::string& modelName,
     }
 
     if (!adapter.isOk())
+    {
         OgreLog("adapter is signaling it isn't in \"ok\" state");
+        OgreLog(adapter.getLastError());
+        return nullptr;
+    }
 
     adapter.pimpl->textureImp.loadTextures();
     Ogre::SceneNode* node = adapter.makeScene(smgr, parentNode);
