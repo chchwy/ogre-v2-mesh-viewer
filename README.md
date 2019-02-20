@@ -13,7 +13,8 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 
 - [ ] Improve performance by converting obj data to ogre mesh directly. (Currently it uses mesh.xml as intermediate data format)
 - [x] Automatically generate normals if there are no normal vectors in obj
-- [ ] glTF import/export
+- [x] glTF import
+- [ ] glTF export
 - [ ] Support DotScene
 
 [0]: https://www.qt.io/download-qt-installer "Qt download"
