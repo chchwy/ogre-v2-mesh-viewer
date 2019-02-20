@@ -34,6 +34,7 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QDirIterator>
+#include <QProgressDialog>
 
 #include "OgreMesh2Serializer.h"
 
@@ -208,6 +209,13 @@ void MainWindow::actionOpen()
         bConversionZupToYup = (ret == QMessageBox::Yes);
     }
 
+    QProgressDialog progress(QString("Loading %1...").arg(sMeshFileName), "Cancel", 0, 0, this);
+    progress.setWindowFlags(progress.windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    progress.setWindowModality(Qt::WindowModal);
+    progress.show();
+    
+    QApplication::processEvents();
+
     QFileInfo info(sMeshFileName);
     settings.setValue("actionOpen", info.absolutePath());
 
@@ -228,6 +236,8 @@ void MainWindow::actionOpen()
         qDebug() << "Mesh load failed";
         QMessageBox::information(this, "Error", "Filed to open" + sMeshFileName);
     }
+
+    progress.cancel();
 }
 
 void MainWindow::actionSaveMesh()
