@@ -27,10 +27,10 @@ TransformWidget::~TransformWidget()
 
 void TransformWidget::sceneNodeSelected(Ogre::SceneNode* node)
 {
+    mCurrentNode = node;
+
     if (node == nullptr)
         return;
-
-    mCurrentNode = node;
 
     Ogre::Vector3 pos = node->getPosition();
 
