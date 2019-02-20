@@ -159,13 +159,13 @@ void OgreWidget::resizeEvent(QResizeEvent* e)
 void OgreWidget::keyPressEvent(QKeyEvent* ev)
 {
     if (mInitialized)
-        mCameraManager->injectKeyDown(ev);
+        mCameraManager->keyPress(ev);
 }
 
 void OgreWidget::keyReleaseEvent(QKeyEvent* ev)
 {
     if (mInitialized)
-        mCameraManager->injectKeyUp(ev);
+        mCameraManager->keyRelease(ev);
 }
 
 void OgreWidget::mouseMoveEvent(QMouseEvent* e)
@@ -175,25 +175,25 @@ void OgreWidget::mouseMoveEvent(QMouseEvent* e)
         Ogre::Vector2 oldPos = mAbsolute;
         mAbsolute = Ogre::Vector2(e->pos().x(), e->pos().y());
         mRelative = mAbsolute - oldPos;
-        mCameraManager->injectMouseMove(mRelative);
+        mCameraManager->mouseMove(mRelative);
     }
 }
 
 void OgreWidget::wheelEvent(QWheelEvent* e)
 {
     if (mInitialized)
-        mCameraManager->injectMouseWheel(e);
+        mCameraManager->mouseWheel(e);
 }
 
 void OgreWidget::mousePressEvent(QMouseEvent* e)
 {
     if (mInitialized)
-        mCameraManager->injectMouseDown(e);
+        mCameraManager->mousePress(e);
 }
 
 void OgreWidget::mouseReleaseEvent(QMouseEvent* e)
 {
     if (mInitialized)
-        mCameraManager->injectMouseUp(e);
+        mCameraManager->mouseRelease(e);
 }
 
