@@ -15,8 +15,10 @@ Ogre::VertexBufferPackedVec modelConverter::constructVertexBuffer(const std::vec
 {
     Ogre::VertexElement2Vec vertexElements;
 
-    size_t stride{ 0 }, strideInElements{ 0 };
-    size_t vertexCount{ 0 }, previousVertexCount{ 0 };
+    size_t stride = 0;
+    size_t strideInElements = 0;
+    size_t vertexCount = 0;
+    size_t previousVertexCount = 0;
 
     for (const auto& part : parts)
     {
@@ -28,16 +30,19 @@ Ogre::VertexBufferPackedVec modelConverter::constructVertexBuffer(const std::vec
         //Sanity check
         if (previousVertexCount != 0)
         {
-            if (vertexCount != previousVertexCount) throw LoadingError("Part of vertex buffer for the same primitive have different vertex counts!");
+            if (vertexCount != previousVertexCount)
+                throw LoadingError("Part of vertex buffer for the same primitive have different vertex counts!");
         }
         else
+        {
             previousVertexCount = vertexCount;
+        }
     }
 
     OgreLog("There will be " + std::to_string(vertexCount) + " vertices with a stride of " + std::to_string(stride) + " bytes");
 
     geometryBuffer<float> finalBuffer(vertexCount * strideInElements);
-    size_t bytesWrittenInCurrentStride{ 0 };
+    size_t bytesWrittenInCurrentStride = 0;
     for (size_t vertexIndex = 0; vertexIndex < vertexCount; ++vertexIndex)
     {
         bytesWrittenInCurrentStride = 0;
@@ -70,16 +75,18 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
     Ogre::Aabb boundingBox;
     OgreLog("Found mesh " + mesh.name + " in glTF file");
 
-    auto OgreMesh = Ogre::MeshManager::getSingleton().getByName(mesh.name);
+    Ogre::String ogreMeshName = mesh.name + "_" + std::to_string(index);
+
+    auto OgreMesh = Ogre::MeshManager::getSingleton().getByName(ogreMeshName);
     if (OgreMesh)
     {
-        OgreLog("Found mesh " + mesh.name + " in Ogre::MeshManager(v2)");
+        OgreLog("Found mesh " + ogreMeshName + " in Ogre::MeshManager(v2)");
         return OgreMesh;
     }
 
     OgreLog("Loading mesh from glTF file");
     OgreLog("mesh has " + std::to_string(mesh.primitives.size()) + " primitives");
-    OgreMesh = Ogre::MeshManager::getSingleton().createManual(mesh.name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    OgreMesh = Ogre::MeshManager::getSingleton().createManual(ogreMeshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     OgreLog("Created mesh on v2 MeshManager");
 
     for (const auto& primitive : mesh.primitives)
