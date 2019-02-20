@@ -87,7 +87,7 @@ bool MeshLoader::loadOgreMeshXML(QString filePath)
     Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
 
     QString strV2Name = meshName +"_xml";
-    Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "OgreSpooky");
+    Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "ViewerResc");
     v2Mesh->importV1(meshV1Ptr.get(), true, true, true);
     Ogre::Item* item = mOgre->sceneManager()->createItem(v2Mesh);
 
@@ -101,7 +101,7 @@ bool MeshLoader::loadOgreMesh(QString filePath)
      QFileInfo info(filePath);
 
     std::string sNewResourceLocation = info.absolutePath().toStdString();
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sNewResourceLocation, "FileSystem", "OgreSpooky");
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sNewResourceLocation, "FileSystem", "ViewerResc");
 
     QString sNewMeshFile = info.fileName();
 
@@ -163,14 +163,14 @@ Ogre::Item* MeshLoader::loadOgreV1(QString meshName)
     try
     {
         Ogre::v1::MeshManager& meshV1Mgr = Ogre::v1::MeshManager::getSingleton();
-        Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.load(sMeshName, "OgreSpooky",
+        Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.load(sMeshName, "ViewerResc",
                                                   Ogre::v1::HardwareBuffer::HBU_STATIC,
                                                   Ogre::v1::HardwareBuffer::HBU_STATIC);
 
         Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
 
         QString strV2Name = meshName + " (v1)";
-        Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "OgreSpooky");
+        Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "ViewerResc");
         v2Mesh->importV1(v1Mesh.get(), true, true, true);
         item = mOgre->sceneManager()->createItem(v2Mesh);
         item->setName(v2Mesh->getName());
@@ -185,7 +185,7 @@ Ogre::Item* MeshLoader::loadOgreV2(QString meshName)
     try
     {
         Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
-        Ogre::MeshPtr mesh = meshMgr.create(meshName.toStdString(), "OgreSpooky");
+        Ogre::MeshPtr mesh = meshMgr.create(meshName.toStdString(), "ViewerResc");
         item = mOgre->sceneManager()->createItem(mesh);
     }
     catch(Ogre::Exception& e) {}

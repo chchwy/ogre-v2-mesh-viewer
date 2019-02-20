@@ -396,8 +396,8 @@ void OgreManager::createBall(int x, int y)
                                  Ogre::HlmsBlendblock(),
                                  Ogre::HlmsParamVec()));
 
-    //auto tex = Ogre::TextureManager::getSingleton().getByName( "wood.png", "OgreSpooky" );
-    auto skybox = Ogre::TextureManager::getSingleton().getByName("env.dds", "OgreSpooky");
+    //auto tex = Ogre::TextureManager::getSingleton().getByName( "wood.png", "ViewerResc" );
+    auto skybox = Ogre::TextureManager::getSingleton().getByName("env.dds", "ViewerResc");
 
     datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
     //datablock->setTexture( Ogre::PBSM_DIFFUSE, 0, tex );

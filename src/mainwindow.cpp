@@ -209,34 +209,33 @@ void MainWindow::actionOpen()
         bConversionZupToYup = (ret == QMessageBox::Yes);
     }
 
-    QProgressDialog progress(QString("Loading %1...").arg(sMeshFileName), "Cancel", 0, 0, this);
+    QProgressDialog progress(QString("Loading %1").arg(sMeshFileName), "Cancel", 0, 0, this); // Cancel is not working atm, but whatever
     progress.setWindowFlags(progress.windowFlags() & (~Qt::WindowContextHelpButtonHint));
     progress.setWindowModality(Qt::WindowModal);
     progress.show();
-    
     QApplication::processEvents();
-
-    QFileInfo info(sMeshFileName);
-    settings.setValue("actionOpen", info.absolutePath());
-
-    auto& manager = Ogre::ResourceGroupManager::getSingleton();
-    manager.addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "OgreSpooky");
-    
-    auto allMaterials = manager.findResourceNames("OgreSpooky", "*.material.json");
-    for (const std::string& sMtlName : *allMaterials)
     {
-        Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "OgreSpooky", nullptr, "");
+        QFileInfo info(sMeshFileName);
+        settings.setValue("actionOpen", info.absolutePath());
+
+        auto& manager = Ogre::ResourceGroupManager::getSingleton();
+        manager.addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "ViewerResc");
+
+        auto allMaterials = manager.findResourceNames("ViewerResc", "*.material.json");
+        for (const std::string& sMtlName : *allMaterials)
+        {
+            Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
+        }
+
+        mMeshLoader->enableZupToYupConversion(bConversionZupToYup);
+
+        bool ok = mMeshLoader->load(sMeshFileName);
+        if (!ok)
+        {
+            qDebug() << "Mesh load failed";
+            QMessageBox::information(this, "Error", "Filed to open" + sMeshFileName);
+        }
     }
-
-    mMeshLoader->enableZupToYupConversion(bConversionZupToYup);
-
-    bool ok = mMeshLoader->load(sMeshFileName);
-    if (!ok)
-    {
-        qDebug() << "Mesh load failed";
-        QMessageBox::information(this, "Error", "Filed to open" + sMeshFileName);
-    }
-
     progress.cancel();
 }
 
