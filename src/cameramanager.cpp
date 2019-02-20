@@ -18,7 +18,7 @@ void CameraManager::setCamera(Ogre::Camera* cam)
     mCameraNode->attachObject(mCamera);
     mCamera->setPosition(Ogre::Vector3(0, 5, 15));
     mCamera->lookAt(Ogre::Vector3(0, 0, 0));
-    mCamera->setNearClipDistance(1.f);
+    mCamera->setNearClipDistance(0.1f);
     mCamera->setFarClipDistance(10000.0f);
     mCamera->setAutoAspectRatio(true);
 }
@@ -217,7 +217,7 @@ bool CameraManager::frameRenderingQueued(const Ogre::FrameEvent& evt)
     return true;
 }
 
-void CameraManager::injectKeyDown(const QKeyEvent* evt)
+void CameraManager::keyPress(const QKeyEvent* evt)
 {
     if (mMode == CM_FLY)
     {
@@ -271,7 +271,7 @@ void CameraManager::injectKeyDown(const QKeyEvent* evt)
     }
 }
 
-void CameraManager::injectKeyUp(const QKeyEvent* evt)
+void CameraManager::keyRelease(const QKeyEvent* evt)
 {
     if (evt->key() == Qt::Key_W)
         mGoingForward = false;
@@ -285,7 +285,7 @@ void CameraManager::injectKeyUp(const QKeyEvent* evt)
         mShiftDown = false;
 }
 
-void CameraManager::injectMouseMove(Ogre::Vector2 mousePos)
+void CameraManager::mouseMove(Ogre::Vector2 mousePos)
 {
     if (mMode == CM_FLY)
     {
@@ -307,7 +307,7 @@ void CameraManager::injectMouseMove(Ogre::Vector2 mousePos)
     }
 }
 
-void CameraManager::injectMouseWheel(const QWheelEvent* evt)
+void CameraManager::mouseWheel(const QWheelEvent* evt)
 {
     mMouseWheelDelta = evt->delta();
     //qDebug() << (uint64_t)mCamera << ", " << (uint64_t)mTarget;
@@ -315,7 +315,7 @@ void CameraManager::injectMouseWheel(const QWheelEvent* evt)
     mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0008f * mDistFromTarget));
 }
 
-void CameraManager::injectMouseDown(const QMouseEvent* evt)
+void CameraManager::mousePress(const QMouseEvent* evt)
 {
     if (mMode == CM_BLENDER || mMode == CM_ORBIT)
     {
@@ -326,7 +326,7 @@ void CameraManager::injectMouseDown(const QMouseEvent* evt)
     }
 }
 
-void CameraManager::injectMouseUp(const QMouseEvent* evt)
+void CameraManager::mouseRelease(const QMouseEvent* evt)
 {
     if (mMode == CM_BLENDER || mMode == CM_ORBIT)
     {
@@ -335,4 +335,23 @@ void CameraManager::injectMouseUp(const QMouseEvent* evt)
             mOrbiting = false;
         }
     }
+}
+
+void CameraManager::rotate(int x, int y)
+{
+    mCameraNode->yaw(Ogre::Degree(-x * 0.4f), Ogre::Node::TS_PARENT);
+    mCameraNode->pitch(Ogre::Degree(-y * 0.4f));
+}
+
+void CameraManager::pan(int x, int y)
+{
+    Ogre::Vector3 transVector(-x, y, 0);
+    if (mTarget)
+    {
+        mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
+        if (mTarget->numAttachedObjects() > 0 && mTarget->getAttachedObject(0))
+            transVector *= mTarget->getAttachedObject(0)->getWorldRadius() * (mDistFromTarget / 10000.0f);
+        //transVector *= mTarget->getAttachedObject(0)->getBoundingRadius() * (mDistFromTarget / 10000.0f);
+    }
+    mCameraNode->translate(transVector, Ogre::Node::TS_LOCAL);
 }

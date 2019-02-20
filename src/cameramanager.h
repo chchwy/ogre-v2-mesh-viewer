@@ -88,40 +88,23 @@ public:
     // Per-frame updates.
     bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-    void injectKeyDown(const QKeyEvent* evt);
-    void injectKeyUp(const QKeyEvent* evt);
+    void keyPress(const QKeyEvent* evt);
+    void keyRelease(const QKeyEvent* evt);
 
-    void injectMouseMove(Ogre::Vector2 mousePos);
-    void injectMouseWheel(const QWheelEvent* evt);
-    void injectMouseDown(const QMouseEvent* evt);
+    void mouseMove(Ogre::Vector2 mousePos);
+    void mouseWheel(const QWheelEvent* evt);
+    void mousePress(const QMouseEvent* evt);
 
     /*-----------------------------------------------------------------------------
     | Processes mouse releases. 
     | Left button is for orbiting, and right button is for zooming.
     -----------------------------------------------------------------------------*/
-    void injectMouseUp(const QMouseEvent* evt); // Only applies for orbit style.
+    void mouseRelease(const QMouseEvent* evt); // Only applies for orbit style.
 
-    void rotate(int x, int y)
-    {
-        mCameraNode->yaw(Ogre::Degree(-x * 0.4f), Ogre::Node::TS_PARENT);
-        mCameraNode->pitch(Ogre::Degree(-y * 0.4f));
-    }
+    void rotate(int x, int y);
+    void pan(int x, int y);
 
-    void pan(int x, int y)
-    {
-        Ogre::Vector3 transVector(-x, y, 0);
-        if (mTarget)
-        {
-            mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
-            if (mTarget->numAttachedObjects() > 0 && mTarget->getAttachedObject(0))
-                transVector *= mTarget->getAttachedObject(0)->getWorldRadius() * (mDistFromTarget / 10000.0f);
-            //transVector *= mTarget->getAttachedObject(0)->getBoundingRadius() * (mDistFromTarget / 10000.0f);
-        }
-        mCameraNode->translate(transVector, Ogre::Node::TS_LOCAL);
-    }
-
-protected:
-
+private:
     Ogre::Camera* mCamera = nullptr;
 
     Ogre::SceneNode* mTarget = nullptr;
