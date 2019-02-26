@@ -15,17 +15,34 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QListWidget" name="listWidget"/>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="selectAllCheckbox">
      <property name="text">
       <string>Select All</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout">
+    <widget class="QListWidget" name="listWidget"/>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QProgressBar" name="progressBar">
+       <property name="value">
+        <number>24</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="HBoxLayout3">
      <property name="spacing">
       <number>6</number>
      </property>
@@ -42,7 +59,7 @@
       <number>0</number>
      </property>
      <item>
-      <spacer>
+      <spacer name="spacer11">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -59,12 +76,21 @@
        <property name="text">
         <string>OK</string>
        </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="cancelButton">
        <property name="text">
-        <string>Cancel</string>
+        <string>Close</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -74,22 +100,6 @@
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>okButton</sender>
-   <signal>clicked()</signal>
-   <receiver>LoadFromFolderDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>278</x>
-     <y>253</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>96</x>
-     <y>254</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>cancelButton</sender>
    <signal>clicked()</signal>

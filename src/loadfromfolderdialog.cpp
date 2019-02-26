@@ -6,16 +6,27 @@
 #include <QStringList>
 #include <QDirIterator>
 
+#include "ogremanager.h"
+#include "meshloader.h"
 
-LoadFromFolderDialog::LoadFromFolderDialog(QWidget* parent) : QDialog(parent)
+
+LoadFromFolderDialog::LoadFromFolderDialog(QWidget* parent, OgreManager* ogre) : QDialog(parent)
 {
     ui = new Ui::LoadFromFolderDialog;
     ui->setupUi(this);
-}
 
+    mOgre = ogre;
+
+    ui->progressBar->setVisible(false);
+
+    connect(ui->selectAllCheckbox, &QCheckBox::clicked, this, &LoadFromFolderDialog::selectAllClicked);
+    connect(ui->okButton, &QPushButton::clicked, this, &LoadFromFolderDialog::okButtonClicked);
+}
 
 LoadFromFolderDialog::~LoadFromFolderDialog()
 {
+    qDebug() << "delete dialog";
+    delete ui;
 }
 
 void LoadFromFolderDialog::setSourceFolder(const QString& s)
@@ -27,15 +38,89 @@ void LoadFromFolderDialog::listAllMeshesInFolder()
 {
     QStringList meshList;
 
-    QDirIterator it(mFolder, QDirIterator::Subdirectories);
+    QStringList nameFilters{ "*.mesh", "*.mesh.xml", "*.obj", "*.gltf", "*.glb" };
+    QDirIterator it(mFolder, nameFilters, QDir::Files, QDirIterator::Subdirectories);
     while(it.hasNext())
     {
         QString filePath = it.next();
-        if (filePath.endsWith(".mesh"))
+        meshList.append(filePath);
+    }
+    qDebug() << meshList;
+    createListItems(meshList);
+}
+
+void LoadFromFolderDialog::createListItems(const QStringList& meshList)
+{
+    for (QString s : meshList)
+    {
+        QString fullPath = s;
+
+        s.replace(mFolder + "/", "");
+
+        QListWidgetItem* item = new QListWidgetItem(s, ui->listWidget);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Checked);
+        item->setData(Qt::UserRole, fullPath);
+
+        ui->listWidget->addItem(item);
+    }
+
+    QSignalBlocker b(ui->selectAllCheckbox);
+    ui->selectAllCheckbox->setChecked(true);
+}
+
+void LoadFromFolderDialog::selectAllClicked(bool b)
+{
+    QListWidget* listWidget = ui->listWidget;
+    for (int i = 0; i < listWidget->count(); ++i)
+    {
+        QListWidgetItem* item = listWidget->item(i);
+
+        Qt::CheckState state = (b) ? Qt::Checked : Qt::Unchecked;
+        item->setCheckState(state);
+    }
+}
+
+void LoadFromFolderDialog::okButtonClicked()
+{
+    qDebug() << "OK!";
+
+    QStringList fileList;
+
+    QListWidget* listWidget = ui->listWidget;
+    for (int i = 0; i < listWidget->count(); ++i)
+    {
+        QListWidgetItem* item = listWidget->item(i);
+        bool checked = (item->checkState() == Qt::Checked);
+        if (checked)
         {
-            meshList.append(filePath);
+            fileList.append(item->data(Qt::UserRole).toString());
         }
     }
 
+    ui->progressBar->setVisible(true);
+    ui->progressBar->setMaximum(fileList.size());
 
+    QApplication::processEvents(QEventLoop::DialogExec);
+
+    for (int i = 0; i < fileList.size(); ++i)
+    {
+        mOgre->meshLoader()->load(fileList[i]);
+        ui->progressBar->setValue(i + 1);
+
+        QApplication::processEvents(QEventLoop::DialogExec);
+    }
+
+    accept();
+}
+
+void LoadFromFolderDialog::showEvent(QShowEvent* event)
+{
+    qDebug() << "Show!";
+
+    if (!mInitialized)
+    {
+        listAllMeshesInFolder();
+        mInitialized = true;
+    }
 }
