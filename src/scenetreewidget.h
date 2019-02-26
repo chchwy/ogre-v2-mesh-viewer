@@ -23,7 +23,7 @@ public:
     explicit SceneTreeWidget(QWidget* parent, OgreManager* ogre);
     ~SceneTreeWidget();
 
-    void refresh();
+    void sceneLoaded();
 
     void treeViewClicked(QModelIndex index);
     void sceneNodeAdded(Ogre::SceneNode*);

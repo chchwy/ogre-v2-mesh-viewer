@@ -149,10 +149,12 @@ bool SceneTreeModel::removeRows(int position, int rows, const QModelIndex& paren
     return false;
 }
 
-void SceneTreeModel::refresh()
+void SceneTreeModel::refresh(QModelIndex rootIndex)
 {
     mRootNode = mOgre->meshRootNode();
-    // Not implemented yet
+
+    beginInsertRows(rootIndex, 0, 1);
+    endInsertRows();
 }
 
 int SceneTreeModel::getSceneNodeRow(Ogre::SceneNode* node) const
