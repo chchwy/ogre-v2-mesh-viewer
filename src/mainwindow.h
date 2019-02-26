@@ -79,5 +79,7 @@ private:
     QTimer* mTimer = nullptr;
     QString mUserDocumentPath;
 
+    bool mFirstLoad = true;
+
     Ui::MainWindow* ui = nullptr;
 };

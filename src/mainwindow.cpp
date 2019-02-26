@@ -209,6 +209,12 @@ void MainWindow::actionOpen()
         bConversionZupToYup = (ret == QMessageBox::Yes);
     }
 
+    if (mFirstLoad)
+    {
+        mOgreManager->clearScene(); // clear the sample model
+        mFirstLoad = false;
+    }
+
     QProgressDialog progress(QString("Loading %1").arg(sMeshFileName), "Cancel", 0, 0, this); // Cancel is not working atm, but whatever
     progress.setWindowFlags(progress.windowFlags() & (~Qt::WindowContextHelpButtonHint));
     progress.setWindowModality(Qt::WindowModal);
