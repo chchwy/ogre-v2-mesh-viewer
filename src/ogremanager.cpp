@@ -49,6 +49,7 @@
 
 #include "ogrewidget.h"
 #include "OgreGLTF/Ogre_glTF.hpp"
+#include "meshloader.h"
 
 
 OgreManager::OgreManager()
@@ -225,6 +226,11 @@ Ogre::Mesh* OgreManager::currentMesh(int index)
 
     //Q_ASSERT(false);
     return nullptr;
+}
+
+void OgreManager::createSubcomponents()
+{
+    mMeshLoader = new MeshLoader(this, this);
 }
 
 void OgreManager::registerHlms()

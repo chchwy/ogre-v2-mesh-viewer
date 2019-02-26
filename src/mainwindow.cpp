@@ -68,7 +68,7 @@ MainWindow::MainWindow()
     mOgreManager->initialize();
     mOgreWidget->createCompositor();
 
-    mMeshLoader = new MeshLoader(this, mOgreManager);
+    mOgreManager->createSubcomponents();
 
     createDockWindows();
 
@@ -77,7 +77,7 @@ MainWindow::MainWindow()
     readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
-    connect(mMeshLoader, &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
+    connect(mOgreManager->meshLoader(), &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
     connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mTransformWidget, &TransformWidget::sceneNodeSelected);
 
     // actions
@@ -130,7 +130,7 @@ void MainWindow::onSceneLoaded()
     while (d.hasNext())
     {
         QString meshFile = d.next();
-        mMeshLoader->load(meshFile);
+        mOgreManager->meshLoader()->load(meshFile);
     }
 
     mSeceneWidget->sceneLoaded();
@@ -233,9 +233,10 @@ void MainWindow::actionOpen()
             Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
         }
 
-        mMeshLoader->enableZupToYupConversion(bConversionZupToYup);
+        MeshLoader* meshLoader = mOgreManager->meshLoader();
+        meshLoader->enableZupToYupConversion(bConversionZupToYup);
 
-        bool ok = mMeshLoader->load(sMeshFileName);
+        bool ok = meshLoader->load(sMeshFileName);
         if (!ok)
         {
             qDebug() << "Mesh load failed";
@@ -332,9 +333,17 @@ void MainWindow::actionLoadFromFolder()
     QString initialPath = settings.value("actionLoadFromFolder", mUserDocumentPath).toString();
     QString folder = QFileDialog::getExistingDirectory(this, "Open a folder", initialPath);
 
-    LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this);
+    if (!folder.isEmpty())
+    {
+        settings.setValue("actionLoadFromFolder", folder);
+        settings.sync();
+    }
+
+    LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this, mOgreManager);
+    dialog->setSourceFolder(folder);
     dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
-    dialog->exec();
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    dialog->open();
 }
 
 void MainWindow::actionBatchConverter()

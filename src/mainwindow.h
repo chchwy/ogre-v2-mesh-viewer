@@ -69,7 +69,6 @@ private:
 
     OgreWidget* mOgreWidget = nullptr;
     OgreManager* mOgreManager = nullptr;
-    MeshLoader* mMeshLoader = nullptr;
 
     Inspector* mInspector = nullptr;
     LightWidget* mLightWidget = nullptr;

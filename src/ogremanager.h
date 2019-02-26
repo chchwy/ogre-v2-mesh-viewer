@@ -37,7 +37,7 @@ class OverlaySystem;
 
 class MyHlmsListener;
 class OgreWidget;
-
+class MeshLoader;
 
 static const std::string OGRE_RENDERSYSTEM_DIRECTX11 = "Direct3D11 Rendering Subsystem";
 static const std::string OGRE_RENDERSYSTEM_OPENGL3PLUS = "OpenGL 3+ Rendering Subsystem";
@@ -62,6 +62,7 @@ public:
     Ogre::Root* ogreRoot() const { return mRoot; }
     Ogre::SceneManager* sceneManager() const { return mSceneManager; }
     Ogre::SceneNode* meshRootNode() const;
+    MeshLoader* meshLoader() { return mMeshLoader; }
 
     bool isRenderSystemGL() const;
     HGLRC getGlContext() const;
@@ -71,6 +72,7 @@ public:
 
     Q_SIGNAL void sceneCreated();
 
+    void createSubcomponents();
 private:
     void setupResources();
     void registerHlms();
@@ -96,4 +98,6 @@ private:
 
     std::vector<Ogre::MeshPtr> mLoadedV2Meshes;
     std::vector<Ogre::v1::MeshPtr> mLoadedV1Meshes;
+
+    MeshLoader* mMeshLoader = nullptr;
 };
