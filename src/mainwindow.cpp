@@ -126,14 +126,14 @@ void MainWindow::onSceneLoaded()
     meshDir.cd("../mesh");
 
     qDebug() << "Search for meshes in" << meshDir.absolutePath();
-    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh");
+    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh" << "*.glb");
     while (d.hasNext())
     {
         QString meshFile = d.next();
         mMeshLoader->load(meshFile);
     }
 
-    mSeceneWidget->refresh();
+    mSeceneWidget->sceneLoaded();
 }
 
 void MainWindow::Tick()

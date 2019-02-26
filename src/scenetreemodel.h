@@ -37,7 +37,7 @@ public:
     bool removeRows(int position, int rows,
                     const QModelIndex& parent = QModelIndex()) override;
 
-    void refresh();
+    void refresh(QModelIndex rootIndex);
 
 private:
     int getSceneNodeRow(Ogre::SceneNode*) const;
