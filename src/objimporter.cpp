@@ -135,7 +135,7 @@ bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
 {
     QFileInfo info(sObjFile);
 
-    QProgressDialog progress(nullptr, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
+    QProgressDialog progress(nullptr, Qt::Dialog | Qt::WindowTitleHint);
     progress.setLabelText( QString("Converting %1...").arg(info.fileName()));
     progress.setRange(0, 100);
     progress.setModal(true);

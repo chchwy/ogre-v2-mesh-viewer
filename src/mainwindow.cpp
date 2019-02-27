@@ -212,6 +212,7 @@ void MainWindow::actionOpen()
     if (mFirstLoad)
     {
         mOgreManager->clearScene(); // clear the sample model
+        mSeceneWidget->sceneLoaded();
         mFirstLoad = false;
     }
 
