@@ -24,15 +24,20 @@
 
 #include "OgreXML/OgreXMLMeshSerializer.h"
 
+#ifdef PROFILING
+
 #define CLOCK_LINENUM_CAT( name, ln ) name##ln
 #define CLOCK_LINENUM( name, ln ) CLOCK_LINENUM_CAT( name, ln )
-#define CLOCK_BEGIN CLOCK_LINENUM(t1, __LINE__)
-#define CLOCK_END   CLOCK_LINENUM(t2, __LINE__)
+#define CLOCK_BEGIN CLOCK_LINENUM(t1, __LINE__, begin_section)
+#define CLOCK_END   CLOCK_LINENUM(t2, __LINE__, end_section)
 #define PROFILE( f ) \
     clock_t CLOCK_BEGIN = clock(); \
     f; \
     clock_t CLOCK_END = clock(); \
     qDebug() << #f << ": Use" << float( CLOCK_END - CLOCK_BEGIN ) / CLOCKS_PER_SEC << "sec";
+#else
+    #define PROFILE( f ) f
+#endif
 
 
 bool operator<(const UniqueVertex& l, const UniqueVertex& r)

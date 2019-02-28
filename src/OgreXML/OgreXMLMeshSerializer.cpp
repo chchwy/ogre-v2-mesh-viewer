@@ -26,6 +26,7 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
+#include "stdafx.h"
 
 #include "OgreXMLMeshSerializer.h"
 #include "OgreSubMesh.h"

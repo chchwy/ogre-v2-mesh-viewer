@@ -17,16 +17,16 @@ HEADERS = \
     src/ogremanager.h \
     src/ogrewidget.h \
     src/lightwidget.h \
-    src/tiny_obj_loader.h \
     src/objimporter.h \
     src/cameramanager.h \
     src/objexporter.h \
     src/scopeguard.h \
     src/batchconversiondialog.h \
     src/loadfromfolderdialog.h \
-    src/OgreXML/OgreXMLMeshSerializer.h \
+    src/TinyObjLoader\tiny_obj_loader.h \
     src/TinyXML/tinyxml.h \
     src/TinyXML/tinystr.h \
+    src/OgreXML/OgreXMLMeshSerializer.h \
     src/OgreGLTF/Ogre_glTF.hpp \
     src/OgreGLTF/Ogre_glTF_common.hpp \
     src/OgreGLTF/Ogre_glTF_DLL.hpp \
