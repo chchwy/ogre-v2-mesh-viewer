@@ -9,15 +9,16 @@ A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 3. Set the path to Ogre sdk folder. You can either set an user-level `OGREHOME` environment variable, or set it directly in `ogre-v2-mesh-viewer.pro` line 9.
 4. Open `ogre-v2-mesh-viewer.pro` in QtCreator and presse `RUN`.
 
+[0]: https://www.qt.io/download-qt-installer "Qt download"
+
 ## TODO
 
 - [ ] Improve performance by converting obj data to ogre mesh directly. (Currently it uses mesh.xml as intermediate data format)
-- [x] Automatically generate normals if there are no normal vectors in obj
-- [x] glTF import
 - [ ] glTF export
 - [ ] Support DotScene
-
-[0]: https://www.qt.io/download-qt-installer "Qt download"
+- [ ] HLMS material editing
+- [x] Automatically generate normals if there are no normal vectors in obj
+- [x] glTF import
 
 ## Known issues
 
