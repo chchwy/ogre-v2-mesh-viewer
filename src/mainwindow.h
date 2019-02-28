@@ -66,6 +66,7 @@ private:
     void actionExportObj();
     void actionLoadFromFolder();
     void actionBatchConverter();
+    void actionResetCamera();
 
     OgreWidget* mOgreWidget = nullptr;
     OgreManager* mOgreManager = nullptr;

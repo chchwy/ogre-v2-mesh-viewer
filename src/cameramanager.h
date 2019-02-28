@@ -62,6 +62,8 @@ public:
     CameraManager(Ogre::Camera* cam);
     ~CameraManager();
 
+    void reset();
+
     void setCamera(Ogre::Camera* cam);
     Ogre::Camera* getCamera() { return mCamera; }
 
@@ -102,7 +104,7 @@ public:
     void mouseRelease(const QMouseEvent* evt); // Only applies for orbit style.
 
     void rotate(int x, int y);
-    void pan(int x, int y);
+    void pan(float x, float y);
 
 private:
     Ogre::Camera* mCamera = nullptr;
@@ -125,6 +127,6 @@ private:
     int mMouseWheelDelta = 0;
 
     View mCurrentView = VI_USER;
-    CameraMode mMode = CM_FLY;
+    CameraMode mMode = CM_BLENDER;
 };
 

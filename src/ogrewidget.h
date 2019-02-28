@@ -58,6 +58,8 @@ public:
     void createRenderWindow(OgreManager* ogreManager);
     void createCompositor();
 
+    CameraManager* cameraManager() { return mCameraManager; }
+
     int id() { return mId; }
     void setId(int id) { mId = id; }
 

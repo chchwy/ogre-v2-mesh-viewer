@@ -49,6 +49,7 @@
 #include "scenetreewidget.h"
 #include "transformwidget.h"
 #include "inspector.h"
+#include "cameramanager.h"
 
 
 #define _STR(x) #x
@@ -87,6 +88,7 @@ MainWindow::MainWindow()
     connect(ui->actionBatchConverter, &QAction::triggered, this, &MainWindow::actionBatchConverter);
     connect(ui->actionLoad_From_Folder, &QAction::triggered, this, &MainWindow::actionLoadFromFolder);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
+    connect(ui->actionResetCamera, &QAction::triggered, this, &MainWindow::actionResetCamera);
 
     // setup the timer
     mTimer = new QTimer(this);
@@ -352,7 +354,14 @@ void MainWindow::actionLoadFromFolder()
 
 void MainWindow::actionBatchConverter()
 {
+    return;
+
     BatchConversionDialog dialog;
     dialog.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dialog.exec();
+}
+
+void MainWindow::actionResetCamera()
+{
+    mOgreWidget->cameraManager()->reset();
 }

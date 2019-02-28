@@ -12,13 +12,24 @@ CameraManager::CameraManager(Ogre::Camera* cam)
 CameraManager::~CameraManager()
 {}
 
+void CameraManager::reset()
+{
+    mCameraNode->setPosition(0, 3, 0);
+    mCameraNode->resetOrientation();
+    mCamera->setPosition(Ogre::Vector3(0, 0, 10));
+}
+
 void CameraManager::setCamera(Ogre::Camera* cam)
 {
     mCamera = cam;
-    mCameraNode = mCamera->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     mCamera->detachFromParent();
+    
+    mCameraNode = mCamera->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     mCameraNode->attachObject(mCamera);
-    mCamera->setPosition(Ogre::Vector3(0, 5, 10));
+    mCameraNode->setPosition(0, 3, 0);
+    mCameraNode->resetOrientation();
+
+    mCamera->setPosition(Ogre::Vector3(0, 0, 10));
     mCamera->lookAt(Ogre::Vector3(0, 0, 0));
     mCamera->setNearClipDistance(0.1f);
     mCamera->setFarClipDistance(10000.0f);
@@ -68,7 +79,6 @@ void CameraManager::setMode(CameraMode mode)
 {
     if (mMode != CM_BLENDER && mode == CM_BLENDER)
     {
-        //qDebug() << "Target=" << (void*)mTarget;
         setTarget(mTarget ? mTarget : mCamera->getSceneManager()->getRootSceneNode());
         setYawPitchDist(Ogre::Degree(0), Ogre::Degree(15), 150);
     }
@@ -87,11 +97,7 @@ void CameraManager::setMode(CameraMode mode)
 
 void CameraManager::setProjectionType(Ogre::ProjectionType pt)
 {
-    if (pt == Ogre::PT_ORTHOGRAPHIC)
-    {
-        /// @todo: Make orthographic projection work properly.
-    }
-    else if (pt == Ogre::PT_PERSPECTIVE)
+    if (pt == Ogre::PT_PERSPECTIVE)
     {
         mCamera->setCustomProjectionMatrix(false);
     }
@@ -314,7 +320,7 @@ void CameraManager::mouseWheel(const QWheelEvent* evt)
     mMouseWheelDelta = evt->delta();
     //qDebug() << (uint64_t)mCamera << ", " << (uint64_t)mTarget;
     mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
-    mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0008f * mDistFromTarget));
+    mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0004f * mDistFromTarget));
 }
 
 void CameraManager::mousePress(const QMouseEvent* evt)
@@ -345,15 +351,17 @@ void CameraManager::rotate(int x, int y)
     mCameraNode->pitch(Ogre::Degree(-y * 0.4f));
 }
 
-void CameraManager::pan(int x, int y)
+void CameraManager::pan(float x, float y)
 {
     Ogre::Vector3 transVector(-x, y, 0);
     if (mTarget)
     {
         mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
+
         if (mTarget->numAttachedObjects() > 0 && mTarget->getAttachedObject(0))
             transVector *= mTarget->getAttachedObject(0)->getWorldRadius() * (mDistFromTarget / 10000.0f);
-        //transVector *= mTarget->getAttachedObject(0)->getBoundingRadius() * (mDistFromTarget / 10000.0f);
+        else
+            transVector *= (mDistFromTarget / 500.f);
     }
     mCameraNode->translate(transVector, Ogre::Node::TS_LOCAL);
 }
