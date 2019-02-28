@@ -335,11 +335,13 @@ void MainWindow::actionLoadFromFolder()
     QString initialPath = settings.value("actionLoadFromFolder", mUserDocumentPath).toString();
     QString folder = QFileDialog::getExistingDirectory(this, "Open a folder", initialPath);
 
-    if (!folder.isEmpty())
+    if (folder.isEmpty())
     {
-        settings.setValue("actionLoadFromFolder", folder);
-        settings.sync();
+        return;
     }
+
+    settings.setValue("actionLoadFromFolder", folder);
+    settings.sync();
 
     LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this, mOgreManager);
     dialog->setSourceFolder(folder);
