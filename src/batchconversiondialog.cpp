@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "batchconversiondialog.h"
 #include "ui_batchconversiondialog.h"
 

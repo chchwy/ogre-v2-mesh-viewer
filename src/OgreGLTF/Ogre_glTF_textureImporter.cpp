@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Ogre_glTF_textureImporter.hpp"
 #include "Ogre_glTF_common.hpp"
 #include <OgreLogManager.h>

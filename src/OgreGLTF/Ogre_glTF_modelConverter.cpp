@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Ogre_glTF_modelConverter.hpp"
 #include "Ogre_glTF_common.hpp"
 #include <OgreMesh2.h>

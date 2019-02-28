@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Ogre_glTF_OgreResource.hpp"
 #include "Ogre_glTF.hpp"
 

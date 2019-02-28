@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Ogre_glTF_OgrePlugin.hpp"
 
 Ogre_glTF::glTFLoaderPlugin* gPluginInstaller = nullptr;

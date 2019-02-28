@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "lightwidget.h"
 #include "ui_lightwidget.h"
 
