@@ -115,6 +115,11 @@ bool MeshLoader::loadOgreMesh(QString filePath)
     if (item == nullptr)
         return false;
 
+    if (item->getName().empty())
+    {
+        item->setName(sNewMeshFile.toStdString());
+    }
+
     attachMeshToSceneTree(item);
     return true;
 }
