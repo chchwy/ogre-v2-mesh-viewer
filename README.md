@@ -2,6 +2,8 @@
 
 A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
 
+![screenshot](images/screenshot.png)
+
 ## How to compile
 
 1. Have Qt 5 framework installed (recommend Qt 5.6+), you can download it [here][0].
