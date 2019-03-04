@@ -1,9 +1,9 @@
 #include "transformwidget.h"
 #include "ui_transformwidget.h"
 
-TransformWidget::TransformWidget(QWidget* parent) : QWidget(parent),
-    ui(new Ui::TransformWidget)
+TransformWidget::TransformWidget(QWidget* parent) : QWidget(parent)
 {
+    ui = new Ui::TransformWidget;
     ui->setupUi(this);
 
     auto doubleChanged = qOverload<double>(&QDoubleSpinBox::valueChanged);
@@ -40,7 +40,7 @@ void TransformWidget::sceneNodeSelected(Ogre::SceneNode* node)
     ui->tx->setValue(pos.x);
     ui->ty->setValue(pos.y);
     ui->tz->setValue(pos.z);
-    
+
     const Ogre::Quaternion quaternion = node->getOrientation();
     Ogre::Matrix3 matrix3;
     quaternion.ToRotationMatrix(matrix3);
@@ -69,7 +69,7 @@ void TransformWidget::positionChanged()
 {
     if (mCurrentNode)
     {
-        mCurrentNode->setPosition(Ogre::Real(ui->tx->value()), 
+        mCurrentNode->setPosition(Ogre::Real(ui->tx->value()),
                                   Ogre::Real(ui->ty->value()),
                                   Ogre::Real(ui->tz->value()));
     }

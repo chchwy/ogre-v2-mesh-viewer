@@ -93,9 +93,9 @@ void OgreWidget::createRenderWindow(OgreManager* ogreManager)
     parameters["vsync"] = cfgOpts["VSync"].currentValue;
 
     mOgreRenderWindow = root->createRenderWindow("MainRenderWin",
-                                                  width(), height(),
-                                                  false, // full screen
-                                                  &parameters);
+                                                 width(), height(),
+                                                 false, // full screen
+                                                 &parameters);
     mOgreRenderWindow->setVisible(true);
 
     // Determine whether the GL context can be reused

@@ -36,7 +36,7 @@
     clock_t CLOCK_END = clock(); \
     qDebug() << #f << ": Use" << float( CLOCK_END - CLOCK_BEGIN ) / CLOCKS_PER_SEC << "sec";
 #else
-    #define PROFILE( f ) f
+#define PROFILE( f ) f
 #endif
 
 
@@ -45,7 +45,7 @@ bool operator<(const UniqueVertex& l, const UniqueVertex& r)
     return std::tie(l.v, l.n, l.t) < std::tie(r.v, r.n, r.t);
 }
 
-Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
+Ogre::HlmsPbsDatablock* importMaterial(const tinyobj::material_t& srcMtl)
 {
     Ogre::Root& root = Ogre::Root::getSingleton();
     Ogre::HlmsManager* hlmsManager = root.getHlmsManager();
@@ -57,7 +57,7 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
 
     std::string strBlockName(srcMtl.name);
     Ogre::HlmsPbsDatablock* datablock = nullptr;
-    
+
     try
     {
         datablock = static_cast<Ogre::HlmsPbsDatablock*>(
@@ -86,7 +86,7 @@ Ogre::HlmsPbsDatablock* importMaterial( const tinyobj::material_t& srcMtl )
     datablock->setSpecular(Ogre::Vector3(srcMtl.specular[0], srcMtl.specular[1], srcMtl.specular[2]));
     datablock->setRoughness(srcMtl.roughness);
     datablock->setMetalness(srcMtl.metallic);
-    
+
     if (!srcMtl.diffuse_texname.empty())
     {
         auto tex = hlmsTextureManager->createOrRetrieveTexture(srcMtl.diffuse_texname, Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
@@ -141,7 +141,7 @@ bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
     QFileInfo info(sObjFile);
 
     QProgressDialog progress(nullptr, Qt::Dialog | Qt::WindowTitleHint);
-    progress.setLabelText( QString("Converting %1...").arg(info.fileName()));
+    progress.setLabelText(QString("Converting %1...").arg(info.fileName()));
     progress.setRange(0, 100);
     progress.setModal(true);
     progress.show();
@@ -159,7 +159,7 @@ bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
 
     progress.setValue(10);
     QApplication::processEvents();
-    
+
     for (tinyobj::material_t& mtl : mObjMaterials)
     {
         if (mImportedMaterials.count(mtl.name) == 0)
@@ -168,7 +168,7 @@ bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
             mImportedMaterials.insert(mtl.name);
         }
     }
-    
+
     progress.setValue(20);
     QApplication::processEvents();
 
@@ -422,14 +422,14 @@ ObjImporter::OgreDataSubMesh ObjImporter::convertObjMeshToOgreData(const tinyobj
         int v2 = mUniqueVerticesIndexMap.at(UniqueVertex(mesh01.indices[f + 1]));
         int v3 = mUniqueVerticesIndexMap.at(UniqueVertex(mesh01.indices[f + 2]));
 
-        mout.faces.push_back(OgreDataFace{v1, v2, v3});
+        mout.faces.push_back(OgreDataFace{ v1, v2, v3 });
     }
 
     // convert vertex buffer
     for (int k = 0; k < mUniqueVerticesVec.size(); ++k)
     {
         UniqueVertex& uniqueV = mUniqueVerticesVec[k];
-        
+
         OgreDataVertex v1;
         {
             float posX = mObjAttrib.vertices[uniqueV.v * 3 + 0];
@@ -494,7 +494,7 @@ void ObjImporter::importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshP
 
 void AssignVector(float f[3], const Ogre::Vector3& v)
 {
-    f[0] = v.x; 
+    f[0] = v.x;
     f[1] = v.y;
     f[2] = v.z;
 }
@@ -503,7 +503,7 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
 {
     struct NormalSum
     {
-        Ogre::Vector3 normal{0, 0, 0};
+        Ogre::Vector3 normal{ 0, 0, 0 };
         int count = 0;
     };
 
@@ -525,7 +525,7 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
         //AssignVector(submesh.vertices[f.index[0]].normal, theNormal);
         //AssignVector(submesh.vertices[f.index[1]].normal, theNormal);
         //AssignVector(submesh.vertices[f.index[2]].normal, theNormal);
-        
+
         normalSums[f.index[0]].normal += theNormal;
         normalSums[f.index[0]].count += 1;
 
@@ -546,7 +546,6 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
         AssignVector(submesh.vertices[i].normal, normalSums[i].normal);
     }
 }
-
 
 void ObjImporter::convertFromZUpToYUp(OgreDataSubMesh& submesh)
 {

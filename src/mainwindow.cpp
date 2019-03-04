@@ -154,7 +154,7 @@ void MainWindow::createDockWindows()
     dockWidget->setWidget(mLightWidget);
     addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
     */
-    
+
     mSeceneWidget = new SceneTreeWidget(this, mOgreManager);
     QDockWidget* sceneTreeDock = new QDockWidget("Scene Tree", this);
     sceneTreeDock->setWidget(mSeceneWidget);
@@ -208,7 +208,7 @@ void MainWindow::actionOpen()
     if (sMeshFileName.endsWith(".obj"))
     {
         QMessageBox::StandardButton ret = QMessageBox::question(this, "Convert Z-up into Y-up",
-                                                                 "Do you want to do Z-up to Y-up conversion?");
+                                                                "Do you want to do Z-up to Y-up conversion?");
         bConversionZupToYup = (ret == QMessageBox::Yes);
     }
 

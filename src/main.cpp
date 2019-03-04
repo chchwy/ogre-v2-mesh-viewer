@@ -23,13 +23,13 @@
 #include <QThread>
 #include "mainwindow.h"
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
-	QApplication app( argc, argv );
-	MainWindow mainWin;
-	
+    QApplication app(argc, argv);
+    MainWindow mainWin;
+
     mainWin.show();
     mainWin.startTimer();
 
-	return app.exec();
+    return app.exec();
 }

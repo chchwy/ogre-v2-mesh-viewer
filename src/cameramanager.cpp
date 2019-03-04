@@ -23,7 +23,7 @@ void CameraManager::setCamera(Ogre::Camera* cam)
 {
     mCamera = cam;
     mCamera->detachFromParent();
-    
+
     mCameraNode = mCamera->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     mCameraNode->attachObject(mCamera);
     mCameraNode->setPosition(0, 3, 0);
