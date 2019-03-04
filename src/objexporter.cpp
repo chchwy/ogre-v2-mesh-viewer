@@ -62,7 +62,7 @@ bool ObjExporter::writeToFile(Ogre::Mesh* srcMesh, const QString& sOutFile)
     PROFILE(convertToOgreData(sTempXmlFile));
 
     QFileInfo info(sOutFile);
-    QString sMtlFile = info.absoluteDir().filePath( info.baseName() + ".mtl" );
+    QString sMtlFile = info.absoluteDir().filePath(info.baseName() + ".mtl");
     PROFILE(writeMtlFile(srcMesh, sMtlFile));
     PROFILE(writeObjFile(sOutFile, info.baseName() + ".mtl"));
 
@@ -203,7 +203,7 @@ bool ObjExporter::writeObjFile(const QString& sOutFile, const QString& sMtlFileN
     QTextStream fout(&file);
 
     fout << "mtllib " << sMtlFileName << "\n";
-        
+
     for (int i = 0; i < mSubmeshes.size(); ++i)
     {
         OgreDataSubMesh& mesh01 = mSubmeshes[i];
@@ -213,9 +213,9 @@ bool ObjExporter::writeObjFile(const QString& sOutFile, const QString& sMtlFileN
             fout << "o exportMesh001\n";
 
         // write vertices
-        for (const OgreDataVertex& v : mesh01.vertices )
+        for (const OgreDataVertex& v : mesh01.vertices)
         {
-            
+
             QString sout;
             fout << "v " << qSetRealNumberPrecision(6)
                 << v.position[0] << " "
@@ -245,16 +245,16 @@ bool ObjExporter::writeObjFile(const QString& sOutFile, const QString& sMtlFileN
         {
             fout << "f ";
             fout << (f.index[0] + indexOffset) << "/"
-                 << (f.index[0] + indexOffset) << "/"
-                 << (f.index[0] + indexOffset) << " ";
+                << (f.index[0] + indexOffset) << "/"
+                << (f.index[0] + indexOffset) << " ";
 
             fout << (f.index[1] + indexOffset) << "/"
-                 << (f.index[1] + indexOffset) << "/"
-                 << (f.index[1] + indexOffset) << " ";
+                << (f.index[1] + indexOffset) << "/"
+                << (f.index[1] + indexOffset) << " ";
 
             fout << (f.index[2] + indexOffset) << "/"
-                 << (f.index[2] + indexOffset) << "/"
-                 << (f.index[2] + indexOffset) << "\n";
+                << (f.index[2] + indexOffset) << "/"
+                << (f.index[2] + indexOffset) << "\n";
         }
 
         fout.flush();
@@ -316,7 +316,7 @@ bool ObjExporter::writeMtlFile(Ogre::Mesh* mesh01, const QString& sOutFile)
         /*
         Ogre::TexturePtr diffuseTex = datablock->getTexture(Ogre::PBSM_DIFFUSE);
         writeTexture(diffuseTex.get(), sOutFolder + "diffuse.png");
-        
+
         Ogre::TexturePtr normalTex = datablock->getTexture(Ogre::PBSM_NORMAL);
         writeTexture(normalTex.get(), sOutFolder + "normal.png");
 
@@ -326,7 +326,7 @@ bool ObjExporter::writeMtlFile(Ogre::Mesh* mesh01, const QString& sOutFile)
         Ogre::TexturePtr metallicTex = datablock->getTexture(Ogre::PBSM_METALLIC);
         writeTexture(metallicTex.get(), sOutFolder + "metallic.png");
         */
-        
+
         float trans = datablock->getTransparency();
         fout << QString::asprintf("d  %.4f\n", trans);
         fout << QString::asprintf("Tr %.4f\n", (1.0 - trans));
@@ -372,7 +372,7 @@ void ObjExporter::normalize(OgreDataVertex& v)
         v.normal[2] = 0.0f;
         return;
     }
-    
+
     v.normal[0] = v3D.x();
     v.normal[1] = v3D.y();
     v.normal[2] = v3D.z();

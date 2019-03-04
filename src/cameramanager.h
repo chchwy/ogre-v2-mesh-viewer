@@ -98,7 +98,7 @@ public:
     void mousePress(const QMouseEvent* evt);
 
     /*-----------------------------------------------------------------------------
-    | Processes mouse releases. 
+    | Processes mouse releases.
     | Left button is for orbiting, and right button is for zooming.
     -----------------------------------------------------------------------------*/
     void mouseRelease(const QMouseEvent* evt); // Only applies for orbit style.

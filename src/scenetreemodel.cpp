@@ -19,10 +19,10 @@ QVariant SceneTreeModel::headerData(int section, Qt::Orientation orientation, in
 {
     if (section == 0)
         return QString("Node");
-    
+
     //if (section == 1)
     //    return QString("Summary");
-        
+
     return QVariant();
 }
 
@@ -61,7 +61,7 @@ QModelIndex SceneTreeModel::parent(const QModelIndex& index) const
 
     if (parentNode == mRootNode)
         return QModelIndex();
-    
+
     //qDebug() << "create parent index";
     return createIndex(getSceneNodeRow(parentNode), 0, (void*)parentNode);
 }

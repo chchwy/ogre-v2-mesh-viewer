@@ -5,9 +5,9 @@
 #include "ogremanager.h"
 
 
-SceneTreeWidget::SceneTreeWidget(QWidget* parent, OgreManager* ogre) : QWidget(parent),
-    ui(new Ui::SceneTreeWidget)
+SceneTreeWidget::SceneTreeWidget(QWidget* parent, OgreManager* ogre) : QWidget(parent)
 {
+    ui = new Ui::SceneTreeWidget;
     ui->setupUi(this);
 
     mOgre = ogre;

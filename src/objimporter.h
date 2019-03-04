@@ -50,7 +50,7 @@ class ObjImporter
 public:
     ObjImporter();
 
-    bool import(const QString& sObjFile, const QString& sOgreMeshFile );
+    bool import(const QString& sObjFile, const QString& sOgreMeshFile);
     void setZUpToYUp(bool b) { mZUpToYUp = b; }
 
 private:

@@ -35,7 +35,7 @@ bool MeshLoader::load(QString filePath)
         qDebug() << "File doesn't exist:" << filePath;
         return false;
     }
-    
+
     if (filePath.endsWith(".mesh.xml"))
     {
         return loadOgreMeshXML(filePath);
@@ -87,7 +87,7 @@ bool MeshLoader::loadOgreMeshXML(QString filePath)
 
     Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
 
-    QString strV2Name = meshName +"_xml";
+    QString strV2Name = meshName + "_xml";
     Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "ViewerResc");
     v2Mesh->importV1(meshV1Ptr.get(), true, true, true);
     Ogre::Item* item = mOgre->sceneManager()->createItem(v2Mesh);
@@ -99,7 +99,7 @@ bool MeshLoader::loadOgreMeshXML(QString filePath)
 
 bool MeshLoader::loadOgreMesh(QString filePath)
 {
-     QFileInfo info(filePath);
+    QFileInfo info(filePath);
 
     std::string sNewResourceLocation = info.absolutePath().toStdString();
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sNewResourceLocation, "FileSystem", "ViewerResc");
@@ -190,7 +190,7 @@ Ogre::Item* MeshLoader::loadOgreV2(QString meshName)
         Ogre::MeshPtr mesh = meshMgr.create(meshName.toStdString(), "ViewerResc");
         item = mOgre->sceneManager()->createItem(mesh);
     }
-    catch(Ogre::Exception& e) {}
+    catch (Ogre::Exception& e) {}
     return item;
 }
 
