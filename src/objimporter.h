@@ -6,6 +6,8 @@
 #include "tiny_obj_loader.h"
 
 class QXmlStreamWriter;
+class OgreManager;
+
 
 struct UniqueVertex
 {
@@ -48,7 +50,7 @@ class ObjImporter
     };
 
 public:
-    ObjImporter();
+    ObjImporter(OgreManager* ogre);
 
     bool import(const QString& sObjFile, const QString& sOgreMeshFile);
     void setZUpToYUp(bool b) { mZUpToYUp = b; }
@@ -70,8 +72,8 @@ private:
 private:
     // the results of tinyobj loader
     tinyobj::attrib_t mObjAttrib;
-    std::vector<tinyobj::shape_t> mObjShapes;
-    std::vector<tinyobj::material_t> mObjMaterials;
+    std::vector<tinyobj::shape_t> mTinyObjShapes;
+    std::vector<tinyobj::material_t> mTinyObjMaterials;
 
     // re-hash the obj indexes
     std::vector<UniqueVertex> mUniqueVerticesVec;
@@ -81,6 +83,8 @@ private:
     std::vector<OgreDataSubMesh> mOgreSubMeshes;
 
     bool mZUpToYUp = true;
+
+    OgreManager* mOgre = nullptr;
 };
 
 #endif // OBJIMPORTER_H

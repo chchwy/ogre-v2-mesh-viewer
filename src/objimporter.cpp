@@ -133,8 +133,10 @@ Ogre::HlmsPbsDatablock* importMaterial(const tinyobj::material_t& srcMtl)
     return datablock;
 }
 
-ObjImporter::ObjImporter()
-{}
+ObjImporter::ObjImporter(OgreManager* ogre)
+{
+    mOgre = ogre;
+}
 
 bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
 {
@@ -149,9 +151,8 @@ bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
 
     std::string sError;
     std::string sMtlBasePath = info.absolutePath().toStdString() + "/";
-    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mObjShapes, &mObjMaterials, &sError, sObjFile.toStdString().c_str(), sMtlBasePath.c_str(), true));
-    Q_ASSERT(b);
-
+    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mTinyObjShapes, &mTinyObjMaterials, &sError, sObjFile.toStdString().c_str(), sMtlBasePath.c_str(), true));
+    
     if (!sError.empty())
     {
         qDebug() << "Error:" << sError.c_str();
@@ -160,7 +161,7 @@ bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
     progress.setValue(10);
     QApplication::processEvents();
 
-    for (tinyobj::material_t& mtl : mObjMaterials)
+    for (tinyobj::material_t& mtl : mTinyObjMaterials)
     {
         if (mImportedMaterials.count(mtl.name) == 0)
         {
@@ -356,10 +357,10 @@ void ObjImporter::convertToOgreData()
 {
     mOgreSubMeshes.clear();
 
-    for (int s = 0; s < mObjShapes.size(); ++s)
+    for (int s = 0; s < mTinyObjShapes.size(); ++s)
     {
-        tinyobj::mesh_t& mesh01 = mObjShapes[s].mesh;
-        qDebug() << "    Converting Mesh=" << mObjShapes[s].name.c_str();
+        tinyobj::mesh_t& mesh01 = mTinyObjShapes[s].mesh;
+        qDebug() << "    Converting Mesh=" << mTinyObjShapes[s].name.c_str();
         qDebug() << "      face count=" << mesh01.indices.size() / 3;
 
         // build indexes
@@ -395,9 +396,9 @@ void ObjImporter::convertToOgreData()
 
         if (mesh01.material_ids[0] >= 0)
         {
-            subMesh.material = mObjMaterials[mesh01.material_ids[0]].name;
+            subMesh.material = mTinyObjMaterials[mesh01.material_ids[0]].name;
         }
-        subMesh.meshName = mObjShapes[s].name;
+        subMesh.meshName = mTinyObjShapes[s].name;
 
         mOgreSubMeshes.push_back(subMesh);
 
