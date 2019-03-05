@@ -88,13 +88,12 @@ void BatchConversionDialog::ConvertButtonClicked()
     {
         QString inFile = ui->FileListWidget->item(i)->text();
         QString outFile = sOutFolder + "/" + QFileInfo(inFile).completeBaseName() + ".mesh";
-
+        /*
         ObjImporter importer;
         importer.setZUpToYUp(bZupToYup);
-
         bool b = importer.import(inFile, outFile);
-
         qDebug() << "Obj=" << inFile << ", Success=" << b;
+        */
     }
 
     QMessageBox::information(this, "Batch conversion", "Conversion done.");

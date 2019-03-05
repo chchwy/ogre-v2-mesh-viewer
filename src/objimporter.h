@@ -8,14 +8,19 @@
 class QXmlStreamWriter;
 class OgreManager;
 
+namespace Ogre
+{
+class HlmsPbsDatablock;
+}
 
-struct UniqueVertex
+
+struct UniqueIndex
 {
     int v = 0;
     int n = 0;
     int t = 0;
 
-    UniqueVertex(const tinyobj::index_t& idx)
+    UniqueIndex(const tinyobj::index_t& idx)
     {
         v = idx.vertex_index;
         n = idx.normal_index;
@@ -23,17 +28,15 @@ struct UniqueVertex
     }
 };
 
+struct OgreDataVertex
+{
+    float position[3];
+    float normal[3];
+    float texcoord[2];
+};
 
 class ObjImporter
 {
-    // intermediate data containers during the conversion
-    struct OgreDataVertex
-    {
-        float position[3];
-        float normal[3];
-        float texcoord[2];
-    };
-
     struct OgreDataFace
     {
         int index[3];
@@ -44,7 +47,7 @@ class ObjImporter
         std::string meshName;
         std::string material;
         std::vector<OgreDataVertex> vertices;
-        std::vector<OgreDataFace> faces;
+        std::vector<int32_t> indexes;
 
         bool bNeedGenerateNormals = false;
     };
@@ -52,22 +55,17 @@ class ObjImporter
 public:
     ObjImporter(OgreManager* ogre);
 
-    bool import(const QString& sObjFile, const QString& sOgreMeshFile);
+    Ogre::MeshPtr import(const QString& sObjFile);
     void setZUpToYUp(bool b) { mZUpToYUp = b; }
 
 private:
-    void writeMeshXML(const QString& sOutFile);
-    void writeXMLOneSubMesh(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
-    void writeXMLFaces(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
-    void writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01);
-
+    Ogre::MeshPtr createOgreMeshes();
     void convertToOgreData();
-    OgreDataSubMesh convertObjMeshToOgreData(const tinyobj::mesh_t&);
+    OgreDataVertex getVertex(const tinyobj::index_t&);
     
-    void importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr);
     void generateNormalVectors(OgreDataSubMesh& submesh);
-
     void convertFromZUpToYUp(OgreDataSubMesh& submesh);
+    Ogre::HlmsPbsDatablock* importMaterial(const tinyobj::material_t& srcMtl);
 
 private:
     // the results of tinyobj loader
@@ -76,13 +74,15 @@ private:
     std::vector<tinyobj::material_t> mTinyObjMaterials;
 
     // re-hash the obj indexes
-    std::vector<UniqueVertex> mUniqueVerticesVec;
-    std::map<UniqueVertex, int> mUniqueVerticesIndexMap;
+    std::vector<OgreDataVertex> mVerticesVec;
+    std::vector<int32_t> mIndexesVec;
 
     std::set<std::string> mImportedMaterials;
     std::vector<OgreDataSubMesh> mOgreSubMeshes;
 
     bool mZUpToYUp = true;
+
+    QString mFileName;
 
     OgreManager* mOgre = nullptr;
 };

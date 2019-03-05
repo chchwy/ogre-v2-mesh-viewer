@@ -147,14 +147,19 @@ bool MeshLoader::loadWavefrontObj(QString filePath)
     QFileInfo info(filePath);
     QString sOutFile = info.absolutePath() + "/" + info.baseName() + ".mesh";
 
-    ObjImporter objImporter;
+    ObjImporter objImporter(mOgre);
     objImporter.setZUpToYUp(mZupToYup);
-    bool ok = objImporter.import(filePath, sOutFile);
+    Ogre::MeshPtr mesh = objImporter.import(filePath);
 
-    if (!ok)
+    if (!mesh)
         qDebug() << "Failed to import obj:" << filePath;
 
-    return loadOgreMesh(sOutFile);
+    Ogre::Item* item = mOgre->sceneManager()->createItem(mesh);
+    item->setName(mesh->getName());
+    attachMeshToSceneTree(item);
+
+    //return loadOgreMesh(sOutFile);
+    return true;
 }
 
 Ogre::Item* MeshLoader::loadOgreV1(QString meshName)

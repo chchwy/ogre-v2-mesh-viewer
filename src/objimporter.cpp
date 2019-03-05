@@ -15,6 +15,7 @@
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreMesh2Serializer.h"
+#include "OgreSubMesh2.h"
 
 #include "OgreHlmsManager.h"
 #include "OgreHlmsTextureManager.h"
@@ -40,12 +41,359 @@
 #endif
 
 
-bool operator<(const UniqueVertex& l, const UniqueVertex& r)
+bool operator<(const UniqueIndex& l, const UniqueIndex& r)
 {
     return std::tie(l.v, l.n, l.t) < std::tie(r.v, r.n, r.t);
 }
 
-Ogre::HlmsPbsDatablock* importMaterial(const tinyobj::material_t& srcMtl)
+bool operator==(const OgreDataVertex& l, const OgreDataVertex& r)
+{
+    return
+        l.position[0] == r.position[0] &&
+        l.position[1] == r.position[1] &&
+        l.position[2] == r.position[2] &&
+        l.normal[0] == r.normal[0] &&
+        l.normal[1] == r.normal[1] &&
+        l.normal[2] == r.normal[2] &&
+        l.texcoord[0] == r.texcoord[0] &&
+        l.texcoord[1] == r.texcoord[1];
+}
+
+namespace std
+{
+template<> struct hash<OgreDataVertex>
+{
+    size_t operator()(OgreDataVertex const& vertex) const
+    {
+        size_t ret = hash<float>()(vertex.position[0]);
+        ret = ret ^ (hash<float>()(vertex.position[1]) << 1);
+        ret = ret ^ (hash<float>()(vertex.position[2]) >> 1);
+        ret = ret << 1;
+
+        ret = ret ^ (hash<float>()(vertex.normal[0]) << 1);
+        ret = ret ^ (hash<float>()(vertex.normal[1]) >> 1);
+        ret = ret ^ (hash<float>()(vertex.normal[2]) << 1);
+        ret = ret >> 1;
+
+        ret = ret ^ (hash<float>()(vertex.texcoord[0]) << 1);
+        ret = ret ^ (hash<float>()(vertex.texcoord[1]) >> 1);
+
+        return ret;
+    }
+};
+}
+
+ObjImporter::ObjImporter(OgreManager* ogre)
+{
+    mOgre = ogre;
+}
+
+Ogre::MeshPtr ObjImporter::import(const QString& sObjFile)
+{
+    QFileInfo info(sObjFile);
+    mFileName = info.fileName();
+
+    QProgressDialog progress(nullptr, Qt::Dialog | Qt::WindowTitleHint);
+    progress.setLabelText(QString("Converting %1...").arg(info.fileName()));
+    progress.setRange(0, 100);
+    progress.setModal(true);
+    progress.show();
+    QApplication::processEvents();
+
+    std::string sError;
+    std::string sMtlBasePath = info.absolutePath().toStdString() + "/";
+    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mTinyObjShapes, &mTinyObjMaterials, &sError, sObjFile.toStdString().c_str(), sMtlBasePath.c_str(), true));
+    
+    if (!sError.empty())
+    {
+        qDebug() << "Error:" << sError.c_str();
+    }
+
+    progress.setValue(10);
+    QApplication::processEvents();
+
+    for (tinyobj::material_t& mtl : mTinyObjMaterials)
+    {
+        if (mImportedMaterials.count(mtl.name) == 0)
+        {
+            importMaterial(mtl);
+            mImportedMaterials.insert(mtl.name);
+        }
+    }
+
+    progress.setValue(30);
+    QApplication::processEvents();
+
+    convertToOgreData();
+
+    progress.setValue(40);
+    QApplication::processEvents();
+
+    Ogre::MeshPtr mesh = createOgreMeshes();
+
+    progress.setValue(80);
+    QApplication::processEvents();
+
+    return mesh;
+}
+
+OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
+{
+    OgreDataVertex v1;
+    {
+        float posX = mObjAttrib.vertices[index.vertex_index * 3 + 0];
+        float posY = mObjAttrib.vertices[index.vertex_index * 3 + 1];
+        float posZ = mObjAttrib.vertices[index.vertex_index * 3 + 2];
+
+        v1.position[0] = posX;
+        v1.position[1] = posY;
+        v1.position[2] = posZ;
+
+        if (index.normal_index != -1)
+        {
+            float normalX = mObjAttrib.normals[index.normal_index * 3 + 0];
+            float normalY = mObjAttrib.normals[index.normal_index * 3 + 1];
+            float normalZ = mObjAttrib.normals[index.normal_index * 3 + 2];
+            v1.normal[0] = normalX;
+            v1.normal[1] = normalY;
+            v1.normal[2] = normalZ;
+        }
+        else
+        {
+            //v1.bNeedGenerateNormals = true;
+        }
+
+        if (index.texcoord_index != -1)
+        {
+            float texCoordU = mObjAttrib.texcoords[index.texcoord_index * 2 + 0];
+            float texCoordV = mObjAttrib.texcoords[index.texcoord_index * 2 + 1];
+            v1.texcoord[0] = texCoordU;
+            v1.texcoord[1] = 1.0 - texCoordV;
+        }
+        else
+        {
+            v1.texcoord[0] = 0;
+            v1.texcoord[1] = 0;
+        }
+    }
+    return v1;
+}
+
+ Ogre::MeshPtr ObjImporter::createOgreMeshes()
+{
+    Ogre::Root& root = Ogre::Root::getSingleton();
+    Ogre::RenderSystem* renderSystem = root.getRenderSystem();
+    Ogre::VaoManager* vaoManager = renderSystem->getVaoManager();
+
+    //Create the mesh
+    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(
+        mFileName.toStdString(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+    //Create one submesh
+    for (const OgreDataSubMesh& m : mOgreSubMeshes)
+    {
+        Ogre::SubMesh* subMesh = mesh->createSubMesh();
+
+        //Vertex declaration
+        Ogre::VertexElement2Vec vertexElements
+        {
+            Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_POSITION),
+            Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_NORMAL),
+            Ogre::VertexElement2(Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES)
+        };
+
+        //For immutable buffers, it is mandatory that cubeVertices is not a null pointer.
+        auto vBuffer = reinterpret_cast<OgreDataVertex*>(OGRE_MALLOC_SIMD(sizeof(OgreDataVertex) * m.vertices.size(),
+                                                                          Ogre::MEMCATEGORY_GEOMETRY));
+
+        //Fill the data.
+        memcpy(vBuffer, m.vertices.data(), sizeof(OgreDataVertex) * m.vertices.size());
+        Ogre::VertexBufferPacked* vertexBuffer = 0;
+        try
+        {
+            //Create the actual vertex buffer.
+            vertexBuffer = vaoManager->createVertexBuffer(vertexElements, m.vertices.size(),
+                                                          Ogre::BT_IMMUTABLE,
+                                                          vBuffer, true);
+        }
+        catch (Ogre::Exception &e)
+        {
+            OGRE_FREE_SIMD(vertexBuffer, Ogre::MEMCATEGORY_GEOMETRY);
+            vertexBuffer = 0;
+            //throw e;
+        }
+
+        Ogre::VertexBufferPackedVec vertexBuffers{ vertexBuffer };
+
+        auto iBuffer = reinterpret_cast<Ogre::uint32*>(OGRE_MALLOC_SIMD(sizeof(Ogre::uint32) * m.indexes.size(),
+                                                                        Ogre::MEMCATEGORY_GEOMETRY));
+        memcpy(iBuffer, m.indexes.data(), sizeof(Ogre::uint32) * m.indexes.size());
+
+        Ogre::IndexBufferPacked* indexBuffer;
+        try
+        {
+            indexBuffer = vaoManager->createIndexBuffer(Ogre::IndexBufferPacked::IT_32BIT,
+                                                        m.indexes.size(),
+                                                        Ogre::BT_IMMUTABLE,
+                                                        iBuffer, true);
+        }
+        catch (Ogre::Exception &e)
+        {
+            // When keepAsShadow = true, the memory will be freed when the index buffer is destroyed.
+            // However if for some weird reason there is an exception raised, the memory will
+            // not be freed, so it is up to us to do so.
+            // The reasons for exceptions are very rare. But we're doing this for correctness.
+            OGRE_FREE_SIMD(indexBuffer, Ogre::MEMCATEGORY_GEOMETRY);
+            indexBuffer = 0;
+            //throw e;
+        }
+
+        Ogre::VertexArrayObject* vao = vaoManager->createVertexArrayObject(vertexBuffers, indexBuffer, Ogre::OT_TRIANGLE_LIST);
+
+        //Each Vao pushed to the vector refers to an LOD level.
+        //Must be in sync with mesh->mLodValues & mesh->mNumLods if you use more than one level
+        subMesh->mVao[Ogre::VpNormal].push_back(vao);
+        //Use the same geometry for shadow casting.
+        subMesh->mVao[Ogre::VpShadow].push_back(vao);
+
+        //Set the bounds to get frustum culling and LOD to work correctly.
+        mesh->_setBounds(Ogre::Aabb(Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_SCALE), false);
+        mesh->_setBoundingSphereRadius(1.732f);
+    }
+    return mesh;
+}
+
+void ObjImporter::convertToOgreData()
+{
+    mOgreSubMeshes.clear();
+
+    for (int s = 0; s < mTinyObjShapes.size(); ++s)
+    {
+        tinyobj::mesh_t& mesh01 = mTinyObjShapes[s].mesh;
+        qDebug() << "    Converting Mesh=" << mTinyObjShapes[s].name.c_str();
+        qDebug() << "      face count=" << mesh01.indices.size() / 3;
+
+        Q_ASSERT(mesh01.indices.size() % 3 == 0);
+
+        mVerticesVec.clear();
+        mIndexesVec.clear();
+
+        std::unordered_map<OgreDataVertex, uint32_t> uniqueVertices;
+
+        // build indexes
+        for (tinyobj::index_t& i : mesh01.indices)
+        {
+            OgreDataVertex v = getVertex(i);
+
+            if (uniqueVertices.count(v) == 0)
+            {
+                uniqueVertices[v] = mVerticesVec.size();
+                mVerticesVec.push_back(v);
+            }
+            mIndexesVec.push_back(uniqueVertices[v]);
+        }
+
+        OgreDataSubMesh subMesh;
+        subMesh.meshName = mTinyObjShapes[s].name;
+        subMesh.vertices = mVerticesVec;
+        subMesh.indexes = mIndexesVec;
+
+        //OgreDataSubMesh subMesh = convertObjMeshToOgreData(mesh01);
+
+        /*
+        if (subMesh.bNeedGenerateNormals)
+        {
+            generateNormalVectors(OUT subMesh);
+        }
+
+        if (mZUpToYUp)
+        {
+            convertFromZUpToYUp(subMesh);
+        }
+        */
+        
+        if (mesh01.material_ids[0] >= 0)
+        {
+            subMesh.material = mTinyObjMaterials[mesh01.material_ids[0]].name;
+        }
+        subMesh.meshName = mTinyObjShapes[s].name;
+        mOgreSubMeshes.push_back(subMesh);
+        
+        QApplication::processEvents();
+    }
+}
+
+
+void AssignVector(float f[3], const Ogre::Vector3& v)
+{
+    f[0] = v.x;
+    f[1] = v.y;
+    f[2] = v.z;
+}
+
+void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
+{
+    struct NormalSum
+    {
+        Ogre::Vector3 normal{ 0, 0, 0 };
+        int count = 0;
+    };
+
+    std::vector<NormalSum> normalSums;
+    normalSums.resize(submesh.vertices.size());
+    
+    /*
+    for (OgreDataFace& f : submesh.faces)
+    {
+        Ogre::Vector3 p1(submesh.vertices[f.index[0]].position);
+        Ogre::Vector3 p2(submesh.vertices[f.index[1]].position);
+        Ogre::Vector3 p3(submesh.vertices[f.index[2]].position);
+
+        Ogre::Vector3 v1 = p2 - p1;
+        Ogre::Vector3 v2 = p3 - p1;
+
+        Ogre::Vector3 theNormal = v2.crossProduct(v1);
+        theNormal.normalise();
+
+        //AssignVector(submesh.vertices[f.index[0]].normal, theNormal);
+        //AssignVector(submesh.vertices[f.index[1]].normal, theNormal);
+        //AssignVector(submesh.vertices[f.index[2]].normal, theNormal);
+
+        normalSums[f.index[0]].normal += theNormal;
+        normalSums[f.index[0]].count += 1;
+
+        normalSums[f.index[1]].normal += theNormal;
+        normalSums[f.index[1]].count += 1;
+
+        normalSums[f.index[2]].normal += theNormal;
+        normalSums[f.index[2]].count += 1;
+    }
+    */
+
+    for (NormalSum& n : normalSums)
+    {
+        n.normal = n.normal / float(n.count);
+    }
+
+    for (int i = 0; i < submesh.vertices.size(); ++i)
+    {
+        AssignVector(submesh.vertices[i].normal, normalSums[i].normal);
+    }
+}
+
+void ObjImporter::convertFromZUpToYUp(OgreDataSubMesh& submesh)
+{
+    for (OgreDataVertex& v : submesh.vertices)
+    {
+        std::swap(v.position[1], v.position[2]);
+        std::swap(v.normal[1], v.normal[2]);
+
+        v.position[2] = -v.position[2];
+        v.normal[2] = -v.normal[2];
+    }
+}
+
+Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& srcMtl)
 {
     Ogre::Root& root = Ogre::Root::getSingleton();
     Ogre::HlmsManager* hlmsManager = root.getHlmsManager();
@@ -131,431 +479,4 @@ Ogre::HlmsPbsDatablock* importMaterial(const tinyobj::material_t& srcMtl)
     //fout.close();
 
     return datablock;
-}
-
-ObjImporter::ObjImporter(OgreManager* ogre)
-{
-    mOgre = ogre;
-}
-
-bool ObjImporter::import(const QString& sObjFile, const QString& sOgreMeshFile)
-{
-    QFileInfo info(sObjFile);
-
-    QProgressDialog progress(nullptr, Qt::Dialog | Qt::WindowTitleHint);
-    progress.setLabelText(QString("Converting %1...").arg(info.fileName()));
-    progress.setRange(0, 100);
-    progress.setModal(true);
-    progress.show();
-    QApplication::processEvents();
-
-    std::string sError;
-    std::string sMtlBasePath = info.absolutePath().toStdString() + "/";
-    PROFILE(bool b = tinyobj::LoadObj(&mObjAttrib, &mTinyObjShapes, &mTinyObjMaterials, &sError, sObjFile.toStdString().c_str(), sMtlBasePath.c_str(), true));
-    
-    if (!sError.empty())
-    {
-        qDebug() << "Error:" << sError.c_str();
-    }
-
-    progress.setValue(10);
-    QApplication::processEvents();
-
-    for (tinyobj::material_t& mtl : mTinyObjMaterials)
-    {
-        if (mImportedMaterials.count(mtl.name) == 0)
-        {
-            importMaterial(mtl);
-            mImportedMaterials.insert(mtl.name);
-        }
-    }
-
-    progress.setValue(20);
-    QApplication::processEvents();
-
-    //PROFILE(PreprocessObjIndexes());
-
-    progress.setValue(30);
-    QApplication::processEvents();
-
-    PROFILE(convertToOgreData());
-
-    progress.setValue(40);
-    QApplication::processEvents();
-
-    QTemporaryDir tempDir;
-    if (!tempDir.isValid())
-    {
-        return false;
-    }
-
-    QString strTempXMLFile = QDir(tempDir.path()).filePath("out.mesh.xml");
-    //QString strTempXMLFile = "C:/Users/Matt/Desktop/out.mesh.xml";
-    PROFILE(writeMeshXML(strTempXMLFile));
-
-    progress.setValue(60);
-    QApplication::processEvents();
-
-    Ogre::v1::MeshPtr v1MeshPtr;
-    PROFILE(importOgreMeshFromXML(strTempXMLFile, v1MeshPtr));
-
-    progress.setValue(80);
-    QApplication::processEvents();
-
-    auto v2Mesh = Ogre::MeshManager::getSingleton().createManual("v2Mesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-    v2Mesh->importV1(v1MeshPtr.get(), false, false, true);
-
-    Ogre::Root* root = Ogre::Root::getSingletonPtr();
-    Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
-    meshSerializer2.exportMesh(v2Mesh.get(), sOgreMeshFile.toStdString());
-
-    progress.setValue(90);
-    QApplication::processEvents();
-
-    Ogre::MeshManager::getSingleton().remove(v2Mesh);
-    Ogre::v1::MeshManager::getSingleton().remove(v1MeshPtr);
-    v2Mesh.reset();
-    v1MeshPtr.reset();
-
-    return b;
-}
-
-void ObjImporter::writeMeshXML(const QString& sOutFile)
-{
-    qDebug() << "  Temp mesh.xml=" << sOutFile;
-
-    QFile outputFile(sOutFile);
-    bool b = outputFile.open(QFile::WriteOnly);
-    Q_ASSERT(b);
-
-    QXmlStreamWriter xout(&outputFile);
-#ifdef _DEBUG
-    xout.setAutoFormatting(true);
-#endif
-    xout.writeStartDocument();
-    xout.writeStartElement("mesh");
-    {
-        xout.writeStartElement("submeshes");
-        for (int s = 0; s < mOgreSubMeshes.size(); ++s)
-        {
-            writeXMLOneSubMesh(xout, mOgreSubMeshes[s]);
-            QApplication::processEvents();
-        }
-        xout.writeEndElement(); // submeshes
-
-        xout.writeStartElement("submeshnames");
-        {
-            for (int s = 0; s < mOgreSubMeshes.size(); ++s)
-            {
-                //<submeshname name="Cerberus00_Fixed0" index="0" />
-                xout.writeStartElement("submeshname");
-                xout.writeAttribute("name", QString::fromStdString(mOgreSubMeshes[s].meshName));
-                xout.writeAttribute("index", QString::number(s));
-                xout.writeEndElement();
-
-                QApplication::processEvents();
-            }
-        }
-        xout.writeEndElement();
-    }
-    xout.writeEndElement();
-    xout.writeEndDocument();
-
-    outputFile.flush();
-    outputFile.close();
-
-    mOgreSubMeshes.clear();
-}
-
-void ObjImporter::writeXMLOneSubMesh(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01)
-{
-    // <submesh material="pistol_fbx#0" usesharedvertices="false" use32bitindexes="true" operationtype="triangle_list">
-    xout.writeStartElement("submesh");
-    {
-        xout.writeAttribute("material", QString::fromStdString(mesh01.material));
-        xout.writeAttribute("usesharedvertices", "false");
-        xout.writeAttribute("use32bitindexes", "true");
-        xout.writeAttribute("operationtype", "triangle_list");
-
-        writeXMLFaces(xout, mesh01);
-        writeXMLGeometry(xout, mesh01);
-    }
-    xout.writeEndElement(); // submesh
-}
-
-void ObjImporter::writeXMLFaces(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01)
-{
-    xout.writeStartElement("faces");
-    {
-        xout.writeAttribute("count", QString::number(mesh01.faces.size()));
-
-        for (const OgreDataFace& f : mesh01.faces)
-        {
-            xout.writeStartElement("face");
-            xout.writeAttribute("v1", QString::number(f.index[0]));
-            xout.writeAttribute("v2", QString::number(f.index[1]));
-            xout.writeAttribute("v3", QString::number(f.index[2]));
-            xout.writeEndElement(); // face
-        }
-    }
-    xout.writeEndElement(); // faces
-}
-
-void ObjImporter::writeXMLGeometry(QXmlStreamWriter& xout, const OgreDataSubMesh& mesh01)
-{
-    xout.writeStartElement("geometry");
-    {
-        xout.writeAttribute("vertexcount", QString::number(mesh01.vertices.size()));
-
-        // <vertexbuffer positions="true" normals="true" texture_coord_dimensions_0="float2" texture_coords="1">
-        xout.writeStartElement("vertexbuffer");
-        {
-            xout.writeAttribute("positions", "true");
-            xout.writeAttribute("normals", "true");
-            xout.writeAttribute("texture_coord_dimensions_0", "float2");
-            xout.writeAttribute("texture_coords", "1");
-
-            //<vertex>
-            //  <position x="-3.43088" y="-10.7253" z="23.8002" />
-            //  <normal   x="-0.84353" y="0.45537" z="0.284766" />
-            //  <texcoord u="0.169636" v="0.699241" />
-            //</vertex>
-            for (int k = 0; k < mesh01.vertices.size(); ++k)
-            {
-                const OgreDataVertex& v01 = mesh01.vertices[k];
-                xout.writeStartElement("vertex");
-                {
-                    // ---- position ----
-                    xout.writeStartElement("position");
-                    xout.writeAttribute("x", QString::number(v01.position[0]));
-                    xout.writeAttribute("y", QString::number(v01.position[1]));
-                    xout.writeAttribute("z", QString::number(v01.position[2]));
-                    xout.writeEndElement();
-
-                    // ---- normal ----
-                    xout.writeStartElement("normal");
-                    xout.writeAttribute("x", QString::number(v01.normal[0]));
-                    xout.writeAttribute("y", QString::number(v01.normal[1]));
-                    xout.writeAttribute("z", QString::number(v01.normal[2]));
-                    xout.writeEndElement();
-
-                    // ---- texcoord ----
-                    xout.writeStartElement("texcoord");
-                    xout.writeAttribute("u", QString::number(v01.texcoord[0]));
-                    xout.writeAttribute("v", QString::number(v01.texcoord[1]));
-                    xout.writeEndElement();
-                }
-                xout.writeEndElement(); // vertex
-            }
-        }
-        xout.writeEndElement(); // vertex buffer
-    }
-    xout.writeEndElement(); // geometry
-}
-
-void ObjImporter::convertToOgreData()
-{
-    mOgreSubMeshes.clear();
-
-    for (int s = 0; s < mTinyObjShapes.size(); ++s)
-    {
-        tinyobj::mesh_t& mesh01 = mTinyObjShapes[s].mesh;
-        qDebug() << "    Converting Mesh=" << mTinyObjShapes[s].name.c_str();
-        qDebug() << "      face count=" << mesh01.indices.size() / 3;
-
-        // build indexes
-        std::set<UniqueVertex> uniqueVerticesSet;
-        Q_ASSERT(mesh01.indices.size() % 3 == 0);
-        for (auto& i : mesh01.indices)
-        {
-            auto p = uniqueVerticesSet.insert(UniqueVertex(i));
-        }
-
-        Q_ASSERT(mUniqueVerticesVec.empty());
-        mUniqueVerticesVec.assign(uniqueVerticesSet.begin(), uniqueVerticesSet.end());
-
-        uniqueVerticesSet.clear();
-
-        Q_ASSERT(mUniqueVerticesIndexMap.empty());
-        for (int i = 0; i < mUniqueVerticesVec.size(); ++i)
-        {
-            mUniqueVerticesIndexMap.emplace(mUniqueVerticesVec[i], i);
-        }
-
-        OgreDataSubMesh subMesh = convertObjMeshToOgreData(mesh01);
-
-        if (subMesh.bNeedGenerateNormals)
-        {
-            generateNormalVectors(OUT subMesh);
-        }
-
-        if (mZUpToYUp)
-        {
-            convertFromZUpToYUp(subMesh);
-        }
-
-        if (mesh01.material_ids[0] >= 0)
-        {
-            subMesh.material = mTinyObjMaterials[mesh01.material_ids[0]].name;
-        }
-        subMesh.meshName = mTinyObjShapes[s].name;
-
-        mOgreSubMeshes.push_back(subMesh);
-
-
-        mUniqueVerticesVec.clear();
-        mUniqueVerticesIndexMap.clear();
-
-        QApplication::processEvents();
-    }
-}
-
-ObjImporter::OgreDataSubMesh ObjImporter::convertObjMeshToOgreData(const tinyobj::mesh_t& mesh01)
-{
-    OgreDataSubMesh mout;
-
-    Q_ASSERT(mesh01.indices.size() % 3 == 0);
-
-    // convert faces
-    for (int f = 0; f < mesh01.indices.size(); f += 3)
-    {
-        int v1 = mUniqueVerticesIndexMap.at(UniqueVertex(mesh01.indices[f + 0]));
-        int v2 = mUniqueVerticesIndexMap.at(UniqueVertex(mesh01.indices[f + 1]));
-        int v3 = mUniqueVerticesIndexMap.at(UniqueVertex(mesh01.indices[f + 2]));
-
-        mout.faces.push_back(OgreDataFace{ v1, v2, v3 });
-    }
-
-    // convert vertex buffer
-    for (int k = 0; k < mUniqueVerticesVec.size(); ++k)
-    {
-        UniqueVertex& uniqueV = mUniqueVerticesVec[k];
-
-        OgreDataVertex v1;
-        {
-            float posX = mObjAttrib.vertices[uniqueV.v * 3 + 0];
-            float posY = mObjAttrib.vertices[uniqueV.v * 3 + 1];
-            float posZ = mObjAttrib.vertices[uniqueV.v * 3 + 2];
-
-            v1.position[0] = posX;
-            v1.position[1] = posY;
-            v1.position[2] = posZ;
-
-            if (uniqueV.n != -1)
-            {
-                float normalX = mObjAttrib.normals[uniqueV.n * 3 + 0];
-                float normalY = mObjAttrib.normals[uniqueV.n * 3 + 1];
-                float normalZ = mObjAttrib.normals[uniqueV.n * 3 + 2];
-                v1.normal[0] = normalX;
-                v1.normal[1] = normalY;
-                v1.normal[2] = normalZ;
-            }
-            else
-            {
-                mout.bNeedGenerateNormals = true;
-            }
-
-            if (uniqueV.t != -1)
-            {
-                float texCoordU = mObjAttrib.texcoords[uniqueV.t * 2 + 0];
-                float texCoordV = mObjAttrib.texcoords[uniqueV.t * 2 + 1];
-                v1.texcoord[0] = texCoordU;
-                v1.texcoord[1] = 1.0 - texCoordV;
-            }
-            else
-            {
-                v1.texcoord[0] = 0;
-                v1.texcoord[1] = 0;
-            }
-        }
-        mout.vertices.push_back(v1);
-    }
-
-    return mout;
-}
-
-void ObjImporter::importOgreMeshFromXML(const QString& sXMLFile, Ogre::v1::MeshPtr& meshV1Ptr)
-{
-    static int convertionCount = 0; // just to avoid name conflicts
-    std::ostringstream sout;
-    sout << "conversion_" << convertionCount++;
-    meshV1Ptr = Ogre::v1::MeshManager::getSingleton().createManual(
-        sout.str(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-    std::string source = sXMLFile.toStdString();
-
-    Ogre::v1::XMLMeshSerializer xmlMeshSerializer;
-    Ogre::VertexElementType colourElementType = Ogre::VET_COLOUR_ABGR;
-    xmlMeshSerializer.importMesh(source, colourElementType, meshV1Ptr.get());
-
-    // Make sure animation types are up to date first
-    meshV1Ptr->_determineAnimationTypes();
-    meshV1Ptr->buildTangentVectors();
-}
-
-void AssignVector(float f[3], const Ogre::Vector3& v)
-{
-    f[0] = v.x;
-    f[1] = v.y;
-    f[2] = v.z;
-}
-
-void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
-{
-    struct NormalSum
-    {
-        Ogre::Vector3 normal{ 0, 0, 0 };
-        int count = 0;
-    };
-
-    std::vector<NormalSum> normalSums;
-    normalSums.resize(submesh.vertices.size());
-
-    for (OgreDataFace& f : submesh.faces)
-    {
-        Ogre::Vector3 p1(submesh.vertices[f.index[0]].position);
-        Ogre::Vector3 p2(submesh.vertices[f.index[1]].position);
-        Ogre::Vector3 p3(submesh.vertices[f.index[2]].position);
-
-        Ogre::Vector3 v1 = p2 - p1;
-        Ogre::Vector3 v2 = p3 - p1;
-
-        Ogre::Vector3 theNormal = v2.crossProduct(v1);
-        theNormal.normalise();
-
-        //AssignVector(submesh.vertices[f.index[0]].normal, theNormal);
-        //AssignVector(submesh.vertices[f.index[1]].normal, theNormal);
-        //AssignVector(submesh.vertices[f.index[2]].normal, theNormal);
-
-        normalSums[f.index[0]].normal += theNormal;
-        normalSums[f.index[0]].count += 1;
-
-        normalSums[f.index[1]].normal += theNormal;
-        normalSums[f.index[1]].count += 1;
-
-        normalSums[f.index[2]].normal += theNormal;
-        normalSums[f.index[2]].count += 1;
-    }
-
-    for (NormalSum& n : normalSums)
-    {
-        n.normal = n.normal / float(n.count);
-    }
-
-    for (int i = 0; i < submesh.vertices.size(); ++i)
-    {
-        AssignVector(submesh.vertices[i].normal, normalSums[i].normal);
-    }
-}
-
-void ObjImporter::convertFromZUpToYUp(OgreDataSubMesh& submesh)
-{
-    for (OgreDataVertex& v : submesh.vertices)
-    {
-        std::swap(v.position[1], v.position[2]);
-        std::swap(v.normal[1], v.normal[2]);
-
-        v.position[2] = -v.position[2];
-        v.normal[2] = -v.normal[2];
-    }
 }
