@@ -275,8 +275,8 @@ void ObjImporter::convertToOgreData()
 
         Q_ASSERT(mesh01.indices.size() % 3 == 0);
 
-        mVerticesVec.clear();
-        mIndexesVec.clear();
+        std::vector<OgreDataVertex> verticesVec;
+        std::vector<int32_t> indexesVec;
 
         std::unordered_map<OgreDataVertex, uint32_t> uniqueVertices;
 
@@ -287,20 +287,18 @@ void ObjImporter::convertToOgreData()
 
             if (uniqueVertices.count(v) == 0)
             {
-                uniqueVertices[v] = mVerticesVec.size();
-                mVerticesVec.push_back(v);
+                uniqueVertices[v] = verticesVec.size();
+                verticesVec.push_back(v);
             }
-            mIndexesVec.push_back(uniqueVertices[v]);
+            indexesVec.push_back(uniqueVertices[v]);
         }
 
         OgreDataSubMesh subMesh;
         subMesh.meshName = mTinyObjShapes[s].name;
-        subMesh.vertices = mVerticesVec;
-        subMesh.indexes = mIndexesVec;
+        subMesh.vertices = verticesVec;
+        subMesh.indexes = indexesVec;
+        subMesh.bNeedGenerateNormals = (mesh01.indices[0].normal_index == -1);
 
-        //OgreDataSubMesh subMesh = convertObjMeshToOgreData(mesh01);
-
-        /*
         if (subMesh.bNeedGenerateNormals)
         {
             generateNormalVectors(OUT subMesh);
@@ -310,15 +308,14 @@ void ObjImporter::convertToOgreData()
         {
             convertFromZUpToYUp(subMesh);
         }
-        */
-        
+
         if (mesh01.material_ids[0] >= 0)
         {
             subMesh.material = mTinyObjMaterials[mesh01.material_ids[0]].name;
         }
         subMesh.meshName = mTinyObjShapes[s].name;
         mOgreSubMeshes.push_back(subMesh);
-        
+
         QApplication::processEvents();
     }
 }
@@ -342,12 +339,12 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
     std::vector<NormalSum> normalSums;
     normalSums.resize(submesh.vertices.size());
     
-    /*
-    for (OgreDataFace& f : submesh.faces)
+    
+    for (int i = 0; i < submesh.indexes.size(); i += 3)
     {
-        Ogre::Vector3 p1(submesh.vertices[f.index[0]].position);
-        Ogre::Vector3 p2(submesh.vertices[f.index[1]].position);
-        Ogre::Vector3 p3(submesh.vertices[f.index[2]].position);
+        Ogre::Vector3 p1(submesh.vertices[submesh.indexes[i + 0]].position);
+        Ogre::Vector3 p2(submesh.vertices[submesh.indexes[i + 1]].position);
+        Ogre::Vector3 p3(submesh.vertices[submesh.indexes[i + 2]].position);
 
         Ogre::Vector3 v1 = p2 - p1;
         Ogre::Vector3 v2 = p3 - p1;
@@ -355,20 +352,15 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
         Ogre::Vector3 theNormal = v2.crossProduct(v1);
         theNormal.normalise();
 
-        //AssignVector(submesh.vertices[f.index[0]].normal, theNormal);
-        //AssignVector(submesh.vertices[f.index[1]].normal, theNormal);
-        //AssignVector(submesh.vertices[f.index[2]].normal, theNormal);
+        normalSums[submesh.indexes[i + 0]].normal += theNormal;
+        normalSums[submesh.indexes[i + 0]].count += 1;
 
-        normalSums[f.index[0]].normal += theNormal;
-        normalSums[f.index[0]].count += 1;
+        normalSums[submesh.indexes[i + 1]].normal += theNormal;
+        normalSums[submesh.indexes[i + 1]].count += 1;
 
-        normalSums[f.index[1]].normal += theNormal;
-        normalSums[f.index[1]].count += 1;
-
-        normalSums[f.index[2]].normal += theNormal;
-        normalSums[f.index[2]].count += 1;
+        normalSums[submesh.indexes[i + 2]].normal += theNormal;
+        normalSums[submesh.indexes[i + 2]].count += 1;
     }
-    */
 
     for (NormalSum& n : normalSums)
     {

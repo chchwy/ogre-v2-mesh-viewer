@@ -73,17 +73,11 @@ private:
     std::vector<tinyobj::shape_t> mTinyObjShapes;
     std::vector<tinyobj::material_t> mTinyObjMaterials;
 
-    // re-hash the obj indexes
-    std::vector<OgreDataVertex> mVerticesVec;
-    std::vector<int32_t> mIndexesVec;
-
     std::set<std::string> mImportedMaterials;
     std::vector<OgreDataSubMesh> mOgreSubMeshes;
 
     bool mZUpToYUp = true;
-
     QString mFileName;
-
     OgreManager* mOgre = nullptr;
 };
 
