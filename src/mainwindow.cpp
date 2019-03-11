@@ -52,9 +52,6 @@
 #include "cameramanager.h"
 
 
-#define _STR(x) #x
-#define STR(X)  _STR(x)
-
 MainWindow::MainWindow()
 {
     ui = new Ui::MainWindow;
@@ -75,7 +72,7 @@ MainWindow::MainWindow()
     createDockWindows();
 
     // Set the title
-    setWindowTitle("Ogre v2.1 Mesh Viewer v" APP_VERSION_NUMBER);
+    setWindowTitle("Ogre v2.1 Mesh Viewer v0.3.1");
     readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
