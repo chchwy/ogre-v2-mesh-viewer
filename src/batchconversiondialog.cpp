@@ -8,12 +8,13 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 
+#include "OgreMesh2Serializer.h"
 #include "objimporter.h"
 
-BatchConversionDialog::BatchConversionDialog(QWidget* parent) :
-    QDialog(parent),
-    ui(new Ui::BatchConversionDialog)
+
+BatchConversionDialog::BatchConversionDialog(QWidget* parent) : QDialog(parent)
 {
+    ui = new Ui::BatchConversionDialog;
     ui->setupUi(this);
 
     connect(ui->AddFileButton, &QPushButton::clicked, this, &BatchConversionDialog::AddFileButtonClicked);
@@ -27,20 +28,35 @@ BatchConversionDialog::~BatchConversionDialog()
     delete ui;
 }
 
+void BatchConversionDialog::setSourceFolder(const QString& folder)
+{
+    mFolder = folder;
+}
+
 void BatchConversionDialog::showEvent(QShowEvent*)
 {
+    if (mInitialized == false)
+    {
+        QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
+        QString myDocument = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
+        QString outFolder = settings.value("BatchConverterOutputFolder", myDocument).toString();
+
+        ui->OutputFolderText->setText(outFolder);
+
+        mInitialized = true;
+    }
 }
 
 void BatchConversionDialog::AddFileButtonClicked()
 {
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
 
-    QString sMyDoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
-    QString sDefaultDir = settings.value("BatchConverterAddFile", sMyDoc).toString();
+    QString myDocument = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
+    QString defaultFolder = settings.value("BatchConverterAddFile", myDocument).toString();
 
     QStringList files = QFileDialog::getOpenFileNames(this,
                                                       "Select one or more files",
-                                                      sDefaultDir,
+                                                      defaultFolder,
                                                       "Wavefront obj (*.obj)");
     ui->FileListWidget->addItems(files);
 
@@ -54,7 +70,7 @@ void BatchConversionDialog::AddFileButtonClicked()
 
 void BatchConversionDialog::ClearButtonClicked()
 {
-    ui->FileListWidget->clear();
+    clearList();
 }
 
 void BatchConversionDialog::BrowserOutputFolderButtonClicked()
@@ -88,13 +104,42 @@ void BatchConversionDialog::ConvertButtonClicked()
     {
         QString inFile = ui->FileListWidget->item(i)->text();
         QString outFile = sOutFolder + "/" + QFileInfo(inFile).completeBaseName() + ".mesh";
-        /*
+        
         ObjImporter importer;
         importer.setZUpToYUp(bZupToYup);
-        bool b = importer.import(inFile, outFile);
-        qDebug() << "Obj=" << inFile << ", Success=" << b;
-        */
+        Ogre::MeshPtr meshPtr = importer.import(inFile);
+        
+        bool ok = writeMeshToDisk(meshPtr, outFile);
+
+        qDebug() << "Src=" << inFile << ", Mesh=" << (!meshPtr.isNull()) << ", Dest=" << outFile;
     }
 
     QMessageBox::information(this, "Batch conversion", "Conversion done.");
+    clearList();
+}
+
+bool BatchConversionDialog::writeMeshToDisk(const Ogre::MeshPtr mesh, const QString& outFile)
+{
+    Ogre::Root& root = Ogre::Root::getSingleton();
+    Ogre::RenderSystem* renderSystem = root.getRenderSystem();
+    Ogre::VaoManager* vaoManager = renderSystem->getVaoManager();
+
+    bool ok = false;
+
+    try
+    {
+        Ogre::MeshSerializer meshSerializer2(vaoManager);
+        meshSerializer2.exportMesh(mesh.getPointer(), outFile.toStdString());
+        ok = true;
+    }
+    catch(...)
+    {
+        ok = false;
+    }
+    return (ok && QFile::exists(outFile));
+}
+
+void BatchConversionDialog::clearList()
+{
+    ui->FileListWidget->clear();
 }

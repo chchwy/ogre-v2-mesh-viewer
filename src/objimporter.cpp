@@ -83,9 +83,8 @@ template<> struct hash<OgreDataVertex>
 };
 }
 
-ObjImporter::ObjImporter(OgreManager* ogre)
+ObjImporter::ObjImporter()
 {
-    mOgre = ogre;
 }
 
 Ogre::MeshPtr ObjImporter::import(const QString& sObjFile)

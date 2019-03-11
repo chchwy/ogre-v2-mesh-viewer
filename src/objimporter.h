@@ -53,7 +53,7 @@ class ObjImporter
     };
 
 public:
-    ObjImporter(OgreManager* ogre);
+    explicit ObjImporter();
 
     Ogre::MeshPtr import(const QString& sObjFile);
     void setZUpToYUp(bool b) { mZUpToYUp = b; }
@@ -78,7 +78,6 @@ private:
 
     bool mZUpToYUp = true;
     QString mFileName;
-    OgreManager* mOgre = nullptr;
 };
 
 #endif // OBJIMPORTER_H

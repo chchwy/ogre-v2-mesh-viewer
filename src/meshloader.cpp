@@ -147,7 +147,7 @@ bool MeshLoader::loadWavefrontObj(QString filePath)
     QFileInfo info(filePath);
     QString sOutFile = info.absolutePath() + "/" + info.baseName() + ".mesh";
 
-    ObjImporter objImporter(mOgre);
+    ObjImporter objImporter;
     objImporter.setZUpToYUp(mZupToYup);
     Ogre::MeshPtr mesh = objImporter.import(filePath);
 

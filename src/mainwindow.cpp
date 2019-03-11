@@ -354,11 +354,13 @@ void MainWindow::actionLoadFromFolder()
 
 void MainWindow::actionBatchConverter()
 {
-    return;
+    mTimer->stop();
+    ON_SCOPE_EXIT(mTimer->start());
 
-    BatchConversionDialog dialog;
-    dialog.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
-    dialog.exec();
+    BatchConversionDialog* dialog = new BatchConversionDialog(this);
+    dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    dialog->open();
 }
 
 void MainWindow::actionResetCamera()
