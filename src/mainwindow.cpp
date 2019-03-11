@@ -129,7 +129,7 @@ void MainWindow::onSceneLoaded()
     meshDir.cd("../mesh");
 
     qDebug() << "Search for meshes in" << meshDir.absolutePath();
-    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh" << "*.glb");
+    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh" << "*.glb" << "*.gltf");
     while (d.hasNext())
     {
         QString meshFile = d.next();
