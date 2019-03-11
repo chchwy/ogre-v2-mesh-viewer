@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>488</width>
     <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Batch Conversion</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -51,7 +51,17 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QLineEdit" name="OutputFolderText"/>
+       <widget class="QLineEdit" name="OutputFolderText">
+        <property name="text">
+         <string notr="true"/>
+        </property>
+        <property name="maxLength">
+         <number>2048</number>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>false</bool>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="BrowserOutputFolderButton">
@@ -73,7 +83,7 @@
    <item>
     <widget class="QPushButton" name="ConvertButton">
      <property name="text">
-      <string>Convert</string>
+      <string>Convert to Ogre Mesh</string>
      </property>
     </widget>
    </item>

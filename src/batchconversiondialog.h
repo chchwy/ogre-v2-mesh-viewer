@@ -12,8 +12,10 @@ class BatchConversionDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit BatchConversionDialog(QWidget* parent = 0);
+    explicit BatchConversionDialog(QWidget* parent = nullptr);
     ~BatchConversionDialog();
+
+    void setSourceFolder(const QString& folder);
 
 protected:
     void showEvent(QShowEvent* ev) override;
@@ -24,7 +26,13 @@ private:
     void BrowserOutputFolderButtonClicked();
     void ConvertButtonClicked();
 
+    bool writeMeshToDisk(const Ogre::MeshPtr mesh, const QString& outFile);
+    void clearList();
+
 private:
+    bool mInitialized = false;
+    QString mFolder;
+
     Ui::BatchConversionDialog *ui;
 };
 
