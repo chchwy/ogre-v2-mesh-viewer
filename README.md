@@ -1,6 +1,6 @@
 # Ogre3D mesh viewer/converter
 
-A simple Ogre3D mesh viewer based on v2.1 which can import/export obj models.
+A simple Ogre3D mesh viewer based on v2.1 which can import obj/gltf models.
 
 ![screenshot](images/screenshot.png)
 
