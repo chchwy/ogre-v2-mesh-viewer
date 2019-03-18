@@ -52,9 +52,15 @@ struct loaderAdapter::impl
     skeletonImporter skeletonImp;
 };
 
-loaderAdapter::loaderAdapter() : pimpl{ std::make_unique<impl>() } { OgreLog("Created adapter object..."); }
+loaderAdapter::loaderAdapter() : pimpl{ std::make_unique<impl>() }
+{
+	//OgreLog("Created adapter object...");
+}
 
-loaderAdapter::~loaderAdapter() { OgreLog("Destructed adapter object..."); }
+loaderAdapter::~loaderAdapter()
+{
+	//OgreLog("Destructed adapter object...");
+}
 
 Ogre::Item* loaderAdapter::getItem(Ogre::SceneManager* smgr) const
 {
@@ -93,7 +99,7 @@ std::vector<Ogre::MeshPtr> loaderAdapter::getAllMeshes() const
     for (int i = 0; i < numMesh; ++i)
     {
         auto Mesh = pimpl->modelConv.getOgreMesh(i);
-        OgreLog("Convert Mesh = " + Mesh->getName());
+        //OgreLog("Convert Mesh = " + Mesh->getName());
         /*
         if (pimpl->modelConv.hasSkins())
         {
@@ -163,7 +169,7 @@ size_t loaderAdapter::getDatablockCount() { return pimpl->materialLoad.getDatabl
 loaderAdapter::loaderAdapter(loaderAdapter&& other) noexcept : pimpl{ std::move(other.pimpl) }
 {
 
-    OgreLog("Moved adapter object...");
+    //OgreLog("Moved adapter object...");
 }
 
 loaderAdapter& loaderAdapter::operator=(loaderAdapter&& other) noexcept

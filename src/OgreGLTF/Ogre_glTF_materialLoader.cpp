@@ -11,6 +11,7 @@
 
 using namespace Ogre_glTF;
 
+
 Ogre::Vector3 materialLoader::convertColor(const tinygltf::ColorValue& color)
 {
 	std::array<float, 4> colorBuffer{};
@@ -58,20 +59,20 @@ void materialLoader::setMetalRoughTexture(Ogre::HlmsPbsDatablock* block, int glt
 {
 	if(!isTextureIndexValid(gltfTextureID)) return;
 	//Ogre cannot use combined metal rough textures. Metal is in the R channel, and rough in the G channel. It seems that the images are loaded as BGR by the libarry
-	//R channel is channle 2 (from 0), G channel is 1.
+	//R channel is channel 2 (from 0), G channel is 1.
 
 	auto metalTexure = textureImporterRef.generateGreyScaleFromChannel(gltfTextureID, 2);
 	auto roughTexure = textureImporterRef.generateGreyScaleFromChannel(gltfTextureID, 1);
 
 	if(metalTexure)
 	{
-		//OgreLog("metalness greyscale texture extracted by textureImporter : " + metalTexure->getName());
+		//OgreLog("metalness grey-scale texture extracted by textureImporter : " + metalTexure->getName());
 		block->setTexture(Ogre::PBSM_METALLIC, 0, metalTexure);
 	}
 
 	if(roughTexure)
 	{
-		//OgreLog("roughness geyscale texture extracted by textureImporter : " + roughTexure->getName());
+		//OgreLog("roughness grey-scale texture extracted by textureImporter : " + roughTexure->getName());
 		block->setTexture(Ogre::PBSM_ROUGHNESS, 0, roughTexure);
 	}
 }
@@ -94,7 +95,7 @@ void materialLoader::setOcclusionTexture(Ogre::HlmsPbsDatablock* block, int valu
 	if(texture)
 	{
 		//OgreLog("occlusion texture from textureImporter : " + texture->getName());
-		//OgreLog("Warning: Ogre doesn't supoort occlusion map in it's HLMS PBS implementation!");
+		//OgreLog("Warning: Ogre doesn't support occlusion map in it's HLMS PBS implementation!");
 		//block->setTexture(Ogre::PbsTextureTypes::PBSM_, 0, texture);
 	}
 }
@@ -130,19 +131,19 @@ void materialLoader::setAlphaCutoff(Ogre::HlmsPbsDatablock* block, Ogre::Real va
 }
 
 materialLoader::materialLoader(tinygltf::Model& input, textureImporter& textureInterface) :
- textureImporterRef { textureInterface },
- model { input }
+	textureImporterRef(textureInterface),
+	model(input)
 {
 }
 
 Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 {
-	OgreLog("Loading material...");
+	//OgreLog("Loading material...");
 	//TODO this will need some modification if we support multiple meshes by glTF file
 	auto HlmsPbs			 = static_cast<Ogre::HlmsPbs*>(Ogre::Root::getSingleton().getHlmsManager()->getHlms(Ogre::HlmsTypes::HLMS_PBS));
 	//const auto mainMeshIndex = (model.defaultScene != 0 ? model.nodes[model.scenes[model.defaultScene].nodes.front()].mesh : 0);
 	//const auto& mesh		 = model.meshes[mainMeshIndex];
-	//const auto material		 = model.materials[mesh.primitives.at(index).material];
+	//const auto material    = model.materials[mesh.primitives.at(index).material];
     const auto material		 = model.materials[index];
 
 	auto datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->getDatablock(Ogre::IdString(material.name)));
@@ -158,8 +159,8 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 																			  Ogre::HlmsParamVec {}));
 	datablock->setWorkflow(Ogre::HlmsPbsDatablock::Workflows::MetallicWorkflow);
 
-	//TODO refactor these almost exact peices of code
-	//OgreLog("values");
+	//OgreLog("Create HlmsPbsDatablock " + mtlName);
+	//TODO refactor these almost exact pieces of code
 	for(const auto& content : material.values)
 	{
 		//OgreLog(content.first);

@@ -86,15 +86,15 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
         return OgreMesh;
     }
 
-    OgreLog("Loading mesh from glTF file");
+    //OgreLog("Loading mesh from glTF file");
     OgreLog("mesh has " + std::to_string(mesh.primitives.size()) + " primitives");
     OgreMesh = Ogre::MeshManager::getSingleton().createManual(ogreMeshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-    OgreLog("Created mesh on v2 MeshManager");
+    //OgreLog("Created mesh on v2 MeshManager");
 
     for (const auto& primitive : mesh.primitives)
     {
         auto subMesh = OgreMesh->createSubMesh();
-        OgreLog("Created one submesh");
+        //OgreLog("Created one submesh");
         const auto indexBuffer = extractIndexBuffer(primitive.indices);
 
         std::vector<vertexBufferPart> parts;
@@ -261,7 +261,7 @@ Ogre::VaoManager* modelConverter::getVaoManager()
 
 Ogre::IndexBufferPacked* modelConverter::extractIndexBuffer(int accessorID) const
 {
-    OgreLog("Extracting index buffer");
+    //OgreLog("Extracting index buffer");
     const auto& accessor = model.accessors[accessorID];
     const auto& bufferView = model.bufferViews[accessor.bufferView];
     auto& buffer = model.buffers[bufferView.buffer];
@@ -389,9 +389,9 @@ vertexBufferPart modelConverter::extractVertexBuffer(const std::pair<std::string
         internal_utils::container_double_to_float(accessor.maxValues, floatVector);
         const Ogre::Vector3 maxBounds{ floatVector.data() };
 
-        OgreLog("Updating bounding box size: ");
-        OgreLog("Setting Min size: " + std::to_string(minBounds.x) + " " + std::to_string(minBounds.y) + " " + std::to_string(minBounds.z));
-        OgreLog("Setting Max size: " + std::to_string(maxBounds.x) + " " + std::to_string(maxBounds.y) + " " + std::to_string(maxBounds.z));
+        //OgreLog("Updating bounding box size: ");
+        //OgreLog("Setting Min size: " + std::to_string(minBounds.x) + " " + std::to_string(minBounds.y) + " " + std::to_string(minBounds.z));
+        //OgreLog("Setting Max size: " + std::to_string(maxBounds.x) + " " + std::to_string(maxBounds.y) + " " + std::to_string(maxBounds.z));
         boundingBox.merge(Ogre::Aabb(minBounds, maxBounds));
     }
 
