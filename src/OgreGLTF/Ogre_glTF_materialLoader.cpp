@@ -146,17 +146,18 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 	//const auto material    = model.materials[mesh.primitives.at(index).material];
     const auto material		 = model.materials[index];
 
-	auto datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->getDatablock(Ogre::IdString(material.name)));
+    std::string mtlName = material.name + "_" + std::to_string(index);
+	auto datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->getDatablock(Ogre::IdString(mtlName)));
 	if(datablock)
 	{
 		//OgreLog("Found HlmsPbsDatablock " + material.name + " in Ogre::HlmsPbs");
 		return datablock;
 	}
-	datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->createDatablock(Ogre::IdString(material.name),
-																			  material.name,
-																			  Ogre::HlmsMacroblock {},
-																			  Ogre::HlmsBlendblock {},
-																			  Ogre::HlmsParamVec {}));
+    datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->createDatablock(Ogre::IdString(mtlName),
+																			  mtlName,
+																			  Ogre::HlmsMacroblock(),
+																			  Ogre::HlmsBlendblock(),
+																			  Ogre::HlmsParamVec()));
 	datablock->setWorkflow(Ogre::HlmsPbsDatablock::Workflows::MetallicWorkflow);
 
 	//OgreLog("Create HlmsPbsDatablock " + mtlName);
