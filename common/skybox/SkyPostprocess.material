@@ -91,7 +91,7 @@ material SkyPostprocess
 
 			texture_unit
 			{
-				texture skycube.dds cubic no_gamma
+				texture env.dds cubic no_gamma
 				filtering			trilinear
 				tex_address_mode	clamp
 			}
