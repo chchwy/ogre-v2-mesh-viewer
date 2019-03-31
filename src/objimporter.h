@@ -48,6 +48,7 @@ class ObjImporter
         std::string material;
         std::vector<OgreDataVertex> vertices;
         std::vector<int32_t> indexes;
+        Ogre::Aabb aabb;
 
         bool bNeedGenerateNormals = false;
     };
@@ -65,6 +66,7 @@ private:
     
     void generateNormalVectors(OgreDataSubMesh& submesh);
     void convertFromZUpToYUp(OgreDataSubMesh& submesh);
+    void generateAABB(OgreDataSubMesh& submesh);
     Ogre::HlmsPbsDatablock* importMaterial(const tinyobj::material_t& srcMtl);
 
 private:

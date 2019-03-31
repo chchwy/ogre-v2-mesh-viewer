@@ -186,7 +186,7 @@ OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
 
     //Create the mesh
     Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(
-        mFileName.toStdString(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        mFileName.toStdString(), "ViewerResc");
 
     //Create one submesh
     for (const OgreDataSubMesh& m : mOgreSubMeshes)
@@ -210,7 +210,7 @@ OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
         Ogre::VertexBufferPacked* vertexBuffer = 0;
         try
         {
-            //Create the actual vertex buffer.
+            // Create the actual vertex buffer.
             vertexBuffer = vaoManager->createVertexBuffer(vertexElements, m.vertices.size(),
                                                           Ogre::BT_IMMUTABLE,
                                                           vBuffer, true);
@@ -255,10 +255,16 @@ OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
         //Use the same geometry for shadow casting.
         subMesh->mVao[Ogre::VpShadow].push_back(vao);
 
-        //Set the bounds to get frustum culling and LOD to work correctly.
-        mesh->_setBounds(Ogre::Aabb(Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_SCALE), false);
-        mesh->_setBoundingSphereRadius(1.732f);
     }
+
+    //Set the bounds to get frustum culling and LOD to work correctly.
+    Ogre::Aabb aabb = mOgreSubMeshes[0].aabb;
+    for (OgreDataSubMesh& m : mOgreSubMeshes)
+    {
+        aabb.merge(m.aabb);
+    }
+    mesh->_setBounds(aabb);
+
     return mesh;
 }
 
@@ -308,6 +314,8 @@ void ObjImporter::convertToOgreData()
             convertFromZUpToYUp(subMesh);
         }
 
+        generateAABB(subMesh);
+
         if (mesh01.material_ids[0] >= 0)
         {
             subMesh.material = mTinyObjMaterials[mesh01.material_ids[0]].name;
@@ -337,7 +345,6 @@ void ObjImporter::generateNormalVectors(OgreDataSubMesh& submesh)
 
     std::vector<NormalSum> normalSums;
     normalSums.resize(submesh.vertices.size());
-    
     
     for (int i = 0; i < submesh.indexes.size(); i += 3)
     {
@@ -382,6 +389,26 @@ void ObjImporter::convertFromZUpToYUp(OgreDataSubMesh& submesh)
         v.position[2] = -v.position[2];
         v.normal[2] = -v.normal[2];
     }
+}
+
+void ObjImporter::generateAABB(OgreDataSubMesh& submesh)
+{
+    Ogre::Vector3 minPos(99999, 99999, 99999);
+    Ogre::Vector3 maxPos(-99999, -99999, -99999);
+    for (const OgreDataVertex& v : submesh.vertices)
+    {
+        Ogre::Vector3 pos(v.position[0], v.position[1], v.position[2]);
+        
+        minPos.x = std::min(pos.x, minPos.x);
+        minPos.y = std::min(pos.y, minPos.y);
+        minPos.z = std::min(pos.z, minPos.z);
+
+        maxPos.x = std::max(pos.x, maxPos.x);
+        maxPos.y = std::max(pos.y, maxPos.y);
+        maxPos.z = std::max(pos.z, maxPos.z);
+    }
+
+    submesh.aabb = Ogre::Aabb::newFromExtents(minPos, maxPos);
 }
 
 Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& srcMtl)
