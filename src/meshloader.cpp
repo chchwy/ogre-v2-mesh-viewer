@@ -8,6 +8,7 @@
 #include <OgreMeshManager2.h>
 #include <OgreMeshManager.h>
 #include <OgreMesh2.h>
+#include <OgreWireAabb.h>
 
 // qt headers
 #include <QFile>
@@ -206,6 +207,9 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
     node->attachObject(item);
     node->setName(item->getName());
     //qDebug() << "Item Name=" << item->getName().c_str();
+
+    //Ogre::WireAabb* wireAabb = mOgre->sceneManager()->createWireAabb();
+    //wireAabb->track(item);
 
     Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
     Ogre::HlmsTextureManager* hlmsTextureManager = hlmsMgr->getTextureManager();

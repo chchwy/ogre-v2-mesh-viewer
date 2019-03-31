@@ -282,7 +282,7 @@ void OgreManager::setBlackBackground()
             pixelData[i + 2] = 0; //B
             pixelData[i + 3] = 255; //A
         }
-        //std::fill(pixelData.begin(), pixelData.end(), 255);
+
         Ogre::Image img;
         img.loadDynamicImage(pixelData.data(), 16, 16, 1, Ogre::PF_A8B8G8R8, false, 6, 0);
         blackTex = texMgr.createManual("black_bg", autoGroup,
