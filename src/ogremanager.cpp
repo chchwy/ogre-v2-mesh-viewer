@@ -41,6 +41,7 @@
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreHlmsPbs.h"
 #include "Overlay/OgreOverlaySystem.h"
+#include "OgreMaterialManager.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -231,6 +232,68 @@ Ogre::Mesh* OgreManager::currentMesh(int index)
 void OgreManager::createSubcomponents()
 {
     mMeshLoader = new MeshLoader(this, this);
+}
+
+void OgreManager::setIrradianceBackground()
+{
+    Ogre::String autoGroup = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
+    auto& texMgr = Ogre::TextureManager::getSingleton();
+
+    Ogre::TexturePtr irradiance = texMgr.getByName("irradiance_bg");
+    if (irradiance.isNull())
+    {
+        Ogre::TexturePtr tex = texMgr.getByName("env.dds", autoGroup);
+
+        Ogre::Image img;
+        tex->convertToImage(img, true, tex->getNumMipmaps() - 4); // 4 looks better
+
+        irradiance = texMgr.createManual("irradiance_bg", autoGroup,
+                                         Ogre::TEX_TYPE_CUBE_MAP, 
+                                         img.getWidth(), img.getHeight(), 
+                                         0 /* mipmap */, img.getFormat());
+        irradiance->loadImage(img);
+    }
+    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
+    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+    texUnit->setTextureName("irradiance_bg", Ogre::TEX_TYPE_CUBE_MAP);
+}
+
+void OgreManager::setEnvironmentBackground()
+{
+    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
+    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+    texUnit->setTextureName("env.dds", Ogre::TEX_TYPE_CUBE_MAP);
+}
+
+void OgreManager::setBlackBackground()
+{
+    Ogre::String autoGroup = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
+    auto& texMgr = Ogre::TextureManager::getSingleton();
+
+    Ogre::TexturePtr blackTex = texMgr.getByName("black_bg");
+    if (blackTex.isNull())
+    {
+        std::vector<uint8_t> pixelData;
+        pixelData.resize(4 * 16 * 16 * 6);
+        for (int i = 0; i < pixelData.size(); i += 4)
+        {
+            pixelData[i + 0] = 0; //R
+            pixelData[i + 1] = 0; //G
+            pixelData[i + 2] = 0; //B
+            pixelData[i + 3] = 255; //A
+        }
+        //std::fill(pixelData.begin(), pixelData.end(), 255);
+        Ogre::Image img;
+        img.loadDynamicImage(pixelData.data(), 16, 16, 1, Ogre::PF_A8B8G8R8, false, 6, 0);
+        blackTex = texMgr.createManual("black_bg", autoGroup,
+                                         Ogre::TEX_TYPE_CUBE_MAP,
+                                         img.getWidth(), img.getHeight(),
+                                         0 /* mipmap */, img.getFormat());
+        blackTex->loadImage(img);
+    }
+    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
+    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+    texUnit->setTextureName("black_bg", Ogre::TEX_TYPE_CUBE_MAP);
 }
 
 void OgreManager::registerHlms()

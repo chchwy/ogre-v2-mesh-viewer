@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>646</width>
-    <height>465</height>
+    <width>937</width>
+    <height>623</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>646</width>
-     <height>21</height>
+     <width>937</width>
+     <height>38</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -50,6 +50,15 @@
     <property name="title">
      <string>View</string>
     </property>
+    <widget class="QMenu" name="menuBackground">
+     <property name="title">
+      <string>Background</string>
+     </property>
+     <addaction name="actionBgEnv"/>
+     <addaction name="actionBgIrradiance"/>
+     <addaction name="actionBgBlack"/>
+    </widget>
+    <addaction name="menuBackground"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -91,6 +100,21 @@
   <action name="actionLoad_From_Folder">
    <property name="text">
     <string>Open Folder...</string>
+   </property>
+  </action>
+  <action name="actionBgIrradiance">
+   <property name="text">
+    <string>Irradiance</string>
+   </property>
+  </action>
+  <action name="actionBgEnv">
+   <property name="text">
+    <string>Environment</string>
+   </property>
+  </action>
+  <action name="actionBgBlack">
+   <property name="text">
+    <string>Black</string>
    </property>
   </action>
  </widget>
