@@ -68,6 +68,10 @@ private:
     void actionBatchConverter();
     void actionResetCamera();
 
+    void actionBgIrradiance();
+    void actionBgEnvironment();
+    void actionBgBlack();
+
     OgreWidget* mOgreWidget = nullptr;
     OgreManager* mOgreManager = nullptr;
 

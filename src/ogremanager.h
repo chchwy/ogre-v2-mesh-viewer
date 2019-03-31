@@ -73,6 +73,11 @@ public:
     Q_SIGNAL void sceneCreated();
 
     void createSubcomponents();
+
+    void setIrradianceBackground();
+    void setEnvironmentBackground();
+    void setBlackBackground();
+
 private:
     void setupResources();
     void registerHlms();

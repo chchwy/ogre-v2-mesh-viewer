@@ -86,6 +86,9 @@ MainWindow::MainWindow()
     connect(ui->actionLoad_From_Folder, &QAction::triggered, this, &MainWindow::actionLoadFromFolder);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
     connect(ui->actionResetCamera, &QAction::triggered, this, &MainWindow::actionResetCamera);
+    connect(ui->actionBgEnv, &QAction::triggered, this, &MainWindow::actionBgEnvironment);
+    connect(ui->actionBgIrradiance, &QAction::triggered, this, &MainWindow::actionBgIrradiance);
+    connect(ui->actionBgBlack, &QAction::triggered, this, &MainWindow::actionBgBlack);
 
     // setup the timer
     mTimer = new QTimer(this);
@@ -363,4 +366,19 @@ void MainWindow::actionBatchConverter()
 void MainWindow::actionResetCamera()
 {
     mOgreWidget->cameraManager()->reset();
+}
+
+void MainWindow::actionBgIrradiance()
+{
+    mOgreManager->setIrradianceBackground();
+}
+
+void MainWindow::actionBgEnvironment()
+{
+    mOgreManager->setEnvironmentBackground();
+}
+
+void MainWindow::actionBgBlack()
+{
+    mOgreManager->setBlackBackground();
 }
