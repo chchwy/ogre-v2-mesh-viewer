@@ -49,7 +49,7 @@
 #include "scenetreewidget.h"
 #include "transformwidget.h"
 #include "inspector.h"
-#include "cameramanager.h"
+#include "cameracontroller.h"
 
 
 MainWindow::MainWindow()
@@ -365,7 +365,7 @@ void MainWindow::actionBatchConverter()
 
 void MainWindow::actionResetCamera()
 {
-    mOgreWidget->cameraManager()->reset();
+    mOgreWidget->cameraController()->reset();
 }
 
 void MainWindow::actionBgIrradiance()

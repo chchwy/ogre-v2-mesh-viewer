@@ -41,7 +41,7 @@ class MyHlmsListener;
 
 
 class OgreManager;
-class CameraManager;
+class CameraController;
 
 
 class OgreWidget : public QWidget
@@ -58,7 +58,7 @@ public:
     void createRenderWindow(OgreManager* ogreManager);
     void createCompositor();
 
-    CameraManager* cameraManager() { return mCameraManager; }
+    CameraController* cameraController() { return mCameraController; }
 
     int id() { return mId; }
     void setId(int id) { mId = id; }
@@ -92,7 +92,7 @@ private:
     Ogre::ColourValue mBackground;
     Ogre::Real mTimeSinceLastFrame = 0.0;
 
-    CameraManager* mCameraManager = nullptr;
+    CameraController* mCameraController = nullptr;
 
     Ogre::Vector2 mAbsolute;
     Ogre::Vector2 mRelative;

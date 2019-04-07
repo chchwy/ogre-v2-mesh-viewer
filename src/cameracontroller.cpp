@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "cameramanager.h"
+#include "cameracontroller.h"
 
 
 CameraController::CameraController(Ogre::Camera* cam)
