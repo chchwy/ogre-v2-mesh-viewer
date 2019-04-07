@@ -20,7 +20,7 @@
 #include "stdafx.h"
 #include "ogrewidget.h"
 #include "ogremanager.h"
-#include "cameramanager.h"
+#include "cameracontroller.h"
 
 #include "OgreCamera.h"
 
@@ -112,7 +112,7 @@ void OgreWidget::createCompositor()
     // Create camera
     mCamera = mOgreManager->sceneManager()->createCamera("MainCamera");
     mCamera->setAspectRatio(Ogre::Real(mOgreRenderWindow->getWidth()) / Ogre::Real(mOgreRenderWindow->getHeight()));
-    mCameraManager = new CameraManager(mCamera);
+    mCameraController = new CameraController(mCamera);
 
     const Ogre::String workspaceName = "PbsMaterialsWorkspace";
     const Ogre::IdString workspaceNameHash = workspaceName;
@@ -159,13 +159,13 @@ void OgreWidget::resizeEvent(QResizeEvent* e)
 void OgreWidget::keyPressEvent(QKeyEvent* ev)
 {
     if (mInitialized)
-        mCameraManager->keyPress(ev);
+        mCameraController->keyPress(ev);
 }
 
 void OgreWidget::keyReleaseEvent(QKeyEvent* ev)
 {
     if (mInitialized)
-        mCameraManager->keyRelease(ev);
+        mCameraController->keyRelease(ev);
 }
 
 void OgreWidget::mouseMoveEvent(QMouseEvent* e)
@@ -175,25 +175,25 @@ void OgreWidget::mouseMoveEvent(QMouseEvent* e)
         Ogre::Vector2 oldPos = mAbsolute;
         mAbsolute = Ogre::Vector2(e->pos().x(), e->pos().y());
         mRelative = mAbsolute - oldPos;
-        mCameraManager->mouseMove(mRelative);
+        mCameraController->mouseMove(mRelative);
     }
 }
 
 void OgreWidget::wheelEvent(QWheelEvent* e)
 {
     if (mInitialized)
-        mCameraManager->mouseWheel(e);
+        mCameraController->mouseWheel(e);
 }
 
 void OgreWidget::mousePressEvent(QMouseEvent* e)
 {
     if (mInitialized)
-        mCameraManager->mousePress(e);
+        mCameraController->mousePress(e);
 }
 
 void OgreWidget::mouseReleaseEvent(QMouseEvent* e)
 {
     if (mInitialized)
-        mCameraManager->mouseRelease(e);
+        mCameraController->mouseRelease(e);
 }
 

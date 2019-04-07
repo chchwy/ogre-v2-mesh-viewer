@@ -18,7 +18,7 @@ HEADERS = \
     src/ogrewidget.h \
     src/lightwidget.h \
     src/objimporter.h \
-    src/cameramanager.h \
+    src/cameracontroller.h \
     src/objexporter.h \
     src/scopeguard.h \
     src/batchconversiondialog.h \
@@ -55,7 +55,7 @@ SOURCES = \
     src/ogrewidget.cpp \ 
     src/lightwidget.cpp \
     src/objimporter.cpp \
-    src/cameramanager.cpp \
+    src/cameracontroller.cpp \
     src/objexporter.cpp \
     src/batchconversiondialog.cpp \
     src/loadfromfolderdialog.cpp \
