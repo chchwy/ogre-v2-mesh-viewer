@@ -3,23 +3,23 @@
 #include "cameramanager.h"
 
 
-CameraManager::CameraManager(Ogre::Camera* cam)
+CameraController::CameraController(Ogre::Camera* cam)
 {
     setCamera(cam);
     setMode(CM_BLENDER);
 }
 
-CameraManager::~CameraManager()
+CameraController::~CameraController()
 {}
 
-void CameraManager::reset()
+void CameraController::reset()
 {
     mCameraNode->setPosition(0, 3, 0);
     mCameraNode->resetOrientation();
     mCamera->setPosition(Ogre::Vector3(0, 0, 10));
 }
 
-void CameraManager::setCamera(Ogre::Camera* cam)
+void CameraController::setCamera(Ogre::Camera* cam)
 {
     mCamera = cam;
     mCamera->detachFromParent();
@@ -36,7 +36,7 @@ void CameraManager::setCamera(Ogre::Camera* cam)
     mCamera->setAutoAspectRatio(true);
 }
 
-void CameraManager::setTarget(Ogre::SceneNode* target)
+void CameraController::setTarget(Ogre::SceneNode* target)
 {
     if (target != mTarget)
     {
@@ -52,7 +52,7 @@ void CameraManager::setTarget(Ogre::SceneNode* target)
     }
 }
 
-void CameraManager::manualStop()
+void CameraController::manualStop()
 {
     if (mMode == CM_FLY)
     {
@@ -66,7 +66,7 @@ void CameraManager::manualStop()
     }
 }
 
-void CameraManager::setYawPitchDist(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::Real dist)
+void CameraController::setYawPitchDist(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::Real dist)
 {
     mCamera->setPosition(mTarget->_getDerivedPositionUpdated());
     mCamera->setOrientation(mTarget->_getDerivedOrientationUpdated());
@@ -75,7 +75,7 @@ void CameraManager::setYawPitchDist(Ogre::Radian yaw, Ogre::Radian pitch, Ogre::
     mCamera->moveRelative(Ogre::Vector3(0, 0, dist));
 }
 
-void CameraManager::setMode(CameraMode mode)
+void CameraController::setMode(CameraMode mode)
 {
     if (mMode != CM_BLENDER && mode == CM_BLENDER)
     {
@@ -95,7 +95,7 @@ void CameraManager::setMode(CameraMode mode)
     mMode = mode;
 }
 
-void CameraManager::setProjectionType(Ogre::ProjectionType pt)
+void CameraController::setProjectionType(Ogre::ProjectionType pt)
 {
     if (pt == Ogre::PT_PERSPECTIVE)
     {
@@ -104,7 +104,7 @@ void CameraManager::setProjectionType(Ogre::ProjectionType pt)
     mCamera->setProjectionType(pt);
 }
 
-void CameraManager::setView(View newView)
+void CameraController::setView(View newView)
 {
     switch (newView)
     {
@@ -130,7 +130,7 @@ void CameraManager::setView(View newView)
     mCurrentView = newView;
 }
 
-void CameraManager::rotatePerspective(Direction dir)
+void CameraController::rotatePerspective(Direction dir)
 {
     Ogre::Radian amount = Ogre::Radian(Ogre::Degree(15));
     switch (dir)
@@ -150,7 +150,7 @@ void CameraManager::rotatePerspective(Direction dir)
     }
 }
 
-void CameraManager::numpadViewSwitch(const QKeyEvent* evt)
+void CameraController::numpadViewSwitch(const QKeyEvent* evt)
 {
     bool ctrl = evt->modifiers().testFlag(Qt::ControlModifier);
     bool numpad = evt->modifiers().testFlag(Qt::KeypadModifier);
@@ -186,7 +186,7 @@ void CameraManager::numpadViewSwitch(const QKeyEvent* evt)
     }
 }
 
-bool CameraManager::frameRenderingQueued(const Ogre::FrameEvent& evt)
+bool CameraController::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
     if (mMode == CM_FLY)
     {
@@ -225,7 +225,7 @@ bool CameraManager::frameRenderingQueued(const Ogre::FrameEvent& evt)
     return true;
 }
 
-void CameraManager::keyPress(const QKeyEvent* evt)
+void CameraController::keyPress(const QKeyEvent* evt)
 {
     if (mMode == CM_FLY)
     {
@@ -279,7 +279,7 @@ void CameraManager::keyPress(const QKeyEvent* evt)
     }
 }
 
-void CameraManager::keyRelease(const QKeyEvent* evt)
+void CameraController::keyRelease(const QKeyEvent* evt)
 {
     if (evt->key() == Qt::Key_W)
         mGoingForward = false;
@@ -293,7 +293,7 @@ void CameraManager::keyRelease(const QKeyEvent* evt)
         mShiftDown = false;
 }
 
-void CameraManager::mouseMove(Ogre::Vector2 mousePos)
+void CameraController::mouseMove(Ogre::Vector2 mousePos)
 {
     if (mMode == CM_FLY)
     {
@@ -315,7 +315,7 @@ void CameraManager::mouseMove(Ogre::Vector2 mousePos)
     }
 }
 
-void CameraManager::mouseWheel(const QWheelEvent* evt)
+void CameraController::mouseWheel(const QWheelEvent* evt)
 {
     mMouseWheelDelta = evt->delta();
     //qDebug() << (uint64_t)mCamera << ", " << (uint64_t)mTarget;
@@ -323,7 +323,7 @@ void CameraManager::mouseWheel(const QWheelEvent* evt)
     mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0004f * mDistFromTarget));
 }
 
-void CameraManager::mousePress(const QMouseEvent* evt)
+void CameraController::mousePress(const QMouseEvent* evt)
 {
     if (mMode == CM_BLENDER || mMode == CM_ORBIT)
     {
@@ -334,7 +334,7 @@ void CameraManager::mousePress(const QMouseEvent* evt)
     }
 }
 
-void CameraManager::mouseRelease(const QMouseEvent* evt)
+void CameraController::mouseRelease(const QMouseEvent* evt)
 {
     if (mMode == CM_BLENDER || mMode == CM_ORBIT)
     {
@@ -345,13 +345,13 @@ void CameraManager::mouseRelease(const QMouseEvent* evt)
     }
 }
 
-void CameraManager::rotate(int x, int y)
+void CameraController::rotate(int x, int y)
 {
     mCameraNode->yaw(Ogre::Degree(-x * 0.4f), Ogre::Node::TS_PARENT);
     mCameraNode->pitch(Ogre::Degree(-y * 0.4f));
 }
 
-void CameraManager::pan(float x, float y)
+void CameraController::pan(float x, float y)
 {
     Ogre::Vector3 transVector(-x, y, 0);
     if (mTarget)
