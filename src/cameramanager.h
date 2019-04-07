@@ -56,11 +56,11 @@ enum Direction
  * This class manages the ogre camera and transalates Qt events to camera
  * actions
 ***************************************************************************/
-class CameraManager
+class CameraController
 {
 public:
-    CameraManager(Ogre::Camera* cam);
-    ~CameraManager();
+    CameraController(Ogre::Camera* cam);
+    ~CameraController();
 
     void reset();
 
