@@ -216,34 +216,29 @@ bool modelConverter::hasSkins() const { return !model.skins.empty(); }
 ModelInformation::ModelTransform modelConverter::getTransform()
 {
     ModelInformation::ModelTransform trans;
-    std::array<float, 3> translation{ 0 }, scale{ 0 };
-    std::array<float, 4> rotation{ 0 };
-    std::array<float, 4 * 4> local_matrix{ 0 };
     bool set = false;
 
     // Just get the first one - not sure if there can be more for a model but doubt it
     const auto& nodes = (model.defaultScene != 0 ? model.nodes[model.scenes[model.defaultScene].nodes[0]] : model.nodes[0]);
     if (!nodes.translation.empty())
     {
-        internal_utils::container_double_to_float(nodes.translation, translation);
-        trans.position = Ogre::Vector3{ translation.data() };
+        trans.position = Ogre::Vector3(nodes.translation[0], nodes.translation[1], nodes.translation[2]);
         set = true;
     }
     if (!nodes.scale.empty())
     {
-        internal_utils::container_double_to_float(nodes.scale, scale);
-        trans.scale = Ogre::Vector3{ scale.data() };
+        trans.scale = Ogre::Vector3(nodes.scale[0], nodes.scale[1], nodes.scale[2]);
         set = true;
     }
     if (!nodes.rotation.empty())
     {
-        internal_utils::container_double_to_float(nodes.rotation, rotation);
-        trans.orientation = Ogre::Quaternion{ rotation[3], rotation[0], rotation[1], rotation[2] };
+        trans.orientation = Ogre::Quaternion(nodes.rotation[3], nodes.rotation[0], nodes.rotation[1], nodes.rotation[2]);
         set = true;
     }
 
     if (!set && !nodes.matrix.empty())
     {
+        std::array<float, 4 * 4> local_matrix{ 0 };
         internal_utils::container_double_to_float(nodes.matrix, local_matrix);
         Ogre::Matrix4 transform_matrix{ local_matrix.data() };
 
