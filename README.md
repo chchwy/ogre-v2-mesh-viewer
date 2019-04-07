@@ -1,13 +1,13 @@
 # Ogre3D mesh viewer/converter
 
-A simple Ogre3D mesh viewer based on v2.1 which can import obj/gltf models. [Download it](https://github.com/chchwy/ogre-v2-mesh-viewer/releases)!
+A Ogre3D mesh viewer based on v2.1 which can import obj/gltf models. [Download it](https://github.com/chchwy/ogre-v2-mesh-viewer/releases)!
 
 ![screenshot](images/screenshot.png)
 
 ## How to compile
 
-1. Have your Qt 5 SDK installed (recommend Qt 5.6+), download it [here][0].
-2. Have a working Ogre3D 2.1 copy.
+1. Have Qt 5 SDK installed (recommend Qt 5.6+), download it [here][0].
+2. Have a working Ogre3D 2.1 sdk.
 3. Set the path to Ogre sdk folder. You can either set an user-level `OGREHOME` environment variable, or set it directly in `ogre-v2-mesh-viewer.pro` line 9.
 4. Open `ogre-v2-mesh-viewer.pro` in QtCreator and presse `RUN`.
 
@@ -15,6 +15,7 @@ A simple Ogre3D mesh viewer based on v2.1 which can import obj/gltf models. [Dow
 
 ## TODO
 
+- [ ] Batch convertor from mesh to obj
 - [ ] glTF export
 - [ ] Support DotScene
 - [ ] HLMS material editing
