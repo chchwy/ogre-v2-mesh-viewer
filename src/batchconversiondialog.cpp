@@ -107,7 +107,7 @@ void BatchConversionDialog::ConvertButtonClicked()
         
         ObjImporter importer;
         importer.setZUpToYUp(bZupToYup);
-        Ogre::MeshPtr meshPtr = importer.import(inFile);
+        Ogre::MeshPtr meshPtr = importer.import(inFile, false);
         
         bool ok = writeMeshToDisk(meshPtr, outFile);
 
