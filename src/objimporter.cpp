@@ -87,7 +87,7 @@ ObjImporter::ObjImporter()
 {
 }
 
-Ogre::MeshPtr ObjImporter::import(const QString& sObjFile)
+Ogre::MeshPtr ObjImporter::import(const QString& sObjFile, bool showProgress)
 {
     QFileInfo info(sObjFile);
     mFileName = info.fileName();
@@ -186,7 +186,7 @@ OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
 
     //Create the mesh
     Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(
-        mFileName.toStdString(), "ViewerResc");
+        mFileName.toStdString(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
     //Create one submesh
     for (const OgreDataSubMesh& m : mOgreSubMeshes)
@@ -424,6 +424,15 @@ Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& s
     std::string strBlockName(srcMtl.name);
     Ogre::HlmsPbsDatablock* datablock = nullptr;
 
+    if (strBlockName.empty())
+    {
+        static int counter = 0;
+        std::ostringstream sout;
+        sout << "obj_mtl_" << counter;
+        strBlockName = sout.str();
+        counter++;
+    }
+
     try
     {
         datablock = static_cast<Ogre::HlmsPbsDatablock*>(
@@ -490,7 +499,7 @@ Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& s
 
     Ogre::HlmsJsonPbs hlmsJson(hlmsManager, nullptr, "");
     std::string outJson;
-    hlmsJson.saveMaterial(datablock, outJson); // FIXME:
+    //hlmsJson.saveMaterial(datablock, outJson); // FIXME:
 
     //std::ofstream fout("C:/Users/Matt/Desktop/abc.material.json", std::ofstream::out);
     //fout << outJson;
