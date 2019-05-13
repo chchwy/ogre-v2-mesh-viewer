@@ -50,6 +50,7 @@
 #include "transformwidget.h"
 #include "inspector.h"
 #include "cameracontroller.h"
+#include "saveasdialog.h"
 
 
 MainWindow::MainWindow()
@@ -258,6 +259,16 @@ void MainWindow::actionSaveMesh()
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     QString sLastOpenLocation = settings.value("actionSaveMesh", mUserDocumentPath).toString();
 
+
+    SaveAsDialog* dialog = new SaveAsDialog(this, mOgreManager);
+    dialog->setFolder(sLastOpenLocation);
+    dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    dialog->open();
+
+    return;
+
+    
     QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
                                                          sLastOpenLocation + "/a.mesh",
                                                          "Ogre Mesh (*.mesh)");
