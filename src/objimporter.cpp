@@ -497,13 +497,5 @@ Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& s
         datablock->setSamplerblock(Ogre::PBSM_NORMAL, samplerBlock);
     }
 
-    Ogre::HlmsJsonPbs hlmsJson(hlmsManager, nullptr, "");
-    std::string outJson;
-    //hlmsJson.saveMaterial(datablock, outJson); // FIXME:
-
-    //std::ofstream fout("C:/Users/Matt/Desktop/abc.material.json", std::ofstream::out);
-    //fout << outJson;
-    //fout.close();
-
     return datablock;
 }
