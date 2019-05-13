@@ -143,8 +143,6 @@ void OgreManager::setupResources()
             Ogre::String rescPath = i->second;
 
             QString s = appDir.filePath(QString::fromStdString(rescPath));
-            qDebug() << s;
-
             Ogre::ResourceGroupManager::getSingleton().addResourceLocation(s.toStdString(), rescType, secName);
         }
     }
@@ -394,17 +392,6 @@ void OgreManager::render()
 
 void OgreManager::createScene()
 {
-    /*
-    for (int i = 0; i <= 5; ++i)
-    {
-        for (int j = 0; j <= 5; ++j)
-        {
-            createBall( i, j );
-        }
-    }
-    //qDebug() << QDir::currentPath();
-    */
-
     auto hlmsManager = mRoot->getHlmsManager();
     Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
     hlmsPbs->setShadowSettings(Ogre::HlmsPbs::PCF_4x4);
