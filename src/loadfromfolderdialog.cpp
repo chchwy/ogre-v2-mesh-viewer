@@ -114,8 +114,6 @@ void LoadFromFolderDialog::okButtonClicked()
 
 void LoadFromFolderDialog::showEvent(QShowEvent* event)
 {
-    qDebug() << "Show!";
-
     if (!mInitialized)
     {
         listAllMeshesInFolder();

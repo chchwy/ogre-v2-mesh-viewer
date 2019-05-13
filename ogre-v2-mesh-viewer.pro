@@ -46,7 +46,8 @@ HEADERS = \
     src/scenetreewidget.h \
     src/scenetreemodel.h \
     src/transformwidget.h \
-    src/inspector.h
+    src/inspector.h \
+    src/saveasdialog.h
 
 SOURCES = \
     src/main.cpp \
@@ -76,7 +77,8 @@ SOURCES = \
     src/scenetreewidget.cpp \
     src/scenetreemodel.cpp \
     src/transformwidget.cpp \
-    src/inspector.cpp
+    src/inspector.cpp \
+    src/saveasdialog.cpp
 
 FORMS += \
     src/mainwindow.ui \
@@ -84,7 +86,8 @@ FORMS += \
     src/batchconversiondialog.ui \
     src/loadfromfolderdialog.ui \
     src/scenetreewidget.ui \
-    src/transformwidget.ui
+    src/transformwidget.ui \
+    src/saveasdialog.ui
 
 PRECOMPILED_HEADER = src/stdafx.h
 
