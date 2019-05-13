@@ -68,7 +68,7 @@ OgreManager::OgreManager()
     if (!mRoot->restoreConfig())
     {
         if (!mRoot->showConfigDialog())
-            OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS, "Abort render system configuration", "OgreManager::OgreManager");
+            OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS, "Abort render system configuration", __FUNCTION__);
     }
 
     Ogre_glTF::glTFLoaderPlugin* gltfPlugin = OGRE_NEW Ogre_glTF::glTFLoaderPlugin;
