@@ -83,8 +83,6 @@ void LoadFromFolderDialog::selectAllClicked(bool b)
 
 void LoadFromFolderDialog::okButtonClicked()
 {
-    qDebug() << "OK!";
-
     QStringList fileList;
 
     QListWidget* listWidget = ui->listWidget;

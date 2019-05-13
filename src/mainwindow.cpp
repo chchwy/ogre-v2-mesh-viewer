@@ -345,6 +345,13 @@ void MainWindow::actionLoadFromFolder()
     settings.setValue("actionLoadFromFolder", folder);
     settings.sync();
 
+    if (mFirstLoad)
+    {
+        mOgreManager->clearScene(); // clear the sample model
+        mSeceneWidget->sceneLoaded();
+        mFirstLoad = false;
+    }
+
     LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this, mOgreManager);
     dialog->setSourceFolder(folder);
     dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
