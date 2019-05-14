@@ -108,7 +108,16 @@ bool MeshLoader::loadOgreMesh(QString filePath)
     QFileInfo info(filePath);
 
     std::string sNewResourceLocation = info.absolutePath().toStdString();
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sNewResourceLocation, "FileSystem", "ViewerResc");
+    auto& manager = Ogre::ResourceGroupManager::getSingleton();
+    if (!manager.resourceLocationExists(sNewResourceLocation, "ViewerResc"))
+    {
+        manager.addResourceLocation(sNewResourceLocation, "FileSystem", "ViewerResc");
+        auto allMaterials = manager.findResourceNames("ViewerResc", "*.material.json");
+        for (const std::string& sMtlName : *allMaterials)
+        {
+            Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
+        }
+    }
 
     QString sNewMeshFile = info.fileName();
 
