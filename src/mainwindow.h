@@ -30,6 +30,7 @@ class QCloseEvent;
 class LightWidget;
 class SceneTreeWidget;
 class TransformWidget;
+class MaterialWidget;
 class MeshLoader;
 class Inspector;
 
@@ -79,6 +80,7 @@ private:
     LightWidget* mLightWidget = nullptr;
     SceneTreeWidget* mSeceneWidget = nullptr;
     TransformWidget* mTransformWidget = nullptr;
+    MaterialWidget* mMaterialWidget = nullptr;
 
     QTimer* mTimer = nullptr;
     QString mUserDocumentPath;
