@@ -69,6 +69,17 @@ void LoadFromFolderDialog::createListItems(const QStringList& meshList)
     ui->selectAllCheckbox->setChecked(true);
 }
 
+void LoadFromFolderDialog::lockListWidget()
+{
+    QListWidget* listWidget = ui->listWidget;
+    for (int i = 0; i < listWidget->count(); ++i)
+    {
+        QListWidgetItem* item = listWidget->item(i);
+        item->setFlags(Qt::NoItemFlags);
+    }
+    QApplication::processEvents(QEventLoop::DialogExec);
+}
+
 void LoadFromFolderDialog::selectAllClicked(bool b)
 {
     QListWidget* listWidget = ui->listWidget;
@@ -83,6 +94,8 @@ void LoadFromFolderDialog::selectAllClicked(bool b)
 
 void LoadFromFolderDialog::okButtonClicked()
 {
+    lockListWidget();
+
     QStringList fileList;
 
     QListWidget* listWidget = ui->listWidget;
