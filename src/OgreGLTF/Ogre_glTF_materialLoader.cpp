@@ -162,27 +162,31 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 
 	//OgreLog("Create HlmsPbsDatablock " + mtlName);
 	//TODO refactor these almost exact pieces of code
-	for(const auto& content : material.values)
+	for (const auto& content : material.values)
 	{
 		//OgreLog(content.first);
-		if(content.first == "baseColorTexture")
-			setBaseColorTexture(datablock, content.second.TextureIndex());
+        if (content.first == "baseColorTexture")
+            setBaseColorTexture(datablock, content.second.TextureIndex());
 
-		if(content.first == "metallicRoughnessTexture")
+		if (content.first == "metallicRoughnessTexture")
 			setMetalRoughTexture(datablock, content.second.TextureIndex());
 
-		if(content.first == "baseColorFactor")
-			setBaseColor(datablock, convertColor(content.second.ColorFactor()));
+        if (content.first == "baseColorFactor")
+        {
+            setBaseColor(datablock, convertColor(content.second.ColorFactor()));
+            float alpha = content.second.number_array[3];
+            datablock->setTransparency(alpha);
+        }
 
-		if(content.first == "metallicFactor")
+		if (content.first == "metallicFactor")
 			setMetallicValue(datablock, static_cast<float>(content.second.Factor()));
 
-		if(content.first == "roughnessFactor")
+		if (content.first == "roughnessFactor")
 			setRoughnesValue(datablock, static_cast<float>(content.second.Factor()));
 	}
 
 	//OgreLog("additionalValues");
-	for(const auto& content : material.additionalValues)
+	for (const auto& content : material.additionalValues)
 	{
 		//OgreLog(content.first);
 		if(content.first == "normalTexture")
