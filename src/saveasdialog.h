@@ -43,6 +43,7 @@ private:
     void saveHlmsJson(const Ogre::Item* ogreItem);
     QString validateFileName(QString fileName);
     void applySubMeshMaterialNames(Ogre::Item* ogreItem);
+    void saveLuaScript(const std::vector<Ogre::Item*>& ogreItems);
 
     OgreManager* mOgre = nullptr;
     bool mInitialized = false;

@@ -122,6 +122,7 @@ void loaderAdapter::makeNode(Ogre::SceneNode* ogreNode, const tinygltf::Node& no
     if (node.mesh > -1)
     {
         Ogre::Item* item = smgr->createItem(meshes[node.mesh]);
+        item->setName(node.name);
         ogreChildNode->attachObject(item);
 
         for (int i = 0; i < item->getNumSubItems(); ++i)
@@ -130,7 +131,6 @@ void loaderAdapter::makeNode(Ogre::SceneNode* ogreNode, const tinygltf::Node& no
             Ogre::HlmsDatablock* datablock = pimpl->materialLoad.getDatablock(materialIndex);
             item->getSubItem(i)->setDatablock(datablock);
         }
-
     }
     if (!node.translation.empty())
         ogreChildNode->translate(node.translation[0], node.translation[1], node.translation[2]);
