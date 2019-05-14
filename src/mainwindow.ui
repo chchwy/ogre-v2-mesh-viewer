@@ -71,7 +71,7 @@
     <string>Open...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionResetCamera">
