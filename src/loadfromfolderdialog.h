@@ -17,15 +17,17 @@ public:
     ~LoadFromFolderDialog();
 
     void setSourceFolder(const QString& s);
-    void listAllMeshesInFolder();
-    void createListItems(const QStringList& meshList);
-
+    
 protected:
     void showEvent(QShowEvent* event) override;
 
 private:
     void selectAllClicked(bool b);
     void okButtonClicked();
+
+    void listAllMeshesInFolder();
+    void createListItems(const QStringList& meshList);
+    void lockListWidget();
 
     QString mFolder;
     bool mInitialized = false;
