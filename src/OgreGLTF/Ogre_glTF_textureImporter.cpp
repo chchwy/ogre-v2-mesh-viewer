@@ -26,7 +26,7 @@ void textureImporter::loadTexture(const tinygltf::Texture& texture)
 {
     auto textureManager = Ogre::TextureManager::getSingletonPtr();
     const auto& image = model.images[texture.source];
-    const auto name = "glTF_texture_" + image.name + std::to_string(id) + std::to_string(texture.source);
+    const auto name = image.uri;
 
     auto OgreTexture = textureManager->getByName(name);
     if (OgreTexture)
@@ -196,7 +196,7 @@ Ogre::TexturePtr textureImporter::getNormalSNORM(int gltfTextureSourceID)
 {
     auto textureManager = Ogre::TextureManager::getSingletonPtr();
     const auto& image = model.images[gltfTextureSourceID];
-    const auto name = "glTF_texture_" + image.name + std::to_string(id) + std::to_string(gltfTextureSourceID) + "_NormalFixed";
+    const auto name = image.uri;
 
     auto texture = textureManager->getByName(name);
     if (texture)
@@ -205,7 +205,7 @@ Ogre::TexturePtr textureImporter::getNormalSNORM(int gltfTextureSourceID)
         return texture;
     }
 
-    OgreLog("Can't find texure " + name + ". Generating it from glTF");
+    OgreLog("Can't find texture " + name + ". Generating it from glTF");
 
     const auto pixelFormat = [&] {
         if (image.component == 3) return Ogre::PF_BYTE_RGB;
