@@ -81,21 +81,7 @@ void SaveAsDialog::saveButtonClicked()
 
     for (int i = 0; i < ogreItems.size(); ++i)
     {
-        QString meshName = QString::fromStdString(ogreItems[i]->getMesh()->getName());
-        if (meshName.endsWith(" (v1)"))
-        {
-            meshName = meshName.mid(0, meshName.size() - 5); // remove the (v1) part
-        }
-
-        if (meshName.endsWith(".mesh.xml"))
-        {
-            meshName = meshName.mid(0, meshName.size() - 4); // remove the .xml part
-        }
-
-        if (!meshName.endsWith(".mesh"))
-        {
-            meshName.append(".mesh"); // make sure the file extension is .mesh
-        }
+        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getMesh()->getName()));
 
         QString fullPath = QDir(mOutputFolder).filePath(meshName);
         Ogre::Mesh* mesh = ogreItems[i]->getMesh().get();
@@ -169,4 +155,23 @@ void SaveAsDialog::createListItems(const std::vector<Ogre::Item*>& ogreItems)
 
     //QSignalBlocker b(ui->selectAllCheckbox);
     //ui->selectAllCheckbox->setChecked(true);
+}
+
+QString SaveAsDialog::validateFileName(QString fileName)
+{
+    if (fileName.endsWith(" (v1)"))
+    {
+        fileName = fileName.mid(0, fileName.size() - 5); // remove the (v1) part
+    }
+
+    if (fileName.endsWith(".mesh.xml"))
+    {
+        fileName = fileName.mid(0, fileName.size() - 4); // remove the .xml part
+    }
+
+    if (!fileName.endsWith(".mesh"))
+    {
+        fileName.append(".mesh"); // make sure the file extension is .mesh
+    }
+    return fileName;
 }

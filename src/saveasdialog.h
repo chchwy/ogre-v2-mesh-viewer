@@ -38,6 +38,7 @@ private:
     void collectMeshRecursively(Ogre::SceneNode* node, std::vector<Ogre::Item*>& ogreItems);
     void createListItems(const std::vector<Ogre::Item*>& ogreItems);
 
+    QString validateFileName(QString fileName);
 
     OgreManager* mOgre = nullptr;
     bool mInitialized = false;
