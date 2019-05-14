@@ -48,6 +48,7 @@
 #include "lightwidget.h"
 #include "scenetreewidget.h"
 #include "transformwidget.h"
+#include "materialwidget.h"
 #include "inspector.h"
 #include "cameracontroller.h"
 #include "saveasdialog.h"
@@ -79,6 +80,7 @@ MainWindow::MainWindow()
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
     connect(mOgreManager->meshLoader(), &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
     connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mTransformWidget, &TransformWidget::sceneNodeSelected);
+    connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mMaterialWidget, &MaterialWidget::sceneNodeSelected);
 
     // actions
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);
@@ -168,6 +170,9 @@ void MainWindow::createDockWindows()
 
     mTransformWidget = new TransformWidget;
     mInspector->addWidget(mTransformWidget);
+
+    mMaterialWidget = new MaterialWidget;
+    mInspector->addWidget(mMaterialWidget);
 
     mInspector->endAddWidget();
 }

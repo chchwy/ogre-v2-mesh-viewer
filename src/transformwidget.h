@@ -24,7 +24,7 @@ private:
     void scaleChanged();
 
     Ogre::SceneNode* mCurrentNode = nullptr;
-    Ui::TransformWidget* ui;
+    Ui::TransformWidget* ui = nullptr;
 };
 
 #endif // TRANSFORMWIDGET_H
