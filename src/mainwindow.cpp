@@ -259,43 +259,11 @@ void MainWindow::actionSaveMesh()
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     QString sLastOpenLocation = settings.value("actionSaveMesh", mUserDocumentPath).toString();
 
-
     SaveAsDialog* dialog = new SaveAsDialog(this, mOgreManager);
     dialog->setFolder(sLastOpenLocation);
     dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dialog->setAttribute(Qt::WA_DeleteOnClose, true);
     dialog->open();
-
-    return;
-
-    
-    QString sMeshFileName = QFileDialog::getSaveFileName(this, "Save Ogre Mesh",
-                                                         sLastOpenLocation + "/a.mesh",
-                                                         "Ogre Mesh (*.mesh)");
-    if (sMeshFileName.isEmpty())
-    {
-        return;
-    }
-
-    QFileInfo info(sMeshFileName);
-    settings.setValue("actionSaveMesh", info.absolutePath());
-
-    if (QFile::exists(sMeshFileName)) QFile::remove(sMeshFileName);
-    Q_ASSERT(!QFile::exists(sMeshFileName));
-
-    Ogre::Mesh* mesh = mOgreManager->currentMesh();
-    if (mesh != nullptr)
-    {
-        Ogre::Root* root = mOgreManager->ogreRoot();
-        Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
-        meshSerializer2.exportMesh(mesh, sMeshFileName.toStdString());
-
-        if (!QFile::exists(sMeshFileName))
-        {
-            qDebug() << "Failed to export obj model.";
-            QMessageBox::information(this, "Error", "Filed to export obj model");
-        }
-    }
 }
 
 void MainWindow::actionExportObj()
