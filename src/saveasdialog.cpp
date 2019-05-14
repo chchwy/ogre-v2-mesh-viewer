@@ -3,7 +3,10 @@
 
 #include <QFileDialog>
 #include "OgreMesh2.h"
+#include "OgreSubMesh2.h"
 #include "OgreMesh2Serializer.h"
+#include "OgreHlmsJson.h"
+#include "OgreItem.h"
 
 #include "ogremanager.h"
 
@@ -60,6 +63,8 @@ void SaveAsDialog::browseButtonClicked()
 
 void SaveAsDialog::saveButtonClicked()
 {
+    lockListWidget();
+
     std::vector<Ogre::Item*> ogreItems;
 
     QListWidget* listWidget = ui->listWidget;
@@ -143,10 +148,23 @@ void SaveAsDialog::createListItems(const std::vector<Ogre::Item*>& ogreItems)
     //ui->selectAllCheckbox->setChecked(true);
 }
 
+void SaveAsDialog::lockListWidget()
+{
+    QListWidget* listWidget = ui->listWidget;
+    for (int i = 0; i < listWidget->count(); ++i)
+    {
+        QListWidgetItem* item = listWidget->item(i);
+        item->setFlags(Qt::NoItemFlags);
+    }
+    QApplication::processEvents(QEventLoop::DialogExec);
+}
+
 void SaveAsDialog::saveOgreMeshes(const std::vector<Ogre::Item*>& ogreItems)
 {
     for (int i = 0; i < ogreItems.size(); ++i)
     {
+        applySubMeshMaterialNames(ogreItems[i]);
+
         QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getMesh()->getName()));
 
         QString fullPath = QDir(mOutputFolder).filePath(meshName);
@@ -156,8 +174,42 @@ void SaveAsDialog::saveOgreMeshes(const std::vector<Ogre::Item*>& ogreItems)
         Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
         meshSerializer2.exportMesh(mesh, fullPath.toStdString());
 
+        saveHlmsJson(ogreItems[i]);
+
         ui->progressBar->setValue(i + 1);
         QApplication::processEvents(QEventLoop::DialogExec);
+    }
+}
+
+void SaveAsDialog::saveHlmsJson(const Ogre::Item* ogreItem)
+{
+    auto hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
+
+    size_t numSubItem = ogreItem->getNumSubItems();
+    for (int i = 0; i < numSubItem; ++i)
+    {
+        Ogre::HlmsDatablock* datablock = ogreItem->getSubItem(i)->getDatablock();
+
+        Ogre::HlmsJson hlmsJson(hlmsManager, nullptr);
+        std::string outJson;
+        hlmsJson.saveMaterial(datablock, outJson, "");
+
+        QString outputPath = QDir(mOutputFolder).filePath(datablock->getNameStr()->c_str());
+        if (!outputPath.endsWith(".material.json"))
+        {
+            outputPath.append(".material.json");
+        }
+
+        QFile f(outputPath);
+        if (f.open(QFile::WriteOnly))
+        {
+            QTextStream fout(&f);
+            fout.setCodec("UTF-8");
+            fout << QString::fromStdString(outJson);
+        }
+        f.close();
+
+        qDebug() << "Write Hlms Json: " << outputPath;
     }
 }
 
@@ -178,4 +230,17 @@ QString SaveAsDialog::validateFileName(QString fileName)
         fileName.append(".mesh"); // make sure the file extension is .mesh
     }
     return fileName;
+}
+
+void SaveAsDialog::applySubMeshMaterialNames(Ogre::Item* ogreItem)
+{
+    // Otherwise the exported mesh won't contain the material name.
+    // Check OgreMesh2SerializerImpl.cpp line 269 (in MeshSerializerImpl::writeSubMesh())
+
+    size_t numSubItems = ogreItem->getNumSubItems();
+    for (size_t i = 0; i < numSubItems; ++i)
+    {
+        std::string datablockName = *ogreItem->getSubItem(i)->getDatablock()->getNameStr();
+        ogreItem->getSubItem(i)->getSubMesh()->setMaterialName(datablockName);
+    }
 }

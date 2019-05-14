@@ -37,9 +37,12 @@ private:
     void listAllMeshesFromScene();
     void collectMeshRecursively(Ogre::SceneNode* node, std::vector<Ogre::Item*>& ogreItems);
     void createListItems(const std::vector<Ogre::Item*>& ogreItems);
+    void lockListWidget();
 
     void saveOgreMeshes(const std::vector<Ogre::Item*>& ogreItems);
+    void saveHlmsJson(const Ogre::Item* ogreItem);
     QString validateFileName(QString fileName);
+    void applySubMeshMaterialNames(Ogre::Item* ogreItem);
 
     OgreManager* mOgre = nullptr;
     bool mInitialized = false;
