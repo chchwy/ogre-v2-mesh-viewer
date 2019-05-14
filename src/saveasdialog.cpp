@@ -76,24 +76,10 @@ void SaveAsDialog::saveButtonClicked()
 
     ui->progressBar->setVisible(true);
     ui->progressBar->setMaximum(ogreItems.size());
-
     QApplication::processEvents(QEventLoop::DialogExec);
 
-    for (int i = 0; i < ogreItems.size(); ++i)
-    {
-        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getMesh()->getName()));
-
-        QString fullPath = QDir(mOutputFolder).filePath(meshName);
-        Ogre::Mesh* mesh = ogreItems[i]->getMesh().get();
-
-        Ogre::Root* root = mOgre->ogreRoot();
-        Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
-        meshSerializer2.exportMesh(mesh, fullPath.toStdString());
-
-        ui->progressBar->setValue(i + 1);
-        QApplication::processEvents(QEventLoop::DialogExec);
-    }
-
+    saveOgreMeshes(ogreItems);
+  
     accept();
 }
 
@@ -155,6 +141,24 @@ void SaveAsDialog::createListItems(const std::vector<Ogre::Item*>& ogreItems)
 
     //QSignalBlocker b(ui->selectAllCheckbox);
     //ui->selectAllCheckbox->setChecked(true);
+}
+
+void SaveAsDialog::saveOgreMeshes(const std::vector<Ogre::Item*>& ogreItems)
+{
+    for (int i = 0; i < ogreItems.size(); ++i)
+    {
+        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getMesh()->getName()));
+
+        QString fullPath = QDir(mOutputFolder).filePath(meshName);
+        Ogre::Mesh* mesh = ogreItems[i]->getMesh().get();
+
+        Ogre::Root* root = mOgre->ogreRoot();
+        Ogre::MeshSerializer meshSerializer2(root->getRenderSystem()->getVaoManager());
+        meshSerializer2.exportMesh(mesh, fullPath.toStdString());
+
+        ui->progressBar->setValue(i + 1);
+        QApplication::processEvents(QEventLoop::DialogExec);
+    }
 }
 
 QString SaveAsDialog::validateFileName(QString fileName)
