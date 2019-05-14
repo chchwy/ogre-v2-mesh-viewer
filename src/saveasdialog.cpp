@@ -2,6 +2,8 @@
 #include "ui_saveasdialog.h"
 
 #include <QFileDialog>
+#include <QSettings>
+
 #include "OgreMesh2.h"
 #include "OgreSubMesh2.h"
 #include "OgreMesh2Serializer.h"
@@ -85,6 +87,9 @@ void SaveAsDialog::saveButtonClicked()
 
     saveOgreMeshes(ogreItems);
   
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
+    settings.setValue("actionSaveMesh", mOutputFolder);
+
     accept();
 }
 
