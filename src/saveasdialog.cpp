@@ -86,7 +86,8 @@ void SaveAsDialog::saveButtonClicked()
     QApplication::processEvents(QEventLoop::DialogExec);
 
     saveOgreMeshes(ogreItems);
-  
+    saveLuaScript(ogreItems);
+
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     settings.setValue("actionSaveMesh", mOutputFolder);
 
@@ -136,7 +137,7 @@ void SaveAsDialog::createListItems(const std::vector<Ogre::Item*>& ogreItems)
 {
     for (Ogre::Item* i : ogreItems)
     {
-        QString meshName = QString::fromStdString(i->getMesh()->getName());
+        QString meshName = QString::fromStdString(i->getName());
 
         QListWidgetItem* listItem = new QListWidgetItem(meshName, ui->listWidget);
         listItem->setFlags(listItem->flags() | Qt::ItemIsUserCheckable);
@@ -170,7 +171,7 @@ void SaveAsDialog::saveOgreMeshes(const std::vector<Ogre::Item*>& ogreItems)
     {
         applySubMeshMaterialNames(ogreItems[i]);
 
-        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getMesh()->getName()));
+        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getName()));
 
         QString fullPath = QDir(mOutputFolder).filePath(meshName);
         Ogre::Mesh* mesh = ogreItems[i]->getMesh().get();
@@ -248,4 +249,58 @@ void SaveAsDialog::applySubMeshMaterialNames(Ogre::Item* ogreItem)
         std::string datablockName = *ogreItem->getSubItem(i)->getDatablock()->getNameStr();
         ogreItem->getSubItem(i)->getSubMesh()->setMaterialName(datablockName);
     }
+}
+
+void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
+{
+    // This function is just for my personal engine.
+    QString fileName = "mesh_load.lua";
+    QString fullPath = QDir(mOutputFolder).filePath(fileName);
+
+    QFile f(fullPath);
+    if (!f.open(QFile::WriteOnly))
+        return;
+
+    QTextStream fout(&f);
+    fout << "local mesh_list = {}\n";
+
+    for (size_t i = 0; i < ogreItems.size(); ++i)
+    {
+        Ogre::Item* item = ogreItems[i];
+        Ogre::Vector3 pos = item->getParentSceneNode()->_getDerivedPosition();
+
+        QString line = QString("mesh_list[\"%1\"] = {x=%2, y=%3, z=%4}\n")
+            .arg(item->getName().c_str())
+            .arg(pos.x, 0, 'f', 4)
+            .arg(pos.y, 0, 'f', 4)
+            .arg(pos.z, 0, 'f', 4);
+        fout << line;
+    }
+    fout << "\n";
+
+    QString func = ""
+        "function create_meshes() \n"
+        "    local root_node = get_object_by_name('main_building') \n"
+        "    for key, value in pairs(file_list) do \n"
+        "        local path = 'script/' ..key \n"
+        "        log_info(path) \n"
+        "\n"
+        "        local mesh = create_persistent_object('COgreMesh') \n"
+        "        mesh:set_string('Path', path) \n"
+        "\n"
+        "        local node = create_persistent_object('CSceneNodeOgreMesh') \n"
+        "        node:set_name(key) \n"
+        "        node:set_ref('Ogre Mesh', mesh) \n"
+        "        node:set_ref('Parent', root_node) \n"
+        "        node:set_vec3('Position', { x = value.x, y = value.y, z = value.z }) \n"
+        "        node:signal_attribute('Parent') \n"
+        "        node:signal_attribute('Name') \n"
+        "        node:signal_attribute('Position') \n"
+        "    end \n"
+        "end \n";
+
+    fout << func;
+    fout.flush();
+
+    f.close();
 }
