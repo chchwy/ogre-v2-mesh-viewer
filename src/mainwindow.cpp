@@ -220,9 +220,8 @@ void MainWindow::actionOpen()
 
     if (mFirstLoad)
     {
+        mSeceneWidget->clear();
         mOgreManager->clearScene(); // clear the sample model
-        mSeceneWidget->sceneLoaded();
-        mFirstLoad = false;
     }
 
     QProgressDialog progress(QString("Loading %1").arg(sMeshFileName), "Cancel", 0, 0, this); // Cancel is not working atm, but whatever
@@ -254,6 +253,12 @@ void MainWindow::actionOpen()
         }
     }
     progress.cancel();
+
+    if (mFirstLoad)
+    {
+        mSeceneWidget->sceneLoaded();
+        mFirstLoad = false;
+    }
 }
 
 void MainWindow::actionSaveMesh()

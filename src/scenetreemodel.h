@@ -38,6 +38,7 @@ public:
                     const QModelIndex& parent = QModelIndex()) override;
 
     void refresh(QModelIndex rootIndex);
+    void clear(QModelIndex rootIndex);
 
 private:
     int getSceneNodeRow(Ogre::SceneNode*) const;
