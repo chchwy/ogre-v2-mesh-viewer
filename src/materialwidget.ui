@@ -37,17 +37,43 @@
     <widget class="QComboBox" name="mtlNameCombo"/>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QCheckBox" name="wireframeCheck">
      <property name="text">
-      <string>Material</string>
+      <string>wireframe</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="diffuseGroup">
      <property name="title">
-      <string/>
+      <string>Diffuse</string>
      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QPushButton" name="diffuseTexButton">
+        <property name="text">
+         <string>No Texture</string>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="diffuseColorButton">
+        <property name="text">
+         <string>Diffuse Colour</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="diffuseBgColorButton">
+        <property name="text">
+         <string>Diffuse Background Colour</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
