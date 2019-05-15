@@ -269,7 +269,7 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
         Ogre::Item* item = ogreItems[i];
         Ogre::Vector3 pos = item->getParentSceneNode()->_getDerivedPosition();
 
-        QString line = QString("mesh_list[\"%1\"] = {x=%2, y=%3, z=%4}\n")
+        QString line = QString("mesh_list[\"%1.mesh\"] = {x=%2, y=%3, z=%4}\n")
             .arg(item->getName().c_str())
             .arg(pos.x, 0, 'f', 4)
             .arg(pos.y, 0, 'f', 4)
@@ -281,7 +281,7 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
     QString func = ""
         "function create_meshes() \n"
         "    local root_node = get_object_by_name('main_building') \n"
-        "    for key, value in pairs(file_list) do \n"
+        "    for key, value in pairs(mesh_list) do \n"
         "        local path = 'script/' ..key \n"
         "        log_info(path) \n"
         "\n"
