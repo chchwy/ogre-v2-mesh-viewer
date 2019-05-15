@@ -131,11 +131,18 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
         qDebug() << "Ogre Format=" << img.getFormat();
 
         QImage::Format qtFormat = toQtImageFormat(img.getFormat());
-        QImage qImg(img.getData(), img.getWidth(), img.getHeight(), qtFormat);
+        if (qtFormat != QImage::Format_Invalid)
+        {
+            QImage qImg(img.getData(), img.getWidth(), img.getHeight(), qtFormat);
 
-        QPixmap pixmap = QPixmap::fromImage(qImg);
-        ui->diffuseTexButton->setIconSize(QSize(64, 64));
-        ui->diffuseTexButton->setIcon(QIcon(pixmap));
+            QPixmap pixmap = QPixmap::fromImage(qImg);
+            ui->diffuseTexButton->setIconSize(QSize(64, 64));
+            ui->diffuseTexButton->setIcon(QIcon(pixmap));
+        }
+        else
+        {
+            // TODO: show unknown format
+        }
 
         QString texInfo = QString("%1: %2x%3")
             .arg(tex->getName().c_str())
