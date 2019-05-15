@@ -41,7 +41,10 @@ void MaterialWidget::sceneNodeSelected(Ogre::SceneNode* node)
 
 void MaterialWidget::materialComboIndexChanged(int i)
 {
-    updateOneDatablock();
+    if (i >= 0)
+    {
+        updateOneDatablock();
+    }
 }
 
 void MaterialWidget::wireFrameClicked(bool b)
@@ -74,11 +77,14 @@ Ogre::HlmsPbsDatablock* MaterialWidget::getCurrentDatablock()
 {
     int i = ui->mtlNameCombo->currentIndex();
     
-    Ogre::HlmsDatablock* datablock = mCurrentItem->getSubItem(i)->getDatablock();
-    Ogre::HlmsPbsDatablock* pbsblock = dynamic_cast<Ogre::HlmsPbsDatablock*>(datablock);
-    if (nullptr != pbsblock)
+    if (i >= 0)
     {
-        return pbsblock;
+        Ogre::HlmsDatablock* datablock = mCurrentItem->getSubItem(i)->getDatablock();
+        Ogre::HlmsPbsDatablock* pbsblock = dynamic_cast<Ogre::HlmsPbsDatablock*>(datablock);
+        if (nullptr != pbsblock)
+        {
+            return pbsblock;
+        }
     }
     return nullptr;
 }
