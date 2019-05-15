@@ -22,6 +22,12 @@ SceneTreeWidget::~SceneTreeWidget()
     delete ui;
 }
 
+void SceneTreeWidget::clear()
+{
+    QModelIndex rootIndex = ui->treeView->rootIndex();
+    mModel->clear(rootIndex);
+}
+
 void SceneTreeWidget::sceneLoaded()
 {
     QModelIndex rootIndex = ui->treeView->rootIndex();
