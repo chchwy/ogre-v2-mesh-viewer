@@ -12,6 +12,7 @@ namespace Ogre
 {
 class SceneNode;
 class Item;
+class HlmsPbsDatablock;
 }
 
 class MaterialWidget : public QWidget
@@ -22,11 +23,23 @@ public:
     explicit MaterialWidget(QWidget* parent = nullptr);
     ~MaterialWidget();
 
+public slots:
     void sceneNodeSelected(Ogre::SceneNode* node);
+    void materialComboIndexChanged(int i);
+    void wireFrameClicked(bool b);
 
 private:
     Ogre::Item* getFirstItem(Ogre::SceneNode* node);
+    Ogre::HlmsPbsDatablock* getCurrentDatablock();
+
     void updateMaterialCombo();
+    void updateOneDatablock();
+    void updateDiffuseGroup(Ogre::HlmsPbsDatablock*);
+
+    void enableAll();
+    void disableAll();
+
+    QImage::Format toQtImageFormat(Ogre::PixelFormat);
 
 private:
     Ogre::Item* mCurrentItem = nullptr;
