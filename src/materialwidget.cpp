@@ -12,9 +12,18 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     ui->diffuseColorButton->setStyleSheet("Text-align:left");
     ui->diffuseBgColorButton->setStyleSheet("Text-align:left");
 
-    auto signal = static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
-    connect(ui->mtlNameCombo, signal, this, &MaterialWidget::materialComboIndexChanged);
+    auto comboSignal = static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
+    connect(ui->mtlNameCombo, comboSignal, this, &MaterialWidget::materialComboIndexChanged);
     connect(ui->wireframeCheck, &QCheckBox::clicked, this, &MaterialWidget::wireFrameClicked);
+
+    auto doubleSpinSignal = static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged);
+    connect(ui->transparencySpin, doubleSpinSignal, this, &MaterialWidget::transparencySpinValueChanged);
+    connect(ui->transparencySlider, &QSlider::valueChanged, this, &MaterialWidget::transparencySliderValueChanged);
+
+    connect(ui->transModeRadioTrans, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
+    connect(ui->transModeRadioFade, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
+    connect(ui->transModeRadioNone, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
+    connect(ui->useTextureAlphaCheck, &QCheckBox::clicked, this, &MaterialWidget::useAlphaFromTextureClicked);
 }
 
 MaterialWidget::~MaterialWidget()
@@ -56,6 +65,48 @@ void MaterialWidget::wireFrameClicked(bool b)
         macro.mPolygonMode = (b) ? Ogre::PM_WIREFRAME : Ogre::PM_SOLID;
         pbs->setMacroblock(macro);
     }
+}
+
+void MaterialWidget::transparencySliderValueChanged(int value)
+{
+    // slider just passes the value to the transparency spinbox. doesn't set a value to pbs directly.
+    float normalizedValue = float(value) / ui->transparencySlider->maximum();
+    ui->transparencySpin->setValue(normalizedValue);
+}
+
+void MaterialWidget::transparencySpinValueChanged(double value)
+{
+    QSignalBlocker b1(ui->transparencySlider);
+    ui->transparencySlider->setValue(value * ui->transparencySlider->maximum());
+
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    auto currentMode = pbs->getTransparencyMode();
+    pbs->setTransparency(value, currentMode);
+}
+
+void MaterialWidget::transparencyModeChanged()
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    float currentAlpha = pbs->getTransparency();
+
+    if (ui->transModeRadioTrans->isChecked())
+    {
+        pbs->setTransparency(currentAlpha, Ogre::HlmsPbsDatablock::Transparent);
+    }
+    else if (ui->transModeRadioFade->isChecked())
+    {
+        pbs->setTransparency(currentAlpha, Ogre::HlmsPbsDatablock::Fade);
+    }
+    else
+    {
+        pbs->setTransparency(currentAlpha, Ogre::HlmsPbsDatablock::None);
+    }
+}
+
+void MaterialWidget::useAlphaFromTextureClicked(bool b)
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    pbs->setTransparency(pbs->getTransparency(), pbs->getTransparencyMode(), b);
 }
 
 Ogre::Item* MaterialWidget::getFirstItem(Ogre::SceneNode* node)
@@ -115,6 +166,7 @@ void MaterialWidget::updateOneDatablock()
     ui->wireframeCheck->setChecked(polygonMode == Ogre::PM_WIREFRAME);
 
     updateDiffuseGroup(pbs);
+    updateTransparencyGroup(pbs);
 }
 
 void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
@@ -168,6 +220,34 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
     bgDiffPixmap.fill(QColor(bgDiffuse.r, bgDiffuse.g, bgDiffuse.b, bgDiffuse.a));
     ui->diffuseBgColorButton->setIcon(bgDiffPixmap);
     ui->diffuseBgColorButton->setIconSize(QSize(64, 16));
+}
+
+void MaterialWidget::updateTransparencyGroup(Ogre::HlmsPbsDatablock* pbs)
+{
+    Q_ASSERT(mCurrentItem);
+
+    float alphaValue = pbs->getTransparency();
+
+    QSignalBlocker b1(ui->transparencySlider);
+    ui->transparencySlider->setValue(alphaValue * ui->transparencySlider->maximum());
+
+    QSignalBlocker b2(ui->transparencySpin);
+    ui->transparencySpin->setValue(alphaValue);
+
+    QSignalBlocker b3(ui->transModeRadioTrans);
+    QSignalBlocker b4(ui->transModeRadioFade);
+    QSignalBlocker b5(ui->transModeRadioNone);
+
+    Ogre::HlmsPbsDatablock::TransparencyModes mode = pbs->getTransparencyMode();
+    switch (mode)
+    {
+    case Ogre::HlmsPbsDatablock::Transparent: ui->transModeRadioTrans->setChecked(true); break;
+    case Ogre::HlmsPbsDatablock::Fade: ui->transModeRadioFade->setChecked(true); break;
+    case Ogre::HlmsPbsDatablock::None: ui->transModeRadioNone->setChecked(true); break;
+    }
+
+    QSignalBlocker b7(ui->useTextureAlphaCheck);
+    ui->useTextureAlphaCheck->setChecked(pbs->getUseAlphaFromTextures());
 }
 
 void MaterialWidget::enableAll()

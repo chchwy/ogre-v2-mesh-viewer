@@ -28,6 +28,11 @@ public slots:
     void materialComboIndexChanged(int i);
     void wireFrameClicked(bool b);
 
+    void transparencySliderValueChanged(int value);
+    void transparencySpinValueChanged(double value);
+    void transparencyModeChanged();
+    void useAlphaFromTextureClicked(bool b);
+
 private:
     Ogre::Item* getFirstItem(Ogre::SceneNode* node);
     Ogre::HlmsPbsDatablock* getCurrentDatablock();
@@ -35,6 +40,7 @@ private:
     void updateMaterialCombo();
     void updateOneDatablock();
     void updateDiffuseGroup(Ogre::HlmsPbsDatablock*);
+    void updateTransparencyGroup(Ogre::HlmsPbsDatablock*);
 
     void enableAll();
     void disableAll();
