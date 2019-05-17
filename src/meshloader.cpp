@@ -9,6 +9,7 @@
 #include <OgreMeshManager.h>
 #include <OgreMesh2.h>
 #include <OgreWireAabb.h>
+#include <OgreHlmsPbs.h>
 
 // qt headers
 #include <QFile>
@@ -237,7 +238,31 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
 
         if (datablock == hlmsMgr->getDefaultDatablock())
         {
-            item->getSubItem(i)->setDatablock("viewer_default_mtl");
+            static int cnt = 0;
+            std::stringstream sout;
+            sout << "TmpBlock_" << cnt;
+            cnt++;
+
+            Ogre::HlmsBlendblock blend;
+            blend.mSourceBlendFactorAlpha = Ogre::SBF_SOURCE_ALPHA;
+            blend.mDestBlendFactorAlpha = Ogre::SBF_ONE_MINUS_SOURCE_ALPHA;
+
+            Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>( hlmsMgr->getHlms(Ogre::HLMS_PBS) );
+            Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(
+                hlmsPbs->createDatablock(sout.str(),
+                                         sout.str(),
+                                         Ogre::HlmsMacroblock(),
+                                         blend,
+                                         Ogre::HlmsParamVec()));
+
+            datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
+            datablock->setRoughness(0.7);
+            datablock->setMetalness(0.3);
+            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
+            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+
+            item->getSubItem(i)->setDatablock(datablock);
+
         }
 
         if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
@@ -245,11 +270,6 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
             auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
             datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
         }
-        /*
-        Ogre::HlmsMacroblock macro;
-        macro.mPolygonMode = Ogre::PM_WIREFRAME;
-        datablock->setMacroblock(macro);
-        */
     }
 
     emit sceneNodeAdded(node);
