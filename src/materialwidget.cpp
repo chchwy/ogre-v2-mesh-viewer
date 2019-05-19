@@ -2,6 +2,7 @@
 #include "ui_materialwidget.h"
 
 #include "OgreHlmsPbsDatablock.h"
+#include "spinslider.h"
 
 MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
 {
@@ -16,9 +17,8 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     connect(ui->mtlNameCombo, comboSignal, this, &MaterialWidget::materialComboIndexChanged);
     connect(ui->wireframeCheck, &QCheckBox::clicked, this, &MaterialWidget::wireFrameClicked);
 
-    auto doubleSpinSignal = static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged);
-    connect(ui->transparencySpin, doubleSpinSignal, this, &MaterialWidget::transparencySpinValueChanged);
-    connect(ui->transparencySlider, &QSlider::valueChanged, this, &MaterialWidget::transparencySliderValueChanged);
+    mTransparencySpinSlider = new SpinSlider(ui->transparencySlider, ui->transparencySpin);
+    connect(mTransparencySpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::transparencyValueChanged);
 
     connect(ui->transModeRadioTrans, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
     connect(ui->transModeRadioFade, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
@@ -67,18 +67,8 @@ void MaterialWidget::wireFrameClicked(bool b)
     }
 }
 
-void MaterialWidget::transparencySliderValueChanged(int value)
+void MaterialWidget::transparencyValueChanged(double value)
 {
-    // slider just passes the value to the transparency spinbox. doesn't set a value to pbs directly.
-    float normalizedValue = float(value) / ui->transparencySlider->maximum();
-    ui->transparencySpin->setValue(normalizedValue);
-}
-
-void MaterialWidget::transparencySpinValueChanged(double value)
-{
-    QSignalBlocker b1(ui->transparencySlider);
-    ui->transparencySlider->setValue(value * ui->transparencySlider->maximum());
-
     Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
     auto currentMode = pbs->getTransparencyMode();
     pbs->setTransparency(value, currentMode);
@@ -228,11 +218,8 @@ void MaterialWidget::updateTransparencyGroup(Ogre::HlmsPbsDatablock* pbs)
 
     float alphaValue = pbs->getTransparency();
 
-    QSignalBlocker b1(ui->transparencySlider);
-    ui->transparencySlider->setValue(alphaValue * ui->transparencySlider->maximum());
-
-    QSignalBlocker b2(ui->transparencySpin);
-    ui->transparencySpin->setValue(alphaValue);
+    QSignalBlocker b1(mTransparencySpinSlider);
+    mTransparencySpinSlider->setValue(alphaValue);
 
     QSignalBlocker b3(ui->transModeRadioTrans);
     QSignalBlocker b4(ui->transModeRadioFade);

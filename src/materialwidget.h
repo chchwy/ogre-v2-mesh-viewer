@@ -15,6 +15,9 @@ class Item;
 class HlmsPbsDatablock;
 }
 
+class SpinSlider;
+
+
 class MaterialWidget : public QWidget
 {
     Q_OBJECT
@@ -28,8 +31,7 @@ public slots:
     void materialComboIndexChanged(int i);
     void wireFrameClicked(bool b);
 
-    void transparencySliderValueChanged(int value);
-    void transparencySpinValueChanged(double value);
+    void transparencyValueChanged(double value);
     void transparencyModeChanged();
     void useAlphaFromTextureClicked(bool b);
 
@@ -49,6 +51,8 @@ private:
 
 private:
     Ogre::Item* mCurrentItem = nullptr;
+    SpinSlider* mTransparencySpinSlider = nullptr;
+
     Ui::MaterialWidget* ui = nullptr;
 };
 

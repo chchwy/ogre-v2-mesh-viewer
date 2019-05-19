@@ -48,7 +48,8 @@ HEADERS = \
     src/transformwidget.h \
     src/inspector.h \
     src/saveasdialog.h \
-    src/materialwidget.h
+    src/materialwidget.h \
+    src/spinslider.h
 
 SOURCES = \
     src/main.cpp \
@@ -80,7 +81,8 @@ SOURCES = \
     src/transformwidget.cpp \
     src/inspector.cpp \
     src/saveasdialog.cpp \
-    src/materialwidget.cpp
+    src/materialwidget.cpp \
+    src/spinslider.cpp
 
 FORMS += \
     src/mainwindow.ui \
