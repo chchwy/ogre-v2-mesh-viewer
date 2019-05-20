@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "materialwidget.h"
 #include "ui_materialwidget.h"
 
@@ -11,15 +12,17 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     ui = new Ui::MaterialWidget;
     ui->setupUi(this);
 
-    mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
-    
-    ui->diffuseColorButton->setStyleSheet("Text-align:left");
-    ui->diffuseBgColorButton->setStyleSheet("Text-align:left");
-
+    /// General section
     auto comboSignal = static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
     connect(ui->mtlNameCombo, comboSignal, this, &MaterialWidget::materialComboIndexChanged);
     connect(ui->wireframeCheck, &QCheckBox::clicked, this, &MaterialWidget::wireFrameClicked);
 
+    /// Diffuse section
+    mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
+    ui->diffuseColorButton->setStyleSheet("Text-align:left");
+    ui->diffuseBgColorButton->setStyleSheet("Text-align:left");
+
+    /// Transparency section
     mTransparencySpinSlider = new SpinSlider(ui->transparencySlider, ui->transparencySpin);
     connect(mTransparencySpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::transparencyValueChanged);
 
@@ -28,9 +31,11 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     connect(ui->transModeRadioNone, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
     connect(ui->useTextureAlphaCheck, &QCheckBox::clicked, this, &MaterialWidget::useAlphaFromTextureClicked);
 
+    /// Roughness section
     mRoughnessSpinSlider = new SpinSlider(ui->roughnessSlider, ui->roughnessSpin);
     connect(mRoughnessSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::roughnessValueChanged);
 
+    /// Metallic section
     mMetallicSpinSlider = new SpinSlider(ui->metallicSlider, ui->metallicSpin);
     connect(mMetallicSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::metallicValueChanged);
 }
