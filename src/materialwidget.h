@@ -16,7 +16,7 @@ class HlmsPbsDatablock;
 }
 
 class SpinSlider;
-
+class TextureButton;
 
 class MaterialWidget : public QWidget
 {
@@ -58,6 +58,7 @@ private:
     SpinSlider* mTransparencySpinSlider = nullptr;
     SpinSlider* mRoughnessSpinSlider = nullptr;
     SpinSlider* mMetallicSpinSlider = nullptr;
+    TextureButton* mDiffuseTexButton = nullptr;
 
     Ui::MaterialWidget* ui = nullptr;
 };
