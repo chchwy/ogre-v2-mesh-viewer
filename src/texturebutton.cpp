@@ -134,7 +134,7 @@ QImage TextureButton::toQtImage(const Ogre::Image& img)
                 //qDebug() << (int)src[src_byte_offset + 0] << (int)src[src_byte_offset + 1];
             }
         }
-        qtImg.save("C:/Temp/normal.png");
+        //qtImg.save("C:/Temp/normal.png");
         return qtImg;
         break;
     }
