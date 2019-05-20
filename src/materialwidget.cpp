@@ -33,6 +33,8 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
 
     /// Normal section
     mNormalTexButton = new TextureButton(ui->normalTexButton);
+    mNormalSpinSlider = new SpinSlider(ui->normalSlider, ui->normalSpin);
+    connect(mNormalSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::normalValueChanged);
 
     /// Roughness section
     mRoughnessTexButton = new TextureButton(ui->roughnessTexButton);
@@ -116,6 +118,12 @@ void MaterialWidget::useAlphaFromTextureClicked(bool b)
 {
     Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
     pbs->setTransparency(pbs->getTransparency(), pbs->getTransparencyMode(), b);
+}
+
+void MaterialWidget::normalValueChanged(double value)
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    pbs->setNormalMapWeight(value);
 }
 
 void MaterialWidget::roughnessValueChanged(double value)
@@ -245,6 +253,9 @@ void MaterialWidget::updateNormalGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
     mNormalTexButton->setTexture(pbs, Ogre::PBSM_NORMAL);
+
+    QSignalBlocker b1(mNormalSpinSlider);
+    mNormalSpinSlider->setValue(pbs->getNormalMapWeight());
 }
 
 void MaterialWidget::updateRoughnessGroup(Ogre::HlmsPbsDatablock* pbs)
