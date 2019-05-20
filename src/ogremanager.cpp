@@ -102,7 +102,7 @@ void OgreManager::initialize()
     // Create scene manager
     const size_t numThreads = std::max<int>(1, Ogre::PlatformInformation::getNumLogicalCores());
     Ogre::InstancingThreadedCullingMethod threadedCullingMethod = (numThreads > 1) ? Ogre::INSTANCING_CULLING_THREADED : Ogre::INSTANCING_CULLING_SINGLETHREAD;
-    mSceneManager = mRoot->createSceneManager(Ogre::ST_GENERIC, numThreads, threadedCullingMethod);
+    mSceneManager = mRoot->createSceneManager(Ogre::ST_GENERIC, numThreads, threadedCullingMethod, "default");
     mSceneManager->setShadowDirectionalLightExtrusionDistance(500.0f);
     mSceneManager->setShadowFarDistance(500.0f);
 
