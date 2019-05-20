@@ -31,11 +31,16 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     connect(ui->transModeRadioNone, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
     connect(ui->useTextureAlphaCheck, &QCheckBox::clicked, this, &MaterialWidget::useAlphaFromTextureClicked);
 
+    /// Normal section
+    mNormalTexButton = new TextureButton(ui->normalTexButton);
+
     /// Roughness section
+    mRoughnessTexButton = new TextureButton(ui->roughnessTexButton);
     mRoughnessSpinSlider = new SpinSlider(ui->roughnessSlider, ui->roughnessSpin);
     connect(mRoughnessSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::roughnessValueChanged);
 
     /// Metallic section
+    mMetallicTexButton = new TextureButton(ui->metallicTexButton);
     mMetallicSpinSlider = new SpinSlider(ui->metallicSlider, ui->metallicSpin);
     connect(mMetallicSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::metallicValueChanged);
 }
@@ -162,6 +167,7 @@ void MaterialWidget::updateMaterialCombo()
 {
     Q_ASSERT(mCurrentItem);
 
+    QSignalBlocker b1(ui->mtlNameCombo);
     ui->mtlNameCombo->clear();
 
     size_t num = mCurrentItem->getNumSubItems();
@@ -185,6 +191,7 @@ void MaterialWidget::updateOneDatablock()
 
     updateDiffuseGroup(pbs);
     updateTransparencyGroup(pbs);
+    updateNormalGroup(pbs);
     updateRoughnessGroup(pbs);
     updateMetallicGroup(pbs);
 }
@@ -234,9 +241,17 @@ void MaterialWidget::updateTransparencyGroup(Ogre::HlmsPbsDatablock* pbs)
     ui->useTextureAlphaCheck->setChecked(pbs->getUseAlphaFromTextures());
 }
 
+void MaterialWidget::updateNormalGroup(Ogre::HlmsPbsDatablock* pbs)
+{
+    Q_ASSERT(mCurrentItem);
+    mNormalTexButton->setTexture(pbs, Ogre::PBSM_NORMAL);
+}
+
 void MaterialWidget::updateRoughnessGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
+
+    mRoughnessTexButton->setTexture(pbs, Ogre::PBSM_ROUGHNESS);
 
     QSignalBlocker b1(mRoughnessSpinSlider);
     float roughness = pbs->getRoughness();
@@ -246,6 +261,8 @@ void MaterialWidget::updateRoughnessGroup(Ogre::HlmsPbsDatablock* pbs)
 void MaterialWidget::updateMetallicGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
+
+    mMetallicTexButton->setTexture(pbs, Ogre::PBSM_METALLIC);
 
     QSignalBlocker b1(mMetallicSpinSlider);
     float metallic = pbs->getMetalness();

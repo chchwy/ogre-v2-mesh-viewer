@@ -45,6 +45,7 @@ private:
     void updateOneDatablock();
     void updateDiffuseGroup(Ogre::HlmsPbsDatablock*);
     void updateTransparencyGroup(Ogre::HlmsPbsDatablock*);
+    void updateNormalGroup(Ogre::HlmsPbsDatablock*);
     void updateRoughnessGroup(Ogre::HlmsPbsDatablock*);
     void updateMetallicGroup(Ogre::HlmsPbsDatablock*);
 
@@ -59,6 +60,9 @@ private:
     SpinSlider* mRoughnessSpinSlider = nullptr;
     SpinSlider* mMetallicSpinSlider = nullptr;
     TextureButton* mDiffuseTexButton = nullptr;
+    TextureButton* mNormalTexButton = nullptr;
+    TextureButton* mRoughnessTexButton = nullptr;
+    TextureButton* mMetallicTexButton = nullptr;
 
     Ui::MaterialWidget* ui = nullptr;
 };

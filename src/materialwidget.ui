@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>326</width>
-    <height>578</height>
+    <height>587</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -151,7 +151,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <widget class="QPushButton" name="normalButton">
+       <widget class="QPushButton" name="normalTexButton">
         <property name="text">
          <string>No Texture</string>
         </property>
@@ -181,7 +181,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_5">
       <item>
-       <widget class="QPushButton" name="roughnessButton">
+       <widget class="QPushButton" name="roughnessTexButton">
         <property name="text">
          <string>No Texture</string>
         </property>
@@ -211,7 +211,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_6">
       <item>
-       <widget class="QPushButton" name="metallicButton">
+       <widget class="QPushButton" name="metallicTexButton">
         <property name="text">
          <string>No Texture</string>
         </property>

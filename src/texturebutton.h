@@ -22,6 +22,7 @@ public:
     void clear();
 
     static QImage::Format toQtImageFormat(Ogre::PixelFormat);
+    static QImage toQtImage(const Ogre::Image& img);
 
 private:
     void setInfoText(const QString& texName, int width, int height);
