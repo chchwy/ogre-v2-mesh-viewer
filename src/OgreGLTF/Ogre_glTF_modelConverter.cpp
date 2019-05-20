@@ -146,11 +146,11 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
             //OgreLog("Vertex element count blendIndex : " + std::to_string(blendIndices.perVertex));
             //OgreLog("Vertex element count blendWeight: " + std::to_string(blendWeights.perVertex));
 
-            //Allocate 2 small arrays to store the bone idexes. (They should be of lenght "4")
+            //Allocate 2 small arrays to store the bone indexes. (They should be of length "4")
             std::vector<Ogre::ushort> vertexBoneIndex(blendIndices.perVertex);
             std::vector<Ogre::Real> vertexBlend(blendWeights.perVertex);
 
-            //Add the attahcments for each bones
+            //Add the attachments for each bones
             for (Ogre::uint32 vertexIndex = 0; vertexIndex < blendIndices.vertexCount; ++vertexIndex)
             {
                 //Fetch the for bone indexes from the buffer
@@ -183,7 +183,7 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
     }
 
     OgreMesh->_setBounds(boundingBox, true);
-    OgreMesh->_setBoundingSphereRadius(boundingBox.getRadius());
+    //OgreMesh->_setBoundingSphereRadius(boundingBox.getRadius());
     //OgreLog("Setting 'bounding sphere radius' from bounds : " + std::to_string(boundingBox.getRadius()));
 
     return OgreMesh;
@@ -387,7 +387,7 @@ vertexBufferPart modelConverter::extractVertexBuffer(const std::pair<std::string
         //OgreLog("Updating bounding box size: ");
         //OgreLog("Setting Min size: " + std::to_string(minBounds.x) + " " + std::to_string(minBounds.y) + " " + std::to_string(minBounds.z));
         //OgreLog("Setting Max size: " + std::to_string(maxBounds.x) + " " + std::to_string(maxBounds.y) + " " + std::to_string(maxBounds.z));
-        boundingBox.merge(Ogre::Aabb(minBounds, maxBounds));
+        boundingBox.merge(Ogre::Aabb::newFromExtents(minBounds, maxBounds));
     }
 
     //geometryBuffer->_debugContentToLog();
