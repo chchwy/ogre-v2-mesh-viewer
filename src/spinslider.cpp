@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "spinslider.h"
 
 #include <QSlider>
