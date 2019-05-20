@@ -15,17 +15,20 @@ A Ogre3D mesh viewer based on v2.1 which can import obj/gltf models. [Download i
 
 ## TODO
 
+- [ ] HLMS material editing (WIP)
 - [ ] Batch convertor from mesh to obj
 - [ ] glTF export
 - [ ] Support DotScene
-- [ ] HLMS material editing
-- [x] Improve performance by converting obj data to ogre mesh directly.
+- [x] Improve performance by converting obj data to ogre mesh directly
 - [x] Automatically generate normals if there are no normal vectors in obj
 - [x] glTF import
 
 ## Known issues
 
-- [ ] Normals are broken when converting a v2-mesh to a obj.
+- [ ] Normals are broken when converting a v2-mesh to a obj
+- [ ] Normal textures are not showing correctly on the material panel
+- [ ] Normal weight doesn't update right after updating the Pbs blocks
+- [ ] Metallic texture is not showing with DirectX11 rendersystem
 
 ## Acknowledgements
 
