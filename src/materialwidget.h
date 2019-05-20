@@ -34,6 +34,7 @@ public slots:
     void transparencyValueChanged(double value);
     void transparencyModeChanged();
     void useAlphaFromTextureClicked(bool b);
+    void normalValueChanged(double value);
     void roughnessValueChanged(double value);
     void metallicValueChanged(double value);
 
@@ -57,6 +58,7 @@ private:
 private:
     Ogre::Item* mCurrentItem = nullptr;
     SpinSlider* mTransparencySpinSlider = nullptr;
+    SpinSlider* mNormalSpinSlider = nullptr;
     SpinSlider* mRoughnessSpinSlider = nullptr;
     SpinSlider* mMetallicSpinSlider = nullptr;
     TextureButton* mDiffuseTexButton = nullptr;
