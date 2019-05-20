@@ -30,6 +30,8 @@ public slots:
     void sceneNodeSelected(Ogre::SceneNode* node);
     void materialComboIndexChanged(int i);
     void wireFrameClicked(bool b);
+    void visibleCheckClicked(bool b);
+    void boundingBoxCheckClicked(bool b);
 
     void transparencyValueChanged(double value);
     void transparencyModeChanged();
@@ -65,6 +67,8 @@ private:
     TextureButton* mNormalTexButton = nullptr;
     TextureButton* mRoughnessTexButton = nullptr;
     TextureButton* mMetallicTexButton = nullptr;
+
+    std::vector<Ogre::WireAabb*> mAllWireAabb;
 
     Ui::MaterialWidget* ui = nullptr;
 };

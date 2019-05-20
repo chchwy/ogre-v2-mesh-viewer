@@ -3,6 +3,8 @@
 #include "ui_materialwidget.h"
 
 #include "OgreHlmsPbsDatablock.h"
+#include "OgreWireAabb.h"
+
 #include "spinslider.h"
 #include "texturebutton.h"
 
@@ -16,6 +18,8 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     auto comboSignal = static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
     connect(ui->mtlNameCombo, comboSignal, this, &MaterialWidget::materialComboIndexChanged);
     connect(ui->wireframeCheck, &QCheckBox::clicked, this, &MaterialWidget::wireFrameClicked);
+    //connect(ui->boundingBoxCheck, &QCheckBox::clicked, this, &MaterialWidget::boundingBoxCheckClicked);
+    //connect(ui->visibleCheck, &QCheckBox::clicked, this, &MaterialWidget::visibleCheckClicked);
 
     /// Diffuse section
     mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
@@ -85,6 +89,43 @@ void MaterialWidget::wireFrameClicked(bool b)
         Ogre::HlmsMacroblock macro = *pbs->getMacroblock();
         macro.mPolygonMode = (b) ? Ogre::PM_WIREFRAME : Ogre::PM_SOLID;
         pbs->setMacroblock(macro);
+    }
+}
+
+void MaterialWidget::visibleCheckClicked(bool b)
+{
+    if (mCurrentItem)
+    {
+        mCurrentItem->setVisible(b);
+    }
+}
+
+void MaterialWidget::boundingBoxCheckClicked(bool b)
+{
+    if (mCurrentItem)
+    {
+        Ogre::SceneManager* sceneMgr = Ogre::Root::getSingleton().getSceneManager("default");
+        if (b)
+        {
+            Ogre::WireAabb* wireAabb = sceneMgr->createWireAabb();
+            wireAabb->track(mCurrentItem);
+            mAllWireAabb.push_back(wireAabb);
+        }
+        else
+        {
+            auto it = mAllWireAabb.begin();
+            for (; it != mAllWireAabb.end(); ++it)
+            {
+                Ogre::WireAabb* wireAabb = *it;
+                if (wireAabb->getTrackedObject() == mCurrentItem)
+                {
+                    sceneMgr->destroyWireAabb(wireAabb);
+                    break;
+                }
+            }
+            if (it != mAllWireAabb.end())
+                mAllWireAabb.erase(it);
+        }
     }
 }
 
