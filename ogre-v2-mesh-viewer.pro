@@ -49,7 +49,8 @@ HEADERS = \
     src/inspector.h \
     src/saveasdialog.h \
     src/materialwidget.h \
-    src/spinslider.h
+    src/spinslider.h \
+    src/texturebutton.h
 
 SOURCES = \
     src/main.cpp \
@@ -82,7 +83,8 @@ SOURCES = \
     src/inspector.cpp \
     src/saveasdialog.cpp \
     src/materialwidget.cpp \
-    src/spinslider.cpp
+    src/spinslider.cpp \
+    src/texturebutton.cpp
 
 FORMS += \
     src/mainwindow.ui \

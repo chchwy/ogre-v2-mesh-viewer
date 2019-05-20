@@ -3,13 +3,16 @@
 
 #include "OgreHlmsPbsDatablock.h"
 #include "spinslider.h"
+#include "texturebutton.h"
+
 
 MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
 {
     ui = new Ui::MaterialWidget;
     ui->setupUi(this);
 
-    ui->diffuseTexButton->setStyleSheet("Text-align:left");
+    mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
+    
     ui->diffuseColorButton->setStyleSheet("Text-align:left");
     ui->diffuseBgColorButton->setStyleSheet("Text-align:left");
 
@@ -186,41 +189,8 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
     Q_ASSERT(mCurrentItem);
     
     Ogre::TexturePtr tex = pbs->getTexture(Ogre::PBSM_DIFFUSE);
-
-    if (tex)
-    {
-        Ogre::Image img;
-        tex->convertToImage(img);
-
-        qDebug() << "Ogre Format=" << img.getFormat();
-
-        QImage::Format qtFormat = toQtImageFormat(img.getFormat());
-        if (qtFormat != QImage::Format_Invalid)
-        {
-            QImage qImg(img.getData(), img.getWidth(), img.getHeight(), qtFormat);
-
-            QPixmap pixmap = QPixmap::fromImage(qImg);
-            ui->diffuseTexButton->setIconSize(QSize(64, 64));
-            ui->diffuseTexButton->setIcon(QIcon(pixmap));
-        }
-        else
-        {
-            // TODO: show unknown format
-        }
-
-        QString texInfo = QString("%1: %2x%3")
-            .arg(tex->getName().c_str())
-            .arg(img.getWidth())
-            .arg(img.getHeight());
-        ui->diffuseTexButton->setText(texInfo);
-    }
-    else
-    {
-        ui->diffuseTexButton->setIcon(QIcon());
-        ui->diffuseTexButton->setIconSize(QSize(1, 1));
-        ui->diffuseTexButton->setText("No Texture");
-    }
-
+    mDiffuseTexButton->setTexture(pbs, Ogre::PBSM_DIFFUSE);
+    
     Ogre::Vector3 diffuse = pbs->getDiffuse() * 255;
     QPixmap diffPixmap(64, 16);
     diffPixmap.fill(QColor(diffuse.x, diffuse.y, diffuse.z));
