@@ -34,6 +34,8 @@ public slots:
     void transparencyValueChanged(double value);
     void transparencyModeChanged();
     void useAlphaFromTextureClicked(bool b);
+    void roughnessValueChanged(double value);
+    void metallicValueChanged(double value);
 
 private:
     Ogre::Item* getFirstItem(Ogre::SceneNode* node);
@@ -43,6 +45,8 @@ private:
     void updateOneDatablock();
     void updateDiffuseGroup(Ogre::HlmsPbsDatablock*);
     void updateTransparencyGroup(Ogre::HlmsPbsDatablock*);
+    void updateRoughnessGroup(Ogre::HlmsPbsDatablock*);
+    void updateMetallicGroup(Ogre::HlmsPbsDatablock*);
 
     void enableAll();
     void disableAll();
@@ -52,6 +56,8 @@ private:
 private:
     Ogre::Item* mCurrentItem = nullptr;
     SpinSlider* mTransparencySpinSlider = nullptr;
+    SpinSlider* mRoughnessSpinSlider = nullptr;
+    SpinSlider* mMetallicSpinSlider = nullptr;
 
     Ui::MaterialWidget* ui = nullptr;
 };

@@ -24,6 +24,12 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     connect(ui->transModeRadioFade, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
     connect(ui->transModeRadioNone, &QRadioButton::clicked, this, &MaterialWidget::transparencyModeChanged);
     connect(ui->useTextureAlphaCheck, &QCheckBox::clicked, this, &MaterialWidget::useAlphaFromTextureClicked);
+
+    mRoughnessSpinSlider = new SpinSlider(ui->roughnessSlider, ui->roughnessSpin);
+    connect(mRoughnessSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::roughnessValueChanged);
+
+    mMetallicSpinSlider = new SpinSlider(ui->metallicSlider, ui->metallicSpin);
+    connect(mMetallicSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::metallicValueChanged);
 }
 
 MaterialWidget::~MaterialWidget()
@@ -99,6 +105,20 @@ void MaterialWidget::useAlphaFromTextureClicked(bool b)
     pbs->setTransparency(pbs->getTransparency(), pbs->getTransparencyMode(), b);
 }
 
+void MaterialWidget::roughnessValueChanged(double value)
+{
+    QSignalBlocker b1(mRoughnessSpinSlider);
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    pbs->setRoughness(value);
+}
+
+void MaterialWidget::metallicValueChanged(double value)
+{
+    QSignalBlocker b1(mMetallicSpinSlider);
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    pbs->setMetalness(value);
+}
+
 Ogre::Item* MaterialWidget::getFirstItem(Ogre::SceneNode* node)
 {
     if (node)
@@ -136,13 +156,13 @@ void MaterialWidget::updateMaterialCombo()
 
     ui->mtlNameCombo->clear();
 
-    int num = mCurrentItem->getNumSubItems();
-    for (int i = 0; i < num; ++i)
+    size_t num = mCurrentItem->getNumSubItems();
+    for (size_t i = 0; i < num; ++i)
     {
         Ogre::HlmsDatablock* datablock = mCurrentItem->getSubItem(i)->getDatablock();
 
         QString name = QString::fromStdString(*datablock->getNameStr());
-        QString displayText = QString("%1: %2").arg(i).arg(name);
+        QString displayText = QString("[%1] %2").arg(i).arg(name);
         ui->mtlNameCombo->addItem(displayText, QVariant(i));
     }
 }
@@ -157,6 +177,8 @@ void MaterialWidget::updateOneDatablock()
 
     updateDiffuseGroup(pbs);
     updateTransparencyGroup(pbs);
+    updateRoughnessGroup(pbs);
+    updateMetallicGroup(pbs);
 }
 
 void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
@@ -235,6 +257,24 @@ void MaterialWidget::updateTransparencyGroup(Ogre::HlmsPbsDatablock* pbs)
 
     QSignalBlocker b7(ui->useTextureAlphaCheck);
     ui->useTextureAlphaCheck->setChecked(pbs->getUseAlphaFromTextures());
+}
+
+void MaterialWidget::updateRoughnessGroup(Ogre::HlmsPbsDatablock* pbs)
+{
+    Q_ASSERT(mCurrentItem);
+
+    QSignalBlocker b1(mRoughnessSpinSlider);
+    float roughness = pbs->getRoughness();
+    mRoughnessSpinSlider->setValue(roughness);
+}
+
+void MaterialWidget::updateMetallicGroup(Ogre::HlmsPbsDatablock* pbs)
+{
+    Q_ASSERT(mCurrentItem);
+
+    QSignalBlocker b1(mMetallicSpinSlider);
+    float metallic = pbs->getMetalness();
+    mMetallicSpinSlider->setValue(metallic);
 }
 
 void MaterialWidget::enableAll()
