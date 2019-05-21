@@ -199,17 +199,33 @@ void MaterialWidget::transparencyModeChanged()
     Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
     float currentAlpha = pbs->getTransparency();
 
+    Ogre::HlmsPbsDatablock::TransparencyModes mode = Ogre::HlmsPbsDatablock::None;
     if (ui->transModeRadioTrans->isChecked())
     {
-        pbs->setTransparency(currentAlpha, Ogre::HlmsPbsDatablock::Transparent);
+        mode = Ogre::HlmsPbsDatablock::Transparent;
     }
     else if (ui->transModeRadioFade->isChecked())
     {
-        pbs->setTransparency(currentAlpha, Ogre::HlmsPbsDatablock::Fade);
+        mode = Ogre::HlmsPbsDatablock::Fade;
     }
     else
     {
-        pbs->setTransparency(currentAlpha, Ogre::HlmsPbsDatablock::None);
+        mode = Ogre::HlmsPbsDatablock::None;
+    }
+
+    pbs->setTransparency(currentAlpha, mode);
+
+    if (mode != Ogre::HlmsPbsDatablock::None)
+    {
+        Ogre::HlmsBlendblock blend = *pbs->getBlendblock();
+        blend.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+        pbs->setBlendblock(blend);
+    }
+    else
+    {
+        Ogre::HlmsBlendblock blend = *pbs->getBlendblock();
+        blend.setBlendType(Ogre::SBT_REPLACE);
+        pbs->setBlendblock(blend);
     }
 }
 
