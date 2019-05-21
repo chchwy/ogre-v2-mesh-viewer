@@ -17,8 +17,7 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     auto comboSignal = static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
     connect(ui->mtlNameCombo, comboSignal, this, &MaterialWidget::materialComboIndexChanged);
     connect(ui->wireframeCheck, &QCheckBox::clicked, this, &MaterialWidget::wireFrameClicked);
-    //connect(ui->boundingBoxCheck, &QCheckBox::clicked, this, &MaterialWidget::boundingBoxCheckClicked);
-    //connect(ui->visibleCheck, &QCheckBox::clicked, this, &MaterialWidget::visibleCheckClicked);
+    connect(ui->twoSidedCheck, &QCheckBox::clicked, this, &MaterialWidget::twoSidedClicked);
 
     /// Diffuse section
     mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
@@ -89,6 +88,12 @@ void MaterialWidget::wireFrameClicked(bool b)
         macro.mPolygonMode = (b) ? Ogre::PM_WIREFRAME : Ogre::PM_SOLID;
         pbs->setMacroblock(macro);
     }
+}
+
+void MaterialWidget::twoSidedClicked(bool b)
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    pbs->setTwoSidedLighting(b);
 }
 
 void MaterialWidget::transparencyValueChanged(double value)
@@ -199,6 +204,9 @@ void MaterialWidget::updateOneDatablock()
     
     QSignalBlocker(ui->wireframeCheck);
     ui->wireframeCheck->setChecked(polygonMode == Ogre::PM_WIREFRAME);
+
+    QSignalBlocker(ui->twoSidedCheck);
+    ui->twoSidedCheck->setChecked(pbs->getTwoSidedLighting());
 
     updateDiffuseGroup(pbs);
     updateTransparencyGroup(pbs);
