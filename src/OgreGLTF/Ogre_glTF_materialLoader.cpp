@@ -175,7 +175,14 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
         {
             setBaseColor(datablock, convertColor(content.second.ColorFactor()));
             float alpha = content.second.number_array[3];
-            datablock->setTransparency(alpha);
+            if (alpha > 0.9999)
+            {
+                datablock->setTransparency(alpha, Ogre::HlmsPbsDatablock::None);
+            }
+            else
+            {
+                datablock->setTransparency(alpha, Ogre::HlmsPbsDatablock::Transparent);
+            }
         }
 
 		if (content.first == "metallicFactor")
