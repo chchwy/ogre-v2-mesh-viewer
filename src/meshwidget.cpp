@@ -26,7 +26,15 @@ void MeshWidget::sceneNodeSelected(Ogre::SceneNode* node)
     Ogre::Item* item = getFirstItem(node);
     mCurrentItem = item;
 
-    updateMeshState(mCurrentItem);
+    if (mCurrentItem)
+    {
+        show();
+        updateMeshState(mCurrentItem);
+    }
+    else
+    {
+        hide();
+    }
 }
 
 void MeshWidget::visibleCheckClicked(bool b)
