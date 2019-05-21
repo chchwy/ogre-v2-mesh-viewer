@@ -50,7 +50,8 @@ HEADERS = \
     src/saveasdialog.h \
     src/materialwidget.h \
     src/spinslider.h \
-    src/texturebutton.h
+    src/texturebutton.h \
+    src/meshwidget.h
 
 SOURCES = \
     src/main.cpp \
@@ -84,7 +85,8 @@ SOURCES = \
     src/saveasdialog.cpp \
     src/materialwidget.cpp \
     src/spinslider.cpp \
-    src/texturebutton.cpp
+    src/texturebutton.cpp \
+    src/meshwidget.cpp
 
 FORMS += \
     src/mainwindow.ui \
@@ -94,7 +96,8 @@ FORMS += \
     src/scenetreewidget.ui \
     src/transformwidget.ui \
     src/saveasdialog.ui \
-    src/materialwidget.ui
+    src/materialwidget.ui \
+    src/meshwidget.ui
 
 PRECOMPILED_HEADER = src/stdafx.h
 

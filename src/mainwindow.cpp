@@ -49,6 +49,7 @@
 #include "scenetreewidget.h"
 #include "transformwidget.h"
 #include "materialwidget.h"
+#include "meshwidget.h"
 #include "inspector.h"
 #include "cameracontroller.h"
 #include "saveasdialog.h"
@@ -81,6 +82,7 @@ MainWindow::MainWindow()
     connect(mOgreManager->meshLoader(), &MeshLoader::sceneNodeAdded, mSeceneWidget, &SceneTreeWidget::sceneNodeAdded);
     connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mTransformWidget, &TransformWidget::sceneNodeSelected);
     connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mMaterialWidget, &MaterialWidget::sceneNodeSelected);
+    connect(mSeceneWidget, &SceneTreeWidget::sceneNodeSelected, mMeshWidget, &MeshWidget::sceneNodeSelected);
 
     // actions
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);
@@ -167,13 +169,16 @@ void MainWindow::createDockWindows()
     QDockWidget* inspectorDock = new QDockWidget("Inspector", this);
     inspectorDock->setWidget(mInspector);
     addDockWidget(Qt::RightDockWidgetArea, inspectorDock);
+    {
+        mTransformWidget = new TransformWidget;
+        mInspector->addWidget(mTransformWidget);
 
-    mTransformWidget = new TransformWidget;
-    mInspector->addWidget(mTransformWidget);
+        mMeshWidget = new MeshWidget;
+        mInspector->addWidget(mMeshWidget);
 
-    mMaterialWidget = new MaterialWidget;
-    mInspector->addWidget(mMaterialWidget);
-
+        mMaterialWidget = new MaterialWidget;
+        mInspector->addWidget(mMaterialWidget);
+    }
     mInspector->endAddWidget();
 }
 
