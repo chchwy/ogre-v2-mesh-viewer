@@ -61,13 +61,13 @@ void MaterialWidget::sceneNodeSelected(Ogre::SceneNode* node)
 
     if (mCurrentItem)
     {
-        enableAll();
+        show();
         updateMaterialCombo();
         updateOneDatablock();
     }
     else
     {
-        disableAll();
+        hide();
     }
 }
 
@@ -289,26 +289,4 @@ void MaterialWidget::updateMetallicGroup(Ogre::HlmsPbsDatablock* pbs)
     QSignalBlocker b1(mMetallicSpinSlider);
     float metallic = pbs->getMetalness();
     mMetallicSpinSlider->setValue(metallic);
-}
-
-void MaterialWidget::enableAll()
-{
-    ui->diffuseGroup->setEnabled(true);
-}
-
-void MaterialWidget::disableAll()
-{
-    ui->diffuseGroup->setEnabled(false);
-}
-
-QImage::Format MaterialWidget::toQtImageFormat(Ogre::PixelFormat ogreFormat)
-{
-    switch (ogreFormat)
-    {
-    case Ogre::PF_A8R8G8B8: return QImage::Format_ARGB32;
-    case Ogre::PF_A8B8G8R8: return QImage::Format_Invalid;
-    default:
-        break;
-    }
-    return QImage::Format_Invalid;
 }

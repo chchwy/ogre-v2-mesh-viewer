@@ -51,11 +51,6 @@ private:
     void updateRoughnessGroup(Ogre::HlmsPbsDatablock*);
     void updateMetallicGroup(Ogre::HlmsPbsDatablock*);
 
-    void enableAll();
-    void disableAll();
-
-    QImage::Format toQtImageFormat(Ogre::PixelFormat);
-
 private:
     Ogre::Item* mCurrentItem = nullptr;
     SpinSlider* mTransparencySpinSlider = nullptr;
