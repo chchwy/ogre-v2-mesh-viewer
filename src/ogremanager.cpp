@@ -248,7 +248,7 @@ void OgreManager::setIrradianceBackground()
         irradiance = texMgr.createManual("irradiance_bg", autoGroup,
                                          Ogre::TEX_TYPE_CUBE_MAP, 
                                          img.getWidth(), img.getHeight(), 
-                                         0 /* mipmap */, img.getFormat());
+                                         Ogre::MIP_DEFAULT /* mipmap */, img.getFormat());
         irradiance->loadImage(img);
     }
     Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
