@@ -141,6 +141,7 @@ void MainWindow::onSceneLoaded()
         mOgreManager->meshLoader()->load(meshFile);
     }
 
+    mOgreManager->setIrradianceBackground();
     mSeceneWidget->sceneLoaded();
 }
 
