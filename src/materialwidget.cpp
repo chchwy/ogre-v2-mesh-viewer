@@ -2,6 +2,7 @@
 #include "materialwidget.h"
 #include "ui_materialwidget.h"
 
+#include <QColorDialog>
 #include "OgreHlmsPbsDatablock.h"
 
 #include "spinslider.h"
@@ -23,6 +24,9 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
     ui->diffuseColorButton->setStyleSheet("Text-align:left");
     ui->diffuseBgColorButton->setStyleSheet("Text-align:left");
+
+    connect(ui->diffuseColorButton, &QPushButton::clicked, this, &MaterialWidget::diffuseColorButtonClicked);
+    connect(ui->diffuseBgColorButton, &QPushButton::clicked, this, &MaterialWidget::diffuseBgColorButtonClicked);
 
     /// Transparency section
     mTransparencySpinSlider = new SpinSlider(ui->transparencySlider, ui->transparencySpin);
@@ -94,6 +98,64 @@ void MaterialWidget::twoSidedClicked(bool b)
 {
     Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
     pbs->setTwoSidedLighting(b);
+}
+
+void MaterialWidget::diffuseColorButtonClicked()
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    Ogre::Vector3 originalColor = pbs->getDiffuse();
+    QColor initColor = QColor::fromRgbF(originalColor.x, originalColor.y, originalColor.z);
+
+    QColorDialog* dialog = new QColorDialog(initColor, this);
+    dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    connect(dialog, &QColorDialog::currentColorChanged, [&pbs] (const QColor& c)
+    {
+        pbs->setDiffuse(Ogre::Vector3(c.redF(), c.greenF(), c.blueF()));
+    });
+
+    connect(dialog, &QColorDialog::rejected, [&pbs, originalColor]
+    {
+        // back to the original color if users hit cancel button
+        pbs->setDiffuse(originalColor);
+    });
+
+    connect(dialog, &QColorDialog::accepted, [this, pbs]
+    {
+        updateDiffuseGroup(pbs);
+    });
+    dialog->exec();
+}
+
+void MaterialWidget::diffuseBgColorButtonClicked()
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    Ogre::ColourValue originalColor = pbs->getBackgroundDiffuse();
+    QColor initColor = QColor::fromRgbF(originalColor.r, originalColor.g, originalColor.b, originalColor.a);
+
+    QColorDialog* dialog = new QColorDialog(initColor, this);
+    dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    dialog->setOption(QColorDialog::ShowAlphaChannel, true);
+
+    connect(dialog, &QColorDialog::currentColorChanged, [&pbs](const QColor& c)
+    {
+        pbs->setBackgroundDiffuse(Ogre::ColourValue(c.redF(), c.greenF(), c.blueF(), c.alphaF()));
+    });
+
+    connect(dialog, &QColorDialog::rejected, [&pbs, originalColor]
+    {
+        // back to the original color if users hit cancel button
+        pbs->setBackgroundDiffuse(originalColor);
+    });
+
+    connect(dialog, &QColorDialog::accepted, [this, pbs]
+    {
+        updateDiffuseGroup(pbs);
+    });
+
+    dialog->exec();
 }
 
 void MaterialWidget::transparencyValueChanged(double value)
