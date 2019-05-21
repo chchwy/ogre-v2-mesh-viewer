@@ -341,9 +341,8 @@ void MainWindow::actionLoadFromFolder()
 
     if (mFirstLoad)
     {
+        mSeceneWidget->clear();
         mOgreManager->clearScene(); // clear the sample model
-        mSeceneWidget->sceneLoaded();
-        mFirstLoad = false;
     }
 
     LoadFromFolderDialog* dialog = new LoadFromFolderDialog(this, mOgreManager);
@@ -351,6 +350,12 @@ void MainWindow::actionLoadFromFolder()
     dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     dialog->setAttribute(Qt::WA_DeleteOnClose, true);
     dialog->open();
+
+    connect(dialog, &LoadFromFolderDialog::finished, [this](int result)
+    {
+        mSeceneWidget->sceneLoaded();
+        mFirstLoad = false;
+    });
 }
 
 void MainWindow::actionBatchConverter()
