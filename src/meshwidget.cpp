@@ -14,6 +14,8 @@ MeshWidget::MeshWidget(QWidget* parent) : QWidget(parent)
 
     connect(ui->visibleCheck, &QCheckBox::clicked, this, &MeshWidget::visibleCheckClicked);
     connect(ui->boundingBoxCheck, &QCheckBox::clicked, this, &MeshWidget::boundingBoxCheckClicked);
+
+    hide();
 }
 
 MeshWidget::~MeshWidget()

@@ -50,6 +50,8 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     mMetallicTexButton = new TextureButton(ui->metallicTexButton);
     mMetallicSpinSlider = new SpinSlider(ui->metallicSlider, ui->metallicSpin);
     connect(mMetallicSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::metallicValueChanged);
+
+    hide();
 }
 
 MaterialWidget::~MaterialWidget()
