@@ -32,6 +32,9 @@ public slots:
     void wireFrameClicked(bool b);
     void twoSidedClicked(bool b);
 
+    void diffuseColorButtonClicked();
+    void diffuseBgColorButtonClicked();
+
     void transparencyValueChanged(double value);
     void transparencyModeChanged();
     void useAlphaFromTextureClicked(bool b);
