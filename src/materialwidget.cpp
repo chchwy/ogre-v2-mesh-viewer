@@ -22,11 +22,10 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
 
     /// Diffuse section
     mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
-    ui->diffuseColorButton->setStyleSheet("Text-align:left");
-    ui->diffuseBgColorButton->setStyleSheet("Text-align:left");
 
     connect(ui->diffuseColorButton, &QPushButton::clicked, this, &MaterialWidget::diffuseColorButtonClicked);
     connect(ui->diffuseBgColorButton, &QPushButton::clicked, this, &MaterialWidget::diffuseBgColorButtonClicked);
+    connect(ui->specularColorButton, &QPushButton::clicked, this, &MaterialWidget::specularColorButtonClicked);
 
     /// Transparency section
     mTransparencySpinSlider = new SpinSlider(ui->transparencySlider, ui->transparencySpin);
@@ -158,6 +157,34 @@ void MaterialWidget::diffuseBgColorButtonClicked()
     dialog->exec();
 }
 
+void MaterialWidget::specularColorButtonClicked()
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    Ogre::Vector3 originalColor = pbs->getSpecular();
+    QColor initColor = QColor::fromRgbF(originalColor.x, originalColor.y, originalColor.z);
+
+    QColorDialog* dialog = new QColorDialog(initColor, this);
+    dialog->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    connect(dialog, &QColorDialog::currentColorChanged, [&pbs](const QColor& c)
+    {
+        pbs->setSpecular(Ogre::Vector3(c.redF(), c.greenF(), c.blueF()));
+    });
+
+    connect(dialog, &QColorDialog::rejected, [&pbs, originalColor]
+    {
+        // back to the original color if users hit cancel button
+        pbs->setSpecular(originalColor);
+    });
+
+    connect(dialog, &QColorDialog::accepted, [this, pbs]
+    {
+        updateDiffuseGroup(pbs);
+    });
+    dialog->exec();
+}
+
 void MaterialWidget::transparencyValueChanged(double value)
 {
     Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
@@ -284,17 +311,25 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
     Ogre::TexturePtr tex = pbs->getTexture(Ogre::PBSM_DIFFUSE);
     mDiffuseTexButton->setTexture(pbs, Ogre::PBSM_DIFFUSE);
     
+    const QSize iconSize(120, 16);
+
     Ogre::Vector3 diffuse = pbs->getDiffuse() * 255;
-    QPixmap diffPixmap(64, 16);
+    QPixmap diffPixmap(iconSize);
     diffPixmap.fill(QColor(diffuse.x, diffuse.y, diffuse.z));
     ui->diffuseColorButton->setIcon(diffPixmap);
-    ui->diffuseColorButton->setIconSize(QSize(64, 16));
+    ui->diffuseColorButton->setIconSize(iconSize);
 
     Ogre::ColourValue bgDiffuse = pbs->getBackgroundDiffuse() * 255;
-    QPixmap bgDiffPixmap(64, 16);
+    QPixmap bgDiffPixmap(iconSize);
     bgDiffPixmap.fill(QColor(bgDiffuse.r, bgDiffuse.g, bgDiffuse.b, bgDiffuse.a));
     ui->diffuseBgColorButton->setIcon(bgDiffPixmap);
-    ui->diffuseBgColorButton->setIconSize(QSize(64, 16));
+    ui->diffuseBgColorButton->setIconSize(iconSize);
+
+    Ogre::Vector3 specular = pbs->getSpecular() * 255;
+    QPixmap specPixmap(iconSize);
+    specPixmap.fill(QColor(specular.x, specular.y, specular.z));
+    ui->specularColorButton->setIcon(specPixmap);
+    ui->specularColorButton->setIconSize(iconSize);
 }
 
 void MaterialWidget::updateTransparencyGroup(Ogre::HlmsPbsDatablock* pbs)
