@@ -34,6 +34,7 @@ public slots:
 
     void diffuseColorButtonClicked();
     void diffuseBgColorButtonClicked();
+    void specularColorButtonClicked();
 
     void transparencyValueChanged(double value);
     void transparencyModeChanged();
