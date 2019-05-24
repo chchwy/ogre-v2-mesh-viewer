@@ -269,11 +269,27 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
         Ogre::Item* item = ogreItems[i];
         Ogre::Vector3 pos = item->getParentSceneNode()->_getDerivedPosition();
 
-        QString line = QString("mesh_list[\"%1.mesh\"] = {x=%2, y=%3, z=%4}\n")
+        const Ogre::Quaternion quaternion = item->getParentSceneNode()->_getDerivedOrientation();
+        Ogre::Matrix3 matrix3;
+        quaternion.ToRotationMatrix(matrix3);
+
+        Ogre::Radian rx, ry, rz;
+        matrix3.ToEulerAnglesXYZ(rx, ry, rz);
+
+        Ogre::Vector3 scale = item->getParentSceneNode()->_getDerivedScale();
+
+        item->getParentSceneNode()->_getDerivedOrientation();
+        QString line = QString("mesh_list[\"%1.mesh\"] = {pos={x=%2, y=%3, z=%4}, rot={x=%5, y=%6, z=%7}, scale={x=%8, y=%9, z=%10}}\n")
             .arg(item->getName().c_str())
             .arg(pos.x, 0, 'f', 4)
             .arg(pos.y, 0, 'f', 4)
-            .arg(pos.z, 0, 'f', 4);
+            .arg(pos.z, 0, 'f', 4)
+            .arg(rx.valueDegrees(), 0, 'f', 4)
+            .arg(ry.valueDegrees(), 0, 'f', 4)
+            .arg(rz.valueDegrees(), 0, 'f', 4)
+            .arg(scale.x, 0, 'f', 4)
+            .arg(scale.y, 0, 'f', 4)
+            .arg(scale.z, 0, 'f', 4);
         fout << line;
     }
     fout << "\n";
@@ -292,10 +308,15 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
         "        node:set_name(key) \n"
         "        node:set_ref('Ogre Mesh', mesh) \n"
         "        node:set_ref('Parent', root_node) \n"
-        "        node:set_vec3('Position', { x = value.x, y = value.y, z = value.z }) \n"
+        "        node:set_vec3('Position', { x = value.pos.x, y = value.pos.y, z = value.pos.z }) \n"
+        "        node:set_vec3('Rotation', { x = value.rot.x, y = -value.rot.y, z = value.rot.z }) \n"
+        "        node:set_vec3('Scale',    { x = value.scale.x, y = value.scale.y, z = value.scale.z }) \n"
+        "        node:set_ref('Is Pickable', false) \n"
         "        node:signal_attribute('Parent') \n"
         "        node:signal_attribute('Name') \n"
         "        node:signal_attribute('Position') \n"
+        "        node:signal_attribute('Rotation') \n"
+        "        node:signal_attribute('Scale') \n"
         "    end \n"
         "end \n";
 
