@@ -3,22 +3,31 @@
 
 #include <QPushButton>
 #include <QImage>
+#include <QFileDialog>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QPainter>
 
 #include "OgreTexture.h"
 #include "OgreImage.h"
 #include "OgreHlmsPbsDatablock.h"
 
 
-TextureButton::TextureButton(QPushButton* button) : QObject(button)
+TextureButton::TextureButton(QPushButton* button, Ogre::PbsTextureTypes texType) : QObject(button)
 {
     Q_ASSERT(button);
     mButton = button;
-
     mButton->setStyleSheet("Text-align:left");
+
+    mTextureType = texType;
+
+    connect(button, &QPushButton::clicked, this, &TextureButton::buttonClicked);
 }
 
-void TextureButton::setTexture(Ogre::HlmsPbsDatablock* datablock, Ogre::PbsTextureTypes textureType)
+void TextureButton::updateTexImage(Ogre::HlmsPbsDatablock* datablock, Ogre::PbsTextureTypes textureType)
 {
+    mDatablock = datablock;
+
     Ogre::HlmsTextureManager::TextureLocation texLocation;
     texLocation.texture = datablock->getTexture(textureType);
     texLocation.xIdx = datablock->_getTextureIdx(textureType);
@@ -62,6 +71,28 @@ void TextureButton::setTexture(Ogre::HlmsPbsDatablock* datablock, Ogre::PbsTextu
         // TODO: show unknown format
         mButton->setIcon(QIcon());
         mButton->setIconSize(QSize(1, 1));
+    }
+}
+
+void TextureButton::buttonClicked()
+{
+    QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
+    QString myDocument = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
+    QString defaultFolder = settings.value("textureLocation", myDocument).toString();
+
+    QString fileName = QFileDialog::getOpenFileName(mButton, "Load textures", defaultFolder, "Images (*.png *.jpg *.dds *.bmp *.tga *.hdr)");
+    if (!fileName.isEmpty())
+    {
+        if (mDatablock)
+        {
+            Ogre::HlmsTextureManager::TextureLocation loc;
+            bool ok = LoadImage(fileName.toStdString(), loc);
+            if (ok)
+            {
+                mDatablock->setTexture(mTextureType, loc.xIdx, loc.texture);
+            }
+        }
+        settings.setValue("textureLocation", QFileInfo(fileName).path());
     }
 }
 
@@ -141,5 +172,51 @@ QImage TextureButton::toQtImage(const Ogre::Image& img)
     default:
         break;
     }
-    return QImage();
+
+    QImage emptyImg(64, 64, QImage::Format_RGBA8888_Premultiplied);
+    QPainter painter(&emptyImg);
+    painter.fillRect(QRect(0, 0, 64, 64), Qt::white);
+    painter.drawText(13, 30, "Preview");
+    painter.drawText(6, 42, "Unavailable");
+    return emptyImg;
+}
+
+bool TextureButton::LoadImage(const Ogre::String& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc)
+{
+    bool ok = false;
+    std::ifstream ifs(texturePath.c_str(), std::ios::binary | std::ios::in);
+    if (ifs.is_open())
+    {
+        Ogre::String fileExt;
+        Ogre::String::size_type indexOfExt = texturePath.find_last_of('.');
+        if (indexOfExt != Ogre::String::npos)
+        {
+            fileExt = texturePath.substr(indexOfExt + 1);
+            Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(texturePath, &ifs, false));
+            Ogre::Image img;
+            img.load(dataStream, fileExt);
+
+            Ogre::HlmsTextureManager::TextureMapType mapType;
+            switch (mTextureType) {
+            case Ogre::PBSM_DIFFUSE:
+            case Ogre::PBSM_METALLIC:
+            case Ogre::PBSM_ROUGHNESS:
+                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME;
+                break;
+            case Ogre::PBSM_NORMAL:
+                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NORMALS;
+                break;
+            default:
+                Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP;
+                Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL;
+                Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL_NORMAL_MAP;
+                Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
+                break;
+            }
+            loc = mHlmsTexManager->createOrRetrieveTexture(texturePath, texturePath, mapType, 0, &img);
+            ok = true;
+        }
+        ifs.close();
+    }
+    return ok;
 }
