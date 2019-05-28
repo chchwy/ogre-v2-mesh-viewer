@@ -173,7 +173,7 @@ QImage TextureButton::toQtImage(const Ogre::Image& img)
         break;
     }
 
-    QImage emptyImg(64, 64, QImage::Format_RGBA8888_Premultiplied);
+    static QImage emptyImg(64, 64, QImage::Format_RGBA8888_Premultiplied);
     QPainter painter(&emptyImg);
     painter.fillRect(QRect(0, 0, 64, 64), Qt::white);
     painter.drawText(13, 30, "Preview");
@@ -199,6 +199,9 @@ bool TextureButton::LoadImage(const Ogre::String& texturePath, Ogre::HlmsTexture
             Ogre::HlmsTextureManager::TextureMapType mapType;
             switch (mTextureType) {
             case Ogre::PBSM_DIFFUSE:
+            case Ogre::PBSM_EMISSIVE:
+                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE;
+                break;
             case Ogre::PBSM_METALLIC:
             case Ogre::PBSM_ROUGHNESS:
                 mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME;
@@ -206,8 +209,10 @@ bool TextureButton::LoadImage(const Ogre::String& texturePath, Ogre::HlmsTexture
             case Ogre::PBSM_NORMAL:
                 mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NORMALS;
                 break;
+            case Ogre::PBSM_REFLECTION:
+                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP;
+                break;
             default:
-                Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP;
                 Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL;
                 Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL_NORMAL_MAP;
                 Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
