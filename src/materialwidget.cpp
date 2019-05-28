@@ -21,7 +21,7 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     connect(ui->twoSidedCheck, &QCheckBox::clicked, this, &MaterialWidget::twoSidedClicked);
 
     /// Diffuse section
-    mDiffuseTexButton = new TextureButton(ui->diffuseTexButton);
+    mDiffuseTexButton = new TextureButton(ui->diffuseTexButton, Ogre::PBSM_DIFFUSE);
 
     connect(ui->diffuseColorButton, &QPushButton::clicked, this, &MaterialWidget::diffuseColorButtonClicked);
     connect(ui->diffuseBgColorButton, &QPushButton::clicked, this, &MaterialWidget::diffuseBgColorButtonClicked);
@@ -37,17 +37,17 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     connect(ui->useTextureAlphaCheck, &QCheckBox::clicked, this, &MaterialWidget::useAlphaFromTextureClicked);
 
     /// Normal section
-    mNormalTexButton = new TextureButton(ui->normalTexButton);
+    mNormalTexButton = new TextureButton(ui->normalTexButton, Ogre::PBSM_NORMAL);
     mNormalSpinSlider = new SpinSlider(ui->normalSlider, ui->normalSpin);
     connect(mNormalSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::normalValueChanged);
 
     /// Roughness section
-    mRoughnessTexButton = new TextureButton(ui->roughnessTexButton);
+    mRoughnessTexButton = new TextureButton(ui->roughnessTexButton, Ogre::PBSM_ROUGHNESS);
     mRoughnessSpinSlider = new SpinSlider(ui->roughnessSlider, ui->roughnessSpin);
     connect(mRoughnessSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::roughnessValueChanged);
 
     /// Metallic section
-    mMetallicTexButton = new TextureButton(ui->metallicTexButton);
+    mMetallicTexButton = new TextureButton(ui->metallicTexButton, Ogre::PBSM_METALLIC);
     mMetallicSpinSlider = new SpinSlider(ui->metallicSlider, ui->metallicSpin);
     connect(mMetallicSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::metallicValueChanged);
 
@@ -327,7 +327,7 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
     Q_ASSERT(mCurrentItem);
     
     Ogre::TexturePtr tex = pbs->getTexture(Ogre::PBSM_DIFFUSE);
-    mDiffuseTexButton->setTexture(pbs, Ogre::PBSM_DIFFUSE);
+    mDiffuseTexButton->updateTexImage(pbs, Ogre::PBSM_DIFFUSE);
     
     const QSize iconSize(120, 16);
 
@@ -378,7 +378,7 @@ void MaterialWidget::updateTransparencyGroup(Ogre::HlmsPbsDatablock* pbs)
 void MaterialWidget::updateNormalGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
-    mNormalTexButton->setTexture(pbs, Ogre::PBSM_NORMAL);
+    mNormalTexButton->updateTexImage(pbs, Ogre::PBSM_NORMAL);
 
     QSignalBlocker b1(mNormalSpinSlider);
     mNormalSpinSlider->setValue(pbs->getNormalMapWeight());
@@ -388,7 +388,7 @@ void MaterialWidget::updateRoughnessGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
 
-    mRoughnessTexButton->setTexture(pbs, Ogre::PBSM_ROUGHNESS);
+    mRoughnessTexButton->updateTexImage(pbs, Ogre::PBSM_ROUGHNESS);
 
     QSignalBlocker b1(mRoughnessSpinSlider);
     float roughness = pbs->getRoughness();
@@ -399,7 +399,7 @@ void MaterialWidget::updateMetallicGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
 
-    mMetallicTexButton->setTexture(pbs, Ogre::PBSM_METALLIC);
+    mMetallicTexButton->updateTexImage(pbs, Ogre::PBSM_METALLIC);
 
     QSignalBlocker b1(mMetallicSpinSlider);
     float metallic = pbs->getMetalness();
