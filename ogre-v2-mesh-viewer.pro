@@ -3,7 +3,7 @@ message(Qt version: $$[QT_VERSION])
 
 QT += widgets
 CONFIG -= flat
-DEFINES += APP_VERSION_NUMBER=\\\"0.3.3\\\"
+DEFINES += APP_VERSION_NUMBER=\\\"0.4.0\\\"
 
 OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {
