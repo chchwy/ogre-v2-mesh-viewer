@@ -21,6 +21,9 @@ A Ogre3D mesh viewer based on v2.1 which can import obj/gltf models.
 - [ ] Batch convertor from mesh to obj
 - [ ] glTF export
 - [ ] Support DotScene
+- [ ] Lighting
+- [ ] HDR
+- [ ] SSAO
 - [x] Improve performance by converting obj data to ogre mesh directly
 - [x] Automatically generate normals if there are no normal vectors in obj
 - [x] glTF import
