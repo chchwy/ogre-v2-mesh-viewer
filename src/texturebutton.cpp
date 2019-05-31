@@ -7,6 +7,8 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QPainter>
+#include <QFileInfo>
+#include <QMessageBox>
 
 #include "OgreTexture.h"
 #include "OgreImage.h"
@@ -17,7 +19,7 @@ TextureButton::TextureButton(QPushButton* button, Ogre::PbsTextureTypes texType)
 {
     Q_ASSERT(button);
     mButton = button;
-    mButton->setStyleSheet("Text-align:left");
+    //mButton->setStyleSheet("Text-align:left");
 
     mTextureType = texType;
 
@@ -81,18 +83,23 @@ void TextureButton::buttonClicked()
     QString defaultFolder = settings.value("textureLocation", myDocument).toString();
 
     QString fileName = QFileDialog::getOpenFileName(mButton, "Load textures", defaultFolder, "Images (*.png *.jpg *.dds *.bmp *.tga *.hdr)");
-    if (!fileName.isEmpty())
+    if (fileName.isEmpty()) { return; }
+
+    if (mDatablock)
     {
-        if (mDatablock)
+        Ogre::HlmsTextureManager::TextureLocation loc;
+        bool ok = LoadImage(fileName, loc);
+        if (ok)
         {
-            Ogre::HlmsTextureManager::TextureLocation loc;
-            bool ok = LoadImage(fileName.toStdString(), loc);
-            if (ok)
-            {
-                mDatablock->setTexture(mTextureType, loc.xIdx, loc.texture);
-            }
+            mDatablock->setTexture(mTextureType, loc.xIdx, loc.texture);
+            updateTexImage(mDatablock, mTextureType);
+
+            settings.setValue("textureLocation", QFileInfo(fileName).absolutePath());
         }
-        settings.setValue("textureLocation", QFileInfo(fileName).path());
+        else
+        {
+            QMessageBox::information(mButton, "Error", "Ogre3D cannot load this texture");
+        }
     }
 }
 
@@ -150,23 +157,23 @@ QImage TextureButton::toQtImage(const Ogre::Image& img)
         QImage qtImg(img.getWidth(), img.getHeight(), QImage::Format_RGBA8888_Premultiplied);
 
         char* src = (char*)img.getData();
-        uchar* dest = qtImg.bits();
-
-        for (int x = 0; x < img.getWidth(); ++x)
+        for (size_t x = 0; x < img.getWidth(); ++x)
         {
-            for (int y = 0; y < img.getHeight(); ++y)
+            for (size_t y = 0; y < img.getHeight(); ++y)
             {
                 size_t src_byte_offset = x * y * 2;
                 int r = src[src_byte_offset + 0] + 128;
                 int g = src[src_byte_offset + 1] + 128;
-
-                qtImg.setPixel(x, y, qRgb(r, g, 255));
-                //size_t src_byte_offset = x * y * 2;
-                //qDebug() << (int)src[src_byte_offset + 0] << (int)src[src_byte_offset + 1];
+                qtImg.setPixel((int)x, (int)y, qRgb(r, g, 255));
             }
         }
         //qtImg.save("C:/Temp/normal.png");
         return qtImg;
+        break;
+    }
+    case Ogre::PF_A8B8G8R8:
+    {
+        QImage qtImg(img.getWidth(), img.getHeight(), QImage::Format_RGBA8888_Premultiplied);
         break;
     }
     default:
@@ -181,47 +188,56 @@ QImage TextureButton::toQtImage(const Ogre::Image& img)
     return emptyImg;
 }
 
-bool TextureButton::LoadImage(const Ogre::String& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc)
+bool TextureButton::LoadImage(const QString& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc)
 {
     bool ok = false;
-    std::ifstream ifs(texturePath.c_str(), std::ios::binary | std::ios::in);
-    if (ifs.is_open())
-    {
-        Ogre::String fileExt;
-        Ogre::String::size_type indexOfExt = texturePath.find_last_of('.');
-        if (indexOfExt != Ogre::String::npos)
-        {
-            fileExt = texturePath.substr(indexOfExt + 1);
-            Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(texturePath, &ifs, false));
-            Ogre::Image img;
-            img.load(dataStream, fileExt);
+    std::ifstream ifs(texturePath.toStdWString(), std::ios::binary | std::ios::in);
+    ON_SCOPE_EXIT(ifs.close());
+    if (!ifs.is_open()) { return false; }
 
-            Ogre::HlmsTextureManager::TextureMapType mapType;
-            switch (mTextureType) {
-            case Ogre::PBSM_DIFFUSE:
-            case Ogre::PBSM_EMISSIVE:
-                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE;
-                break;
-            case Ogre::PBSM_METALLIC:
-            case Ogre::PBSM_ROUGHNESS:
-                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME;
-                break;
-            case Ogre::PBSM_NORMAL:
-                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NORMALS;
-                break;
-            case Ogre::PBSM_REFLECTION:
-                mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP;
-                break;
-            default:
-                Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL;
-                Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL_NORMAL_MAP;
-                Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
-                break;
-            }
-            loc = mHlmsTexManager->createOrRetrieveTexture(texturePath, texturePath, mapType, 0, &img);
-            ok = true;
+    QString fileExt = QFileInfo(texturePath).suffix();
+    if (fileExt.isEmpty()) { return false; }
+
+
+    std::string texName = texturePath.toStdString();
+    Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(texName, &ifs, false));
+
+    try
+    {
+        Ogre::Image img;
+        img.load(dataStream, fileExt.toStdString());
+
+        if (img.getWidth() == 0) { return false; }
+
+        Ogre::HlmsTextureManager::TextureMapType mapType;
+        switch (mTextureType) {
+        case Ogre::PBSM_DIFFUSE:
+        case Ogre::PBSM_EMISSIVE:
+            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE;
+            break;
+        case Ogre::PBSM_METALLIC:
+        case Ogre::PBSM_ROUGHNESS:
+            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME;
+            break;
+        case Ogre::PBSM_NORMAL:
+            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NORMALS;
+            break;
+        case Ogre::PBSM_REFLECTION:
+            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP;
+            break;
+        default:
+            Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL;
+            Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL_NORMAL_MAP;
+            Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
+            break;
         }
-        ifs.close();
+        loc = mHlmsTexManager->createOrRetrieveTexture(texName, texName, mapType, 0, &img);
+        ok = true;
+    }
+    catch(Ogre::Exception& e)
+    {
+        qDebug() << e.what();
+        ok = false;
     }
     return ok;
 }
