@@ -29,7 +29,7 @@ private:
 
     void setInfoText(const QString& texName, int width, int height);
     Ogre::HlmsTextureManager* getHlmsTexManager();
-    bool LoadImage(const Ogre::String& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc);
+    bool LoadImage(const QString& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc);
 
     Ogre::PbsTextureTypes mTextureType = Ogre::PBSM_DIFFUSE;
     Ogre::HlmsPbsDatablock* mDatablock = nullptr;
