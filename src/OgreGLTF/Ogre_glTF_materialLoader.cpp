@@ -174,15 +174,11 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
         if (content.first == "baseColorFactor")
         {
             setBaseColor(datablock, convertColor(content.second.ColorFactor()));
+
+            // Need to set the alpha channel separately
             float alpha = content.second.number_array[3];
-            if (alpha > 0.9999)
-            {
-                datablock->setTransparency(alpha, Ogre::HlmsPbsDatablock::None);
-            }
-            else
-            {
-                datablock->setTransparency(alpha, Ogre::HlmsPbsDatablock::Transparent);
-            }
+            auto transparentMode = (alpha > 0.99) ? Ogre::HlmsPbsDatablock::None : Ogre::HlmsPbsDatablock::Transparent;
+            datablock->setTransparency(alpha, transparentMode);
         }
 
 		if (content.first == "metallicFactor")
