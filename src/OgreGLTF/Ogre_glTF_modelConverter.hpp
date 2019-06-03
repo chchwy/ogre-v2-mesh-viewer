@@ -45,7 +45,7 @@ public:
 ///RAII style object that encapsulate a buffer allocated via OGRE_MALLOC_SIMD
 ///Any of theses buffer should be used with Ogre VaoManager **WITHOUT** shadow copy
 template <typename T>
-class geometryBuffer : public geometryBuffer_base
+class GeometryBuffer : public geometryBuffer_base
 {
     ///Pointer to the buffer allocated with OGRE_MALLOC_SIMD, in the "geometry" memory category
     T* buffer;
@@ -82,10 +82,10 @@ public:
 
     ///Construct a geometryBuffer. This is templated and you will need to provide the type between angle brackets.
     /// \param size size of the buffer we are allocation (in number of elements, not bytes)
-    geometryBuffer(size_t size) : buffer{ allocateSimdBuffer(size) }, bufferSize{ size } {}
+    GeometryBuffer(size_t size) : buffer{ allocateSimdBuffer(size) }, bufferSize{ size } {}
 
     ///Call freeSimdBuffer on the enclosed buffer
-    ~geometryBuffer() { freeSimdBuffer(buffer); }
+    ~GeometryBuffer() { freeSimdBuffer(buffer); }
 
     ///Return a typed pointer to the data. Think of it as getting access to the array behind this buffer
     T* data() { return buffer; }
@@ -94,14 +94,14 @@ public:
     size_t size() const { return bufferSize; }
 
     ///Deleted copy constructor
-    geometryBuffer(const geometryBuffer&) = delete;
+    GeometryBuffer(const GeometryBuffer&) = delete;
 
     ///Deleted assignment operator
-    geometryBuffer operator=(const geometryBuffer&) = delete;
+    GeometryBuffer operator=(const GeometryBuffer&) = delete;
 
     ///Move constructor that move around the underlying pointer and size
     /// \param other buffer we are moving into this one
-    geometryBuffer(geometryBuffer&& other) noexcept : buffer{ other.buffer }, bufferSize{ other.bufferSize }
+    GeometryBuffer(GeometryBuffer&& other) noexcept : buffer{ other.buffer }, bufferSize{ other.bufferSize }
     {
         //Neutralise destructor by preventing potential double-free
         other.buffer = nullptr;
@@ -109,7 +109,7 @@ public:
 
     ///Move assign operator
     /// \param other buffer we are moving from
-    geometryBuffer& operator=(geometryBuffer&& other) noexcept
+    GeometryBuffer& operator=(GeometryBuffer&& other) noexcept
     {
         buffer = other.buffer;
         bufferSize = other.bufferSize;
@@ -120,7 +120,7 @@ public:
 
 ///Part of the vertex buffer, containing a geometry buffer and the information about the type and number of vertex elements;
 ///We cache these informations because we need to reorder the data into one single interleaved buffer for Ogre loading vertices into a single Vao
-struct vertexBufferPart
+struct VertexBufferPart
 {
     ///Buffer that contain vertices
     std::unique_ptr<geometryBuffer_base> buffer;
@@ -194,11 +194,11 @@ private:
 
     ///Extract the buffer content from the attribute of a primitive of a mesh
     /// \param attribute the attribute of the mesh primitive we are loading
-    vertexBufferPart extractVertexBuffer(const std::pair<std::string, int>& attribute, Ogre::Aabb& boundingBox) const;
+    VertexBufferPart extractVertexBuffer(const std::pair<std::string, int>& attribute, Ogre::Aabb& boundingBox) const;
 
     ///Construct an actual vertex buffer from a list of vertex buffer parts
     /// \param parts list of vertexBufferPart to load into the vertex buffer
-    Ogre::VertexBufferPackedVec constructVertexBuffer(const std::vector<vertexBufferPart>& parts) const;
+    Ogre::VertexBufferPackedVec constructVertexBuffer(const std::vector<VertexBufferPart>& parts) const;
 
     ///Reference to a loaded model
     tinygltf::Model& model;

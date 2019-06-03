@@ -9,11 +9,15 @@
 
 using namespace Ogre_glTF;
 
-size_t vertexBufferPart::getPartStride() const { return buffer->elementSize() * perVertex; }
+size_t VertexBufferPart::getPartStride() const { return buffer->elementSize() * perVertex; }
 
-modelConverter::modelConverter(tinygltf::Model& input) : model{ input } {}
 
-Ogre::VertexBufferPackedVec modelConverter::constructVertexBuffer(const std::vector<vertexBufferPart>& parts) const
+modelConverter::modelConverter(tinygltf::Model& input)
+    : model(input)
+{
+}
+
+Ogre::VertexBufferPackedVec modelConverter::constructVertexBuffer(const std::vector<VertexBufferPart>& parts) const
 {
     Ogre::VertexElement2Vec vertexElements;
 
@@ -43,16 +47,16 @@ Ogre::VertexBufferPackedVec modelConverter::constructVertexBuffer(const std::vec
 
     OgreLog("There will be " + std::to_string(vertexCount) + " vertices with a stride of " + std::to_string(stride) + " bytes");
 
-    geometryBuffer<float> finalBuffer(vertexCount * strideInElements);
+    GeometryBuffer<float> finalBuffer(vertexCount * strideInElements);
     size_t bytesWrittenInCurrentStride = 0;
     for (size_t vertexIndex = 0; vertexIndex < vertexCount; ++vertexIndex)
     {
         bytesWrittenInCurrentStride = 0;
         for (const auto& part : parts)
         {
-            memcpy(finalBuffer.dataAddress() + (bytesWrittenInCurrentStride + vertexIndex * stride),
-                (part.buffer->dataAddress() + (vertexIndex * part.getPartStride())),
-                   part.getPartStride());
+            uint8_t* dest = finalBuffer.dataAddress() + (bytesWrittenInCurrentStride + vertexIndex * stride);
+            uint8_t* src = part.buffer->dataAddress() + (vertexIndex * part.getPartStride());
+            memcpy(dest, src, part.getPartStride());
             bytesWrittenInCurrentStride += part.getPartStride();
         }
     }
@@ -97,32 +101,33 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
         //OgreLog("Created one submesh");
         const auto indexBuffer = extractIndexBuffer(primitive.indices);
 
-        std::vector<vertexBufferPart> parts;
-        //OgreLog("\tprimitive has : " + std::to_string(primitive.attributes.size()) + " atributes");
-        for (const auto& atribute : primitive.attributes)
+        std::vector<VertexBufferPart> parts;
+        OgreLog("\tprimitive has : " + std::to_string(primitive.attributes.size()) + " attributes");
+        for (const auto& attribute : primitive.attributes)
         {
-            //OgreLog("\t " + atribute.first);
-            parts.push_back(std::move(extractVertexBuffer(atribute, boundingBox)));
+            OgreLog("\t " + attribute.first);
+            parts.push_back(std::move(extractVertexBuffer(attribute, boundingBox)));
         }
 
         //Get (if they exists) the blend weights and bone index parts of our vertex array object content
-        const auto blendIndicesIt = std::find_if(std::begin(parts), std::end(parts), [](const vertexBufferPart& vertexBufferPart) {
+        const auto blendIndicesIt = std::find_if(std::begin(parts), std::end(parts), [](const VertexBufferPart& vertexBufferPart) {
             return (vertexBufferPart.semantic == Ogre::VertexElementSemantic::VES_BLEND_INDICES);
         });
 
-        const auto blendWeightsIt = std::find_if(std::begin(parts), std::end(parts), [](const vertexBufferPart& vertexBufferPart) {
+        const auto blendWeightsIt = std::find_if(std::begin(parts), std::end(parts), [](const VertexBufferPart& vertexBufferPart) {
             return (vertexBufferPart.semantic == Ogre::VertexElementSemantic::VES_BLEND_WEIGHTS);
         });
 
-        const auto vertexBuffers = constructVertexBuffer(parts);
-        auto vao = getVaoManager()->createVertexArrayObject(vertexBuffers, indexBuffer, [&]() -> Ogre::OperationType {
+        const Ogre::VertexBufferPackedVec vertexBuffers = constructVertexBuffer(parts);
+        Ogre::VertexArrayObject* vao = getVaoManager()->createVertexArrayObject(vertexBuffers, indexBuffer, [&]() -> Ogre::OperationType
+        {
             switch (primitive.mode)
             {
             case TINYGLTF_MODE_LINE: OgreLog("Line List"); return Ogre::OT_LINE_LIST;
             case TINYGLTF_MODE_LINE_LOOP: OgreLog("Line Loop"); return Ogre::OT_LINE_STRIP;
             case TINYGLTF_MODE_POINTS: OgreLog("Points"); return Ogre::OT_POINT_LIST;
             case TINYGLTF_MODE_TRIANGLES: OgreLog("Triangle List"); return Ogre::OT_TRIANGLE_LIST;
-            case TINYGLTF_MODE_TRIANGLE_FAN: OgreLog("Trinagle Fan"); return Ogre::OT_TRIANGLE_FAN;
+            case TINYGLTF_MODE_TRIANGLE_FAN: OgreLog("Triangle Fan"); return Ogre::OT_TRIANGLE_FAN;
             case TINYGLTF_MODE_TRIANGLE_STRIP: OgreLog("Triangle Strip"); return Ogre::OT_TRIANGLE_STRIP;
             default: OgreLog("Unknown"); throw LoadingError("Can't understand primitive mode!");
             };
@@ -137,8 +142,8 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
 
             //Get the vertexBufferParts from the two iterators
             //OgreLog("The vertex buffer contains blend weights and indices information!");
-            vertexBufferPart& blendIndices = *blendIndicesIt;
-            vertexBufferPart& blendWeights = *blendWeightsIt;
+            VertexBufferPart& blendIndices = *blendIndicesIt;
+            VertexBufferPart& blendWeights = *blendWeightsIt;
 
             //Debug sanity check, both should be equals
             //OgreLog("Vertex count blendIndex : " + std::to_string(blendIndices.vertexCount));
@@ -183,7 +188,6 @@ Ogre::MeshPtr modelConverter::getOgreMesh(int index)
     }
 
     OgreMesh->_setBounds(boundingBox, true);
-    //OgreMesh->_setBoundingSphereRadius(boundingBox.getRadius());
     //OgreLog("Setting 'bounding sphere radius' from bounds : " + std::to_string(boundingBox.getRadius()));
 
     return OgreMesh;
@@ -276,7 +280,7 @@ Ogre::IndexBufferPacked* modelConverter::extractIndexBuffer(int accessorID) cons
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
     {
         type = Ogre::IndexBufferPacked::IT_16BIT;
-        auto geomBuffer = geometryBuffer<Ogre::uint16>(indexCount);
+        auto geomBuffer = GeometryBuffer<Ogre::uint16>(indexCount);
         if (convertTo16Bit)
             loadIndexBuffer(geomBuffer.data(), buffer.data.data(), indexCount, bufferView.byteOffset + accessor.byteOffset, byteStride);
         else
@@ -291,7 +295,7 @@ Ogre::IndexBufferPacked* modelConverter::extractIndexBuffer(int accessorID) cons
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
     {
         type = Ogre::IndexBufferPacked::IT_32BIT;
-        auto geomBuffer = geometryBuffer<Ogre::uint32>(indexCount);
+        auto geomBuffer = GeometryBuffer<Ogre::uint32>(indexCount);
         loadIndexBuffer(
             geomBuffer.data(), reinterpret_cast<Ogre::uint32*>(buffer.data.data()), indexCount, bufferView.byteOffset + accessor.byteOffset, byteStride);
         return getVaoManager()->createIndexBuffer(type, indexCount, Ogre::BT_IMMUTABLE, geomBuffer.dataAddress(), false);
@@ -323,16 +327,16 @@ Ogre::VertexElementSemantic modelConverter::getVertexElementScemantic(const std:
     return Ogre::VES_COUNT; //Returning this means returning "invalid" here
 }
 
-vertexBufferPart modelConverter::extractVertexBuffer(const std::pair<std::string, int>& attribute, Ogre::Aabb& boundingBox) const
+VertexBufferPart modelConverter::extractVertexBuffer(const std::pair<std::string, int>& attribute, Ogre::Aabb& boundingBox) const
 {
-    const auto elementScemantic = getVertexElementScemantic(attribute.first);
-    const auto& accessor = model.accessors[attribute.second];
-    const auto& bufferView = model.bufferViews[accessor.bufferView];
-    const auto& buffer = model.buffers[bufferView.buffer];
-    const auto vertexBufferByteLen = bufferView.byteLength;
-    const auto numberOfElementPerVertex = getVertexBufferElementsPerVertexCount(accessor.type);
-    const auto elementOffsetInBuffer = bufferView.byteOffset + accessor.byteOffset;
-    size_t bufferLenghtInBufferBasicType{ 0 };
+    const Ogre::VertexElementSemantic elementScemantic = getVertexElementScemantic(attribute.first);
+    const tinygltf::Accessor& accessor = model.accessors[attribute.second];
+    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+    const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+    const size_t vertexBufferByteLen = bufferView.byteLength;
+    const size_t numberOfElementPerVertex = getVertexBufferElementsPerVertexCount(accessor.type);
+    const size_t elementOffsetInBuffer = bufferView.byteOffset + accessor.byteOffset;
+    size_t bufferLenghtInBufferBasicType = 0;
 
     std::unique_ptr<geometryBuffer_base> geomBuffer{ nullptr };
     Ogre::VertexElementType elementType{};
@@ -342,14 +346,14 @@ vertexBufferPart modelConverter::extractVertexBuffer(const std::pair<std::string
     case TINYGLTF_COMPONENT_TYPE_DOUBLE: throw LoadingError("Double precision not implemented!");
     case TINYGLTF_COMPONENT_TYPE_FLOAT:
         bufferLenghtInBufferBasicType = (vertexBufferByteLen / sizeof(float));
-        geomBuffer = std::make_unique<geometryBuffer<float>>(bufferLenghtInBufferBasicType);
+        geomBuffer = std::make_unique<GeometryBuffer<float>>(bufferLenghtInBufferBasicType);
         if (numberOfElementPerVertex == 2) elementType = Ogre::VET_FLOAT2;
         if (numberOfElementPerVertex == 3) elementType = Ogre::VET_FLOAT3;
         if (numberOfElementPerVertex == 4) elementType = Ogre::VET_FLOAT4;
         break;
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
         bufferLenghtInBufferBasicType = (vertexBufferByteLen / sizeof(unsigned short));
-        geomBuffer = std::make_unique<geometryBuffer<unsigned short>>(bufferLenghtInBufferBasicType);
+        geomBuffer = std::make_unique<GeometryBuffer<unsigned short>>(bufferLenghtInBufferBasicType);
         if (numberOfElementPerVertex == 2) elementType = Ogre::VET_USHORT2;
         if (numberOfElementPerVertex == 4) elementType = Ogre::VET_USHORT4;
         break;

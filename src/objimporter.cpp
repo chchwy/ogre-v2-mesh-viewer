@@ -219,7 +219,6 @@ OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
         {
             OGRE_FREE_SIMD(vertexBuffer, Ogre::MEMCATEGORY_GEOMETRY);
             vertexBuffer = 0;
-            //throw e;
         }
 
         Ogre::VertexBufferPackedVec vertexBuffers{ vertexBuffer };
