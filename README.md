@@ -6,6 +6,24 @@ A Ogre3D mesh viewer based on v2.1 which can import obj/gltf models.
 
 ![screenshot](images/screenshot.png)
 
+## Features
+
+- Load Ogre v2, v1, xml meshes with HLMS materials.
+- Import Wavefront Obj and save as Ogre Meshes
+- Import glTF 2.0 models and save as Ogre Meshes
+  - It's not perfect yet, some glTF models appear black or have flat materials
+- Show scene hierarchy
+- Basic HLMS editing
+  - Texture: diffuse, background diffuse, normal, roughness, metalness
+  - Transparent value and mode
+  - Solid or wireframe
+  - Two-sided on/off
+- Scene node editing:
+  - Position, rotation and scale
+  - Show/hide bounding boxes
+  - Switch visibility
+- Batch conversion tool from obj => .mesh
+
 ## How to compile
 
 1. Have Qt 5 SDK installed (recommend Qt 5.6+), download it [here][0].
