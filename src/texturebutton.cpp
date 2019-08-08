@@ -231,7 +231,7 @@ bool TextureButton::LoadImage(const QString& texturePath, Ogre::HlmsTextureManag
             Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
             break;
         }
-        loc = mHlmsTexManager->createOrRetrieveTexture(texName, texName, mapType, 0, &img);
+        loc = getHlmsTexManager()->createOrRetrieveTexture(texName, texName, mapType, 0, &img);
         ok = true;
     }
     catch(Ogre::Exception& e)
