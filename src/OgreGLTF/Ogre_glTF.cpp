@@ -19,7 +19,7 @@
 
 using namespace Ogre_glTF;
 
-///Implementaiton of the adapter
+///Implementation of the adapter
 struct loaderAdapter::impl
 {
     ///Constructor, initialize once all the objects inclosed in this class. They need a reference
