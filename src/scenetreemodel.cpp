@@ -146,6 +146,8 @@ bool SceneTreeModel::insertRows(int position, int rows, const QModelIndex& paren
 
 bool SceneTreeModel::removeRows(int position, int rows, const QModelIndex& parent /*= QModelIndex()*/)
 {
+    if (!parent.isValid())
+        return false;
     beginRemoveRows(parent, position, position + rows - 1);
     auto node = static_cast<Ogre::SceneNode*>(parent.internalPointer());
     endRemoveRows();
