@@ -209,7 +209,7 @@ bool TextureButton::LoadImage(const QString& texturePath, Ogre::HlmsTextureManag
 
         if (img.getWidth() == 0) { return false; }
 
-        Ogre::HlmsTextureManager::TextureMapType mapType;
+        Ogre::HlmsTextureManager::TextureMapType mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
         switch (mTextureType) {
         case Ogre::PBSM_DIFFUSE:
         case Ogre::PBSM_EMISSIVE:
