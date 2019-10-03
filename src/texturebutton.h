@@ -21,19 +21,19 @@ public:
     void updateTexImage(Ogre::HlmsPbsDatablock*, Ogre::PbsTextureTypes);
     void clear();
 
-    static QImage::Format toQtImageFormat(Ogre::PixelFormat);
-    static QImage toQtImage(const Ogre::Image& img);
+    static QImage::Format toQtImageFormat(Ogre::PixelFormatGpu);
+    static QImage toQtImage(const Ogre::Image2& img);
 
 private:
     void buttonClicked();
 
     void setInfoText(const QString& texName, int width, int height);
-    Ogre::HlmsTextureManager* getHlmsTexManager();
-    bool LoadImage(const QString& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc);
+    Ogre::TextureGpuManager* getHlmsTexManager();
+    bool LoadImage(const QString& texturePath, Ogre::TextureGpu*& loc);
 
     Ogre::PbsTextureTypes mTextureType = Ogre::PBSM_DIFFUSE;
     Ogre::HlmsPbsDatablock* mDatablock = nullptr;
-    Ogre::HlmsTextureManager* mHlmsTexManager = nullptr;
+    Ogre::TextureGpuManager* mHlmsTexManager = nullptr;
     QPushButton* mButton = nullptr;
 };
 

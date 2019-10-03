@@ -17,12 +17,10 @@
 #include "OgrePrerequisites.h"
 #include "OgreString.h"
 #include "OgreRoot.h"
-#include "OgreRenderWindow.h"
 #include "OgreCamera.h"
 #include "OgreItem.h"
 
 #include "OgreHlmsManager.h"
-#include "OgreHlmsTextureManager.h"
 
 // common qt headers
 #include <QString>

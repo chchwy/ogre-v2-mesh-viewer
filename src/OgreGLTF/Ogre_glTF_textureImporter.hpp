@@ -2,7 +2,7 @@
 
 #include "tiny_gltf.h"
 #include <unordered_map>
-#include <OgreTexture.h>
+#include <OgreTextureGpu.h>
 
 namespace Ogre_glTF
 {
@@ -27,18 +27,18 @@ class textureImporter
     bool isHardwareGammaEnabled() const;
 
 public:
-    ///Construct the texture importer object. Inrement the id counter
+    ///Construct the texture importer object. Increment the id counter
     /// \param input reference to the model that we are loading
     textureImporter(tinygltf::Model& input);
 
     ///Load all the textures in the model
     void loadTextures();
 
-    ///Get the loaded texture that corespound to the given index
+    ///Get the loaded texture that correspond to the given index
     /// \param glTFTextureSourceID index of a texture in the gltf file
     Ogre::TexturePtr getTexture(int glTFTextureSourceID);
 
-    ///Get the texture that corespound to the given index, but as a greyscale one containing only
+    ///Get the texture that correspond to the given index, but as a greyscale one containing only
     ///the information of the given channel. It seems that the order of channel on loaded textures
     ///is BGR
     /// \param gltfTextureSourceID index of a texture in the gltf file

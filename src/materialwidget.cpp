@@ -326,7 +326,7 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
     
-    Ogre::TexturePtr tex = pbs->getTexture(Ogre::PBSM_DIFFUSE);
+    Ogre::TextureGpu* tex = pbs->getTexture(Ogre::PBSM_DIFFUSE);
     mDiffuseTexButton->updateTexImage(pbs, Ogre::PBSM_DIFFUSE);
     
     const QSize iconSize(120, 16);

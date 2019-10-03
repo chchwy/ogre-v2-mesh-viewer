@@ -25,6 +25,7 @@
 #include "OgreColourValue.h"
 #include "OgreVector2.h"
 
+#define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
 
@@ -85,7 +86,7 @@ private:
 
     OgreManager* mOgreManager = nullptr;
 
-    Ogre::RenderWindow* mOgreRenderWindow = nullptr;
+    Ogre::Window* mOgreRenderWindow = nullptr;
 
     Ogre::Camera* mCamera = nullptr;
 

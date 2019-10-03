@@ -44,7 +44,7 @@ private:
     void clearOgreDataVertex(OgreDataVertex&);
     bool writeObjFile(const QString& sOutObjFile, const QString& sMtlFileName);
     bool writeMtlFile(Ogre::Mesh*, const QString& sOutFile);
-    void writeTexture(Ogre::Texture* tex, const std::string& sTexFileName);
+    void writeTexture(Ogre::TextureGpu* tex, const std::string& sTexFileName);
     void normalize(OgreDataVertex&);
     std::vector<OgreDataSubMesh> mSubmeshes;
 };

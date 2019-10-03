@@ -23,7 +23,7 @@
 #include "OgreRoot.h"
 #include "OgreRenderSystem.h"
 #include "OgreTimer.h"
-#include "OgreTextureManager.h"
+#include "OgreTextureGpuManager.h"
 
 #include "OgreConfigFile.h"
 #include "OgreArchiveManager.h"
@@ -37,11 +37,11 @@
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreMesh2.h"
-#include "OgreHlmsTextureManager.h"
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreHlmsPbs.h"
 #include "Overlay/OgreOverlaySystem.h"
 #include "OgreMaterialManager.h"
+#include "OgreTechnique.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -49,7 +49,7 @@
 #include <QApplication>
 
 #include "ogrewidget.h"
-#include "OgreGLTF/Ogre_glTF.hpp"
+//#include "OgreGLTF/Ogre_glTF.hpp"
 #include "meshloader.h"
 
 
@@ -70,10 +70,10 @@ OgreManager::OgreManager()
         if (!mRoot->showConfigDialog())
             OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS, "Abort render system configuration", __FUNCTION__);
     }
-
+    /*
     Ogre_glTF::glTFLoaderPlugin* gltfPlugin = OGRE_NEW Ogre_glTF::glTFLoaderPlugin;
     mRoot->installPlugin(gltfPlugin);
-
+    */
     mCurrentRenderSystem = mRoot->getRenderSystem();
     mRoot->initialise(false);
 
@@ -100,9 +100,12 @@ OgreManager::~OgreManager()
 void OgreManager::initialize()
 {
     // Create scene manager
-    const size_t numThreads = std::max<int>(1, Ogre::PlatformInformation::getNumLogicalCores());
-    Ogre::InstancingThreadedCullingMethod threadedCullingMethod = (numThreads > 1) ? Ogre::INSTANCING_CULLING_THREADED : Ogre::INSTANCING_CULLING_SINGLETHREAD;
-    mSceneManager = mRoot->createSceneManager(Ogre::ST_GENERIC, numThreads, threadedCullingMethod, "default");
+#if OGRE_DEBUG_MODE
+    const size_t numThreads = 1;
+#else
+    const size_t numThreads = std::max<size_t>(1, Ogre::PlatformInformation::getNumLogicalCores());
+#endif
+    mSceneManager = mRoot->createSceneManager(Ogre::ST_GENERIC, numThreads, "default");
     mSceneManager->setShadowDirectionalLightExtrusionDistance(500.0f);
     mSceneManager->setShadowFarDistance(500.0f);
 
@@ -234,37 +237,41 @@ void OgreManager::createSubcomponents()
 
 void OgreManager::setIrradianceBackground()
 {
+    /*
     Ogre::String autoGroup = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
-    auto& texMgr = Ogre::TextureManager::getSingleton();
+    auto texMgr = Ogre::Root::getSingleton().getRenderSystem()->getTextureGpuManager();
 
-    Ogre::TexturePtr irradiance = texMgr.getByName("irradiance_bg");
+    Ogre::TexturePtr irradiance = texMgr->getByName("irradiance_bg");
     if (irradiance.isNull())
     {
-        Ogre::TexturePtr tex = texMgr.getByName("env.dds", autoGroup);
+        Ogre::TexturePtr tex = texMgr->getByName("env.dds", autoGroup);
 
-        Ogre::Image img;
+        Ogre::Image2 img;
         tex->convertToImage(img, true, tex->getNumMipmaps() - 4); // 4 looks better
 
-        irradiance = texMgr.createManual("irradiance_bg", autoGroup,
-                                         Ogre::TEX_TYPE_CUBE_MAP,
-                                         img.getWidth(), img.getHeight(),
-                                         Ogre::MIP_DEFAULT /* mipmap */, img.getFormat());
+        irradiance = texMgr->createManual("irradiance_bg", autoGroup,
+                                         Ogre::TEX_TYPE_CUBE_MAP, 
+                                         img.getWidth(), img.getHeight(), 
+                                         Ogre::MIP_DEFAULT, // mipmap
+                                         img.getFormat());
         irradiance->loadImage(img);
     }
     Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
     Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
     texUnit->setTextureName("irradiance_bg", Ogre::TEX_TYPE_CUBE_MAP);
+    */
 }
 
 void OgreManager::setEnvironmentBackground()
 {
     Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
     Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-    texUnit->setTextureName("env.dds", Ogre::TEX_TYPE_CUBE_MAP);
+    texUnit->setTextureName("env.dds", Ogre::TextureTypes::TypeCube);
 }
 
 void OgreManager::setBlackBackground()
 {
+    /*
     Ogre::String autoGroup = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
     auto& texMgr = Ogre::TextureManager::getSingleton();
 
@@ -286,12 +293,14 @@ void OgreManager::setBlackBackground()
         blackTex = texMgr.createManual("black_bg", autoGroup,
                                          Ogre::TEX_TYPE_CUBE_MAP,
                                          img.getWidth(), img.getHeight(),
-                                         0 /* mipmap */, img.getFormat());
+                                         0 // mipmap,
+                                         img.getFormat());
         blackTex->loadImage(img);
     }
     Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
     Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
     texUnit->setTextureName("black_bg", Ogre::TEX_TYPE_CUBE_MAP);
+    */
 }
 
 void OgreManager::registerHlms()
@@ -453,11 +462,11 @@ void OgreManager::createBall(int x, int y)
                                  Ogre::HlmsParamVec()));
 
     //auto tex = Ogre::TextureManager::getSingleton().getByName( "wood.png", "ViewerResc" );
-    auto skybox = Ogre::TextureManager::getSingleton().getByName("env.dds", "ViewerResc");
+    //auto skybox = Ogre::TextureManager::getSingleton().getByName("env.dds", "ViewerResc");
 
     datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
     //datablock->setTexture( Ogre::PBSM_DIFFUSE, 0, tex );
-    datablock->setTexture(Ogre::PBSM_REFLECTION, 0, skybox);
+    //datablock->setTexture(Ogre::PBSM_REFLECTION, 0, skybox);
     datablock->setDiffuse(Ogre::Vector3(1.0f, 1.0f, 1.0f));
     datablock->setSpecular(Ogre::Vector3(1.0f, 1.0f, 1.0f));
     datablock->setRoughness(x / 4.0f);

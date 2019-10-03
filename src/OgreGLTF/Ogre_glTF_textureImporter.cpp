@@ -3,9 +3,9 @@
 #include "Ogre_glTF_textureImporter.hpp"
 #include "Ogre_glTF_common.hpp"
 #include <OgreLogManager.h>
-#include <OgreTextureManager.h>
-#include <OgreTexture.h>
-#include <OgreImage.h>
+#include <OgreTextureGpuManager.h>
+#include <OgreTextureGpu.h>
+#include <OgreImage2.h>
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreColourValue.h>
 #include <OgreRoot.h>
@@ -24,7 +24,7 @@ size_t textureImporter::id{ 0 };
 
 void textureImporter::loadTexture(const tinygltf::Texture& texture)
 {
-    auto textureManager = Ogre::TextureManager::getSingletonPtr();
+    auto textureManager = Ogre::TextureGpuManager::getSingletonPtr();
     const auto& image = model.images[texture.source];
     const auto name = image.uri;
 

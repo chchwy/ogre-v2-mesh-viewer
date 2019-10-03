@@ -228,7 +228,7 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
     //wireAabb->track(item);
 
     Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
-    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsMgr->getTextureManager();
+    //Ogre::HlmsTextureManager* hlmsTextureManager = hlmsMgr->getTextureManager();
 
     for (int i = 0; i < item->getNumSubItems(); ++i)
     {
@@ -258,18 +258,19 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
             datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
             datablock->setRoughness(0.7);
             datablock->setMetalness(0.3);
-            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+            //auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
+            //datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
 
             item->getSubItem(i)->setDatablock(datablock);
 
         }
-
+        /*
         if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
         {
             auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
             datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
         }
+        */
     }
 
     emit sceneNodeAdded(node);
