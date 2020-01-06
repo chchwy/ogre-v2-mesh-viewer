@@ -7,10 +7,10 @@ CONFIG -= flat
 VERSION = 0.4.2
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
-OGREHOME = $$(OGREHOME)
-isEmpty(OGREHOME) {
-    OGREHOME = "D:/SDK/OgreSDK/Ogre/build/sdk"
-}
+#OGREHOME = $$(OGREHOME)
+#isEmpty(OGREHOME) {
+    OGREHOME = "D:/OgreSDK/Ogre/build/sdk"
+#}
 
 message(OGRE_HOME: $$OGREHOME)
 
