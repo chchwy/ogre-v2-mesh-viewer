@@ -49,7 +49,7 @@
 #include <QApplication>
 
 #include "ogrewidget.h"
-//#include "OgreGLTF/Ogre_glTF.hpp"
+#include "OgreGLTF/Ogre_glTF.hpp"
 #include "meshloader.h"
 
 
@@ -70,10 +70,10 @@ OgreManager::OgreManager()
         if (!mRoot->showConfigDialog())
             OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS, "Abort render system configuration", __FUNCTION__);
     }
-    /*
+    
     Ogre_glTF::glTFLoaderPlugin* gltfPlugin = OGRE_NEW Ogre_glTF::glTFLoaderPlugin;
     mRoot->installPlugin(gltfPlugin);
-    */
+    
     mCurrentRenderSystem = mRoot->getRenderSystem();
     mRoot->initialise(false);
 

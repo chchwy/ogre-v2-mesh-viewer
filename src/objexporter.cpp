@@ -11,6 +11,7 @@
 
 #include "OgreHlmsPbs.h"
 #include "OgreHlmsPbsDatablock.h"
+#include "OgreImage2.h"
 
 #include "OgreXML/OgreXMLMeshSerializer.h"
 

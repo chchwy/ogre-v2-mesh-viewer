@@ -7,6 +7,7 @@
 #include <OgreHlms.h>
 #include <OgreHlmsManager.h>
 #include <OgreLogManager.h>
+#include <OgreTextureGpuManager.h>
 #include "Ogre_glTF_internal_utils.hpp"
 
 using namespace Ogre_glTF;
@@ -66,14 +67,14 @@ void materialLoader::setMetalRoughTexture(Ogre::HlmsPbsDatablock* block, int glt
 
 	if(metalTexure)
 	{
-		//OgreLog("metalness grey-scale texture extracted by textureImporter : " + metalTexure->getName());
-		block->setTexture(Ogre::PBSM_METALLIC, 0, metalTexure);
+		//OgreLog("metallic gray-scale texture extracted by textureImporter : " + metalTexure->getName());
+		block->setTexture(Ogre::PBSM_METALLIC, metalTexure);
 	}
 
 	if(roughTexure)
 	{
-		//OgreLog("roughness grey-scale texture extracted by textureImporter : " + roughTexure->getName());
-		block->setTexture(Ogre::PBSM_ROUGHNESS, 0, roughTexure);
+		//OgreLog("roughness gray-scale texture extracted by textureImporter : " + roughTexure->getName());
+		block->setTexture(Ogre::PBSM_ROUGHNESS, roughTexure);
 	}
 }
 
@@ -84,7 +85,7 @@ void materialLoader::setNormalTexture(Ogre::HlmsPbsDatablock* block, int value) 
 	if(texture)
 	{
 		//OgreLog("normal texture from textureImporter : " + texture->getName());
-		block->setTexture(Ogre::PbsTextureTypes::PBSM_NORMAL, 0, texture);
+		block->setTexture(Ogre::PbsTextureTypes::PBSM_NORMAL, texture);
 	}
 }
 
@@ -107,7 +108,7 @@ void materialLoader::setEmissiveTexture(Ogre::HlmsPbsDatablock* block, int value
 	if(texture)
 	{
 		//OgreLog("emissive texture from textureImporter : " + texture->getName());
-		block->setTexture(Ogre::PbsTextureTypes::PBSM_EMISSIVE, 0, texture);
+		block->setTexture(Ogre::PbsTextureTypes::PBSM_EMISSIVE,  texture);
 	}
 }
 
@@ -223,8 +224,13 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
     auto hlmsTextureManager = Ogre::Root::getSingleton().getRenderSystem()->getTextureGpuManager();
     if (datablock->getTexture(Ogre::PBSM_REFLECTION))
     {
-        auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-        datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+        //TextureGpu* createOrRetrieveTexture(const String & name,
+        //                                    GpuPageOutStrategy::GpuPageOutStrategy pageOutStrategy,
+        //                                    uint32 textureFlags,
+        //                                    TextureTypes::TextureTypes initialType,
+
+        auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::GpuPageOutStrategy::Discard, Ogre::CommonTextureTypes::EnvMap);
+        datablock->setTexture(Ogre::PBSM_REFLECTION, envMap);
     }
 	return datablock;
 }

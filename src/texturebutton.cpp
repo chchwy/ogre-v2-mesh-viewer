@@ -15,6 +15,7 @@
 #include "OgreHlmsPbsDatablock.h"
 #include "OgrePixelFormatGpu.h"
 #include "OgreTextureBox.h"
+#include "OgreTextureGpuManager.h"
 
 
 TextureButton::TextureButton(QPushButton* button, Ogre::PbsTextureTypes texType) : QObject(button)

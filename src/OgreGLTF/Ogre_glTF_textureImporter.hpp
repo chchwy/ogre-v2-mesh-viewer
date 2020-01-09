@@ -11,7 +11,7 @@ namespace Ogre_glTF
 class textureImporter
 {
     ///List of the loaded basic textures
-    std::unordered_map<int, Ogre::TexturePtr> loadedTextures;
+    std::unordered_map<int, Ogre::TextureGpu*> loadedTextures;
 
     ///Static counter to make unique texture name. Incremented by constructor
     static size_t id;
@@ -36,17 +36,17 @@ public:
 
     ///Get the loaded texture that correspond to the given index
     /// \param glTFTextureSourceID index of a texture in the gltf file
-    Ogre::TexturePtr getTexture(int glTFTextureSourceID);
+    Ogre::TextureGpu* getTexture(int glTFTextureSourceID);
 
     ///Get the texture that correspond to the given index, but as a greyscale one containing only
     ///the information of the given channel. It seems that the order of channel on loaded textures
     ///is BGR
     /// \param gltfTextureSourceID index of a texture in the gltf file
     /// \param channel index of a channel. Starts from zero
-    Ogre::TexturePtr generateGreyScaleFromChannel(int gltfTextureSourceID, int channel);
+    Ogre::TextureGpu* generateGreyScaleFromChannel(int gltfTextureSourceID, int channel);
 
     ///Get the normal texture in a compatible format
     /// \param gltfTextureSourceID index of a texture in the gltf file
-    Ogre::TexturePtr getNormalSNORM(int gltfTextureSourceID);
+    Ogre::TextureGpu* getNormalSNORM(int gltfTextureSourceID);
 };
 }
