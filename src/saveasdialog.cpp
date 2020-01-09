@@ -311,7 +311,7 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
         "        node:set_vec3('Position', { x = value.pos.x, y = value.pos.y, z = value.pos.z }) \n"
         "        node:set_vec3('Rotation', { x = value.rot.x, y = -value.rot.y, z = value.rot.z }) \n"
         "        node:set_vec3('Scale',    { x = value.scale.x, y = value.scale.y, z = value.scale.z }) \n"
-        "        node:set_ref('Is Pickable', false) \n"
+        "        node:set_bool('Is Pickable', false) \n"
         "        node:signal_attribute('Parent') \n"
         "        node:signal_attribute('Name') \n"
         "        node:signal_attribute('Position') \n"
