@@ -55,17 +55,21 @@ void textureImporter::loadTexture(const tinygltf::Texture& texture)
     //The rest of the function is not modifying the model.images[x].image object. We get the image as a const ref.
     //In order to keep the rest of this code const correct, and knowing that the "autoDelete" is specifically
     //set to `false`, we're casting away const on the pointer to get the image data.
-    OgreImage->loadDynamicImage(const_cast<Ogre::uchar*>(image.image.data()), image.width, image.height, 1, Ogre::TextureTypes::Type2D,  pixelFormat, false);
+    OgreImage->loadDynamicImage(const_cast<Ogre::uchar*>(image.image.data()), 
+                                image.width, image.height, 1u,
+                                Ogre::TextureTypes::Type2D,  pixelFormat, false);
 
-    OgreTexture = textureManager->createTexture(name, Ogre::GpuPageOutStrategy::Discard, Ogre::TextureFlags::ManualTexture, Ogre::TextureTypes::Type2D);
-    OgreTexture->setPixelFormat(OgreImage->getPixelFormat());
+    OgreTexture = textureManager->createTexture(name,
+                                                Ogre::GpuPageOutStrategy::Discard,
+                                                Ogre::TextureFlags::ManualTexture | Ogre::TextureFlags::AutomaticBatching,
+                                                Ogre::TextureTypes::Type2D);
+    OgreTexture->setResolution(OgreImage->getWidth(), OgreImage->getHeight());
     OgreTexture->setNumMipmaps(1);
-    OgreTexture->setResolution(OgreImage->getWidth(), OgreImage->getHeight(), OgreImage->getNumSlices());
-    OgreTexture->scheduleTransitionTo(Ogre::GpuResidency::Resident, OgreImage, true);
-    //OgreTexture->_setNextResidencyStatus(Ogre::GpuResidency::Resident);
-    //OgreTexture->_transitionTo()
-    //OgreImage.uploadTo(OgreTexture, 0, 0);
-
+    OgreTexture->setPixelFormat(OgreImage->getPixelFormat());
+    OgreTexture->scheduleTransitionTo(Ogre::GpuResidency::Resident);
+   
+    OgreImage->uploadTo(OgreTexture, 0, 0);
+    
     loadedTextures.insert({ texture.source, OgreTexture });
 }
 
@@ -128,13 +132,13 @@ Ogre::TextureGpu* textureImporter::generateGreyScaleFromChannel(int gltfTextureS
     //Grey-scale the image by putting all channel to the same value, ignoring alpha
     std::vector<Ogre::uchar> imageData(image.image.size());
     const auto pixelCount{ imageData.size() / image.component };
-    for (size_t i{ 0 }; i < pixelCount; i++) //for each pixel
+    for (size_t i = 0; i < pixelCount; i++) //for each pixel
     {
         //Get the channel that has the value
         Ogre::uchar grey = image.image[(i * image.component) + channel];
 
         //Turn pixel at this specific shade of grey
-        for (size_t c{ 0 }; c < 3; c++) imageData[i * image.component + c] = grey;
+        for (size_t c = 0; c < 3; c++) imageData[i * image.component + c] = grey;
 
         //If there's an alpha channel, put it to 1.0f (255)
         if (image.component > 3) imageData[i * image.component + 3] = 255;
@@ -156,14 +160,17 @@ Ogre::TextureGpu* textureImporter::generateGreyScaleFromChannel(int gltfTextureS
     //In order to keep the rest of this code const correct, and knowing that the "autoDelete" is specifically
     //set to `false`, we're casting away const on the pointer to get the image data.
 
-    /*loadDynamicImage(void* pData, uint32 width, uint32 height, uint32 depthOrSlices,
-     TextureTypes::TextureTypes textureType, PixelFormatGpu format,
-     bool autoDelete, uint8 numMipmaps = 1u);*/
     Ogre::Image2 OgreImage;
     OgreImage.loadDynamicImage(imageData.data(), image.width, image.height, 1, Ogre::TextureTypes::Type2D, pixelFormat, false);
 
-    Ogre::TextureGpu* OgreTexture = textureManager->createTexture(name, Ogre::GpuPageOutStrategy::Discard, 0, Ogre::TextureTypes::Type2D);
-    OgreImage.uploadTo(OgreTexture, 1, 1);
+    Ogre::TextureGpu* OgreTexture = textureManager->createOrRetrieveTexture(name, Ogre::GpuPageOutStrategy::Discard,
+                                                                            Ogre::TextureFlags::ManualTexture | Ogre::TextureFlags::AutomaticBatching,
+                                                                            Ogre::TextureTypes::Type2D);
+    OgreTexture->setResolution(OgreImage.getWidth(), OgreImage.getHeight());
+    OgreTexture->setNumMipmaps(1);
+    OgreTexture->setPixelFormat(OgreImage.getPixelFormat());
+    OgreTexture->scheduleTransitionTo(Ogre::GpuResidency::Resident);
+    OgreImage.uploadTo(OgreTexture, 0, 0);
     return OgreTexture;
 }
 
