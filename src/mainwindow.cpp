@@ -242,11 +242,12 @@ void MainWindow::actionOpen()
         auto& manager = Ogre::ResourceGroupManager::getSingleton();
         manager.addResourceLocation(info.absolutePath().toStdString(), "FileSystem", "ViewerResc");
 
+        /*
         auto allMaterials = manager.findResourceNames("ViewerResc", "*.material.json");
         for (const std::string& sMtlName : *allMaterials)
         {
             Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
-        }
+        }*/
 
         MeshLoader* meshLoader = mOgreManager->meshLoader();
         meshLoader->enableZupToYupConversion(bConversionZupToYup);
@@ -297,9 +298,6 @@ void MainWindow::actionExportObj()
     {
         return;
     }
-
-    //QString sObjFileName = "C:/Users/Matt/Desktop/a.obj";
-
     if (QFile::exists(sObjFileName)) QFile::remove(sObjFileName);
 
     Q_ASSERT(!QFile::exists(sObjFileName));

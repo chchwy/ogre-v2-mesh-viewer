@@ -58,8 +58,12 @@ CMakeLists.txt.user*
 # Ogre stuff
 Ogre.log
 
+/*.glsl
+/*.hlsl
 /bin/*.dll
 /bin/*.exe
+/bin/*.glsl
+/bin/*.hlsl
 /bin/translations/*
 /dbin/*.dll
 /dbin/*.exe

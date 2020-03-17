@@ -5,6 +5,7 @@
 // ogre headers
 #include <OgreItem.h>
 #include <OgreHlmsPbsDatablock.h>
+#include <OgreTextureGpuManager.h>
 #include <OgreMeshManager2.h>
 #include <OgreMeshManager.h>
 #include <OgreMesh2.h>
@@ -113,11 +114,14 @@ bool MeshLoader::loadOgreMesh(QString filePath)
     if (!manager.resourceLocationExists(sNewResourceLocation, "ViewerResc"))
     {
         manager.addResourceLocation(sNewResourceLocation, "FileSystem", "ViewerResc");
+        
+        /*
         auto allMaterials = manager.findResourceNames("ViewerResc", "*.material.json");
         for (const std::string& sMtlName : *allMaterials)
         {
-            Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
+            //Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
         }
+        */
     }
 
     QString sNewMeshFile = info.fileName();
@@ -264,13 +268,14 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
             item->getSubItem(i)->setDatablock(datablock);
 
         }
-        /*
-        if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
+        
+        if (datablock->getTexture(Ogre::PBSM_REFLECTION))
         {
-            auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+            auto textureManager = Ogre::Root::getSingleton().getRenderSystem()->getTextureGpuManager();
+            auto envMap = textureManager->createOrRetrieveTexture("env.dds", Ogre::GpuPageOutStrategy::Discard, Ogre::CommonTextureTypes::EnvMap);
+            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap);
         }
-        */
+        
     }
 
     emit sceneNodeAdded(node);
