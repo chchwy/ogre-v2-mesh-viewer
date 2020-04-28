@@ -36,6 +36,7 @@ private:
 
     void listAllMeshesFromScene();
     void collectMeshRecursively(Ogre::SceneNode* node, std::vector<Ogre::Item*>& ogreItems);
+    void collectNodeRecursively(Ogre::SceneNode* node, std::vector<Ogre::SceneNode*>& ogreNodes);
     void createListItems(const std::vector<Ogre::Item*>& ogreItems);
     void lockListWidget();
 
@@ -43,7 +44,7 @@ private:
     void saveHlmsJson(const Ogre::Item* ogreItem);
     QString validateFileName(QString fileName);
     void applySubMeshMaterialNames(Ogre::Item* ogreItem);
-    void saveLuaScript(const std::vector<Ogre::Item*>& ogreItems);
+    void saveLuaScript(const std::vector<Ogre::SceneNode*>& nodes, const std::vector<Ogre::Item*>& ogreItems);
 
     OgreManager* mOgre = nullptr;
     bool mInitialized = false;

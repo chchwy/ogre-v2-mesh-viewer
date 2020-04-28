@@ -86,7 +86,12 @@ void SaveAsDialog::saveButtonClicked()
     QApplication::processEvents(QEventLoop::DialogExec);
 
     saveOgreMeshes(ogreItems);
-    saveLuaScript(ogreItems);
+
+    Ogre::SceneNode* rootNode = mOgre->meshRootNode();
+    std::vector<Ogre::SceneNode*> nodes;
+    collectNodeRecursively(rootNode, nodes);
+
+    saveLuaScript(nodes, ogreItems);
 
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
     settings.setValue("actionSaveMesh", mOutputFolder);
@@ -133,6 +138,17 @@ void SaveAsDialog::collectMeshRecursively(Ogre::SceneNode* node, std::vector<Ogr
     }
 }
 
+void SaveAsDialog::collectNodeRecursively(Ogre::SceneNode* node, std::vector<Ogre::SceneNode*>& ogreNodes)
+{
+    ogreNodes.push_back(node);
+
+    for (int i = 0; i < node->numChildren(); ++i)
+    {
+        Ogre::SceneNode* child = static_cast<Ogre::SceneNode*>(node->getChild(i));
+        collectNodeRecursively(child, ogreNodes);
+    }
+}
+
 void SaveAsDialog::createListItems(const std::vector<Ogre::Item*>& ogreItems)
 {
     for (Ogre::Item* i : ogreItems)
@@ -171,7 +187,7 @@ void SaveAsDialog::saveOgreMeshes(const std::vector<Ogre::Item*>& ogreItems)
     {
         applySubMeshMaterialNames(ogreItems[i]);
 
-        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getName()));
+        QString meshName = validateFileName(QString::fromStdString(ogreItems[i]->getMesh()->getName()));
 
         QString fullPath = QDir(mOutputFolder).filePath(meshName);
         Ogre::Mesh* mesh = ogreItems[i]->getMesh().get();
@@ -251,10 +267,10 @@ void SaveAsDialog::applySubMeshMaterialNames(Ogre::Item* ogreItem)
     }
 }
 
-void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
+void SaveAsDialog::saveLuaScript(const std::vector<Ogre::SceneNode*>& nodes, const std::vector<Ogre::Item*>& ogreItems)
 {
-    // This function is just for my personal engine.
-    QString fileName = "mesh_load.lua";
+    // This function is just for my engine.
+    QString fileName = "mesh_load2.lua";
     QString fullPath = QDir(mOutputFolder).filePath(fileName);
 
     QFile f(fullPath);
@@ -262,25 +278,27 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
         return;
 
     QTextStream fout(&f);
-    fout << "local mesh_list = {}\n";
+    fout << "local node_list = {}\n";
 
-    for (size_t i = 0; i < ogreItems.size(); ++i)
+    for (size_t i = 0; i < nodes.size(); ++i)
     {
-        Ogre::Item* item = ogreItems[i];
-        Ogre::Vector3 pos = item->getParentSceneNode()->_getDerivedPosition();
+        Ogre::SceneNode* node = nodes[i];
+        Ogre::Vector3 pos = node->getPosition();
 
-        const Ogre::Quaternion quaternion = item->getParentSceneNode()->_getDerivedOrientation();
+        const Ogre::Quaternion quaternion = node->getOrientation();
         Ogre::Matrix3 matrix3;
         quaternion.ToRotationMatrix(matrix3);
 
         Ogre::Radian rx, ry, rz;
         matrix3.ToEulerAnglesXYZ(rx, ry, rz);
 
-        Ogre::Vector3 scale = item->getParentSceneNode()->_getDerivedScale();
+        Ogre::Vector3 scale = node->getScale();
+        
+        QString parentNodeName = (node == mOgre->meshRootNode()) ? "main_building" : QString::fromStdString(node->getParent()->getName());
 
-        item->getParentSceneNode()->_getDerivedOrientation();
-        QString line = QString("mesh_list[\"%1.mesh\"] = {pos={x=%2, y=%3, z=%4}, rot={x=%5, y=%6, z=%7}, scale={x=%8, y=%9, z=%10}}\n")
-            .arg(item->getName().c_str())
+        QString line = QString("node_list[%1] = { name=\"%2\", pos={x=%3, y=%4, z=%5}, rot={x=%6, y=%7, z=%8}, scale={x=%9, y=%10, z=%11}, parent=\"%12\" }")
+            .arg(i)
+            .arg(node->getName().c_str())
             .arg(pos.x, 0, 'f', 4)
             .arg(pos.y, 0, 'f', 4)
             .arg(pos.z, 0, 'f', 4)
@@ -289,25 +307,25 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
             .arg(rz.valueDegrees(), 0, 'f', 4)
             .arg(scale.x, 0, 'f', 4)
             .arg(scale.y, 0, 'f', 4)
-            .arg(scale.z, 0, 'f', 4);
-        fout << line;
-    }
-    fout << "\n";
+            .arg(scale.z, 0, 'f', 4)
+            .arg(parentNodeName);
 
-    QString func = ""
-        "function create_meshes() \n"
-        "    local root_node = get_object_by_name('main_building') \n"
-        "    for key, value in pairs(mesh_list) do \n"
-        "        local path = 'script/' ..key \n"
-        "        log_info(path) \n"
+        fout << line << "\n";
+    }
+
+    QString funcNodes = ""
         "\n"
-        "        local mesh = create_persistent_object('COgreMesh') \n"
-        "        mesh:set_string('Path', path) \n"
+        "function create_nodes() \n"
         "\n"
-        "        local node = create_persistent_object('CSceneNodeOgreMesh') \n"
-        "        node:set_name(key) \n"
-        "        node:set_ref('Ogre Mesh', mesh) \n"
-        "        node:set_ref('Parent', root_node) \n"
+        "    for key, value in pairs(node_list) do \n"
+        "        local node_name = value.name \n"
+        "        log_info(key .. ': ' .. node_name) \n"
+        "\n"
+        "        local parent_node = get_object_by_name(value.parent) \n"
+        "\n"
+        "        local node = create_persistent_object('CSceneNodeOgre') \n"
+        "        node:set_name(node_name) \n"
+        "        node:set_ref('Parent', parent_node) \n"
         "        node:set_vec3('Position', { x = value.pos.x, y = value.pos.y, z = value.pos.z }) \n"
         "        node:set_vec3('Rotation', { x = value.rot.x, y = -value.rot.y, z = value.rot.z }) \n"
         "        node:set_vec3('Scale',    { x = value.scale.x, y = value.scale.y, z = value.scale.z }) \n"
@@ -320,7 +338,59 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::Item*>& ogreItems)
         "    end \n"
         "end \n";
 
+    fout << funcNodes;
+    fout.flush();
+
+    fout << "local mesh_list = {}\n";
+
+    for (size_t i = 0; i < ogreItems.size(); ++i)
+    {
+        Ogre::Item* item = ogreItems[i];
+        
+        QString line = QString("mesh_list[%1] = { name=\"Mesh_%2\", mesh=\"%3\", parent=\"%4\" }")
+            .arg(i)
+            .arg(QString::fromStdString(item->getName()))
+            .arg(QString::fromStdString(item->getMesh()->getName()))
+            .arg(QString::fromStdString(item->getParentNode()->getName()));
+        fout << line << "\n";
+    }
+    fout << "\n";
+
+    QString func = "\n"
+        "function create_meshes() \n"
+        "    local mesh_map = {} \n"
+
+        "    for key, value in pairs(mesh_list) do \n"
+        "        local path = 'script/' .. value.mesh .. '.mesh' \n"
+        "        log_info(path) \n"
+        "\n"
+        "        local parent_node = get_object_by_name(value.parent) \n"
+        "\n"
+        "        local mesh = mesh_map[value.mesh]\n"
+        "        if mesh == nil then\n"
+        "            mesh = create_persistent_object('COgreMesh')\n"
+        "            mesh:set_string('Path', path)\n"
+        "            mesh_map[value.mesh] = mesh\n"
+        "        end\n"
+        "\n"
+        "        local node = create_persistent_object('CSceneNodeOgreMesh') \n"
+        "        node:set_name(value.name) \n"
+        "        node:set_ref('Ogre Mesh', mesh) \n"
+        "        node:set_ref('Parent', parent_node) \n"
+        "        node:set_bool('Is Pickable', false) \n"
+        "        node:signal_attribute('Parent') \n"
+        "        node:signal_attribute('Name') \n"
+        "    end \n"
+        "end \n";
+
     fout << func;
+
+    fout << "\n"
+        "function go()\n"
+        "    create_nodes()\n"
+        "    create_meshes()\n"
+        "end";
+        
     fout.flush();
 
     f.close();
