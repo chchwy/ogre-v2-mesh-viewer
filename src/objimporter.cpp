@@ -11,6 +11,7 @@
 #include <QProgressDialog>
 #include <QApplication>
 
+#include "Vao/OgreVaoManager.h"
 #include "OgreMesh2.h"
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"

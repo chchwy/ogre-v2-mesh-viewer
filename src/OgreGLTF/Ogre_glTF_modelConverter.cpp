@@ -1,10 +1,12 @@
 #include "stdafx.h"
 
+#include <sstream>
 #include "Ogre_glTF_modelConverter.hpp"
 #include "Ogre_glTF_common.hpp"
 #include <OgreMesh2.h>
 #include <OgreMeshManager2.h>
 #include <OgreSubMesh2.h>
+#include <Vao/OgreVaoManager.h>
 #include "Ogre_glTF_internal_utils.hpp"
 
 using namespace Ogre_glTF;

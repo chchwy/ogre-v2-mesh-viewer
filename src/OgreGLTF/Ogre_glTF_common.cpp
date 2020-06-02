@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <sstream>
 #include "Ogre_glTF_common.hpp"
 
 #include <OgreLogManager.h>

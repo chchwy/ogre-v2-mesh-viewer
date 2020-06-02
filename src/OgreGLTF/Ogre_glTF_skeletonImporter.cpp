@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <sstream>
 #include "Ogre_glTF_skeletonImporter.hpp"
 #include "Ogre_glTF_common.hpp"
 #include "Ogre_glTF_internal_utils.hpp"

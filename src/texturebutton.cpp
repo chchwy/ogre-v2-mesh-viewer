@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "texturebutton.h"
 
+#include <fstream>
 #include <QPushButton>
 #include <QImage>
 #include <QFileDialog>
@@ -46,6 +47,7 @@ void TextureButton::updateTexImage(Ogre::HlmsPbsDatablock* datablock, Ogre::PbsT
     //         << ", X index:" << texLocation.xIdx
     //         << ", Pointer:" << texLocation.texture;
 
+    texture->waitForData(); // TODO: exception throwed here
     Ogre::Image2 img;
     img.convertFromTexture(texture, 0, 0);
     
@@ -216,7 +218,7 @@ bool TextureButton::LoadImage(const QString& texturePath, Ogre::TextureGpu*& tex
         texture = getHlmsTexManager()->createTexture(texName, texName,
             Ogre::GpuPageOutStrategy::Discard,
             Ogre::TextureFlags::PrefersLoadingFromFileAsSRGB,
-            Ogre::TextureTypes::Type2D);
+            Ogre::TextureTypes::Type2D, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         ok = true;
     }
     catch(Ogre::Exception& e)

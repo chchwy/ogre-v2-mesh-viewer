@@ -262,14 +262,16 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
             datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
             datablock->setRoughness(0.7);
             datablock->setMetalness(0.3);
-            //auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-            //datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+
+            auto textureManager = Ogre::Root::getSingleton().getRenderSystem()->getTextureGpuManager();
+            auto envMap = textureManager->createOrRetrieveTexture("env.dds", Ogre::GpuPageOutStrategy::Discard, Ogre::CommonTextureTypes::EnvMap);
+            datablock->setTexture(Ogre::PBSM_REFLECTION, envMap);
 
             item->getSubItem(i)->setDatablock(datablock);
 
         }
         
-        if (datablock->getTexture(Ogre::PBSM_REFLECTION))
+        if (!datablock->getTexture(Ogre::PBSM_REFLECTION))
         {
             auto textureManager = Ogre::Root::getSingleton().getRenderSystem()->getTextureGpuManager();
             auto envMap = textureManager->createOrRetrieveTexture("env.dds", Ogre::GpuPageOutStrategy::Discard, Ogre::CommonTextureTypes::EnvMap);
