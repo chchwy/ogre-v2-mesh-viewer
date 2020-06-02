@@ -1,4 +1,4 @@
-set OGREHOME=D:\OgreSDK\Ogre\build\sdk
+set OGREHOME=D:\SDK\OgreSDK\ogre-next\build\sdk
 echo %OGREHOME%
 xcopy /y "%OGREHOME%\bin\Debug\OgreMain_d.dll"                "dbin"
 xcopy /y "%OGREHOME%\bin\Debug\OgreHlmsPbs_d.dll"             "dbin"
