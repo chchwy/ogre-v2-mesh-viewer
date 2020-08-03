@@ -192,8 +192,10 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 	for (const auto& content : material.additionalValues)
 	{
 		//OgreLog(content.first);
-		if(content.first == "normalTexture")
-			setNormalTexture(datablock, content.second.TextureIndex());
+		if (content.first == "normalTexture")
+		{
+			//setNormalTexture(datablock, content.second.TextureIndex());
+		}
 
 		//if (content.first == "occlusionTexture")
 		//	setOcclusionTexture(datablock, getTextureIndex(content));
@@ -204,10 +206,10 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 		if(content.first == "emissiveFactor")
 			setEmissiveColor(datablock, convertColor(content.second.ColorFactor()));
 
-		if(content.first == "alphaMode") 
+		if(content.first == "alphaMode")
 			setAlphaMode(datablock, content.second.string_value);
 
-		if(content.first == "alphaCutoff") 
+		if(content.first == "alphaCutoff")
 			setAlphaCutoff(datablock, static_cast<Ogre::Real>(content.second.number_value));
 	}
 

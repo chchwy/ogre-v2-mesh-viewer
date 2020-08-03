@@ -1,3 +1,5 @@
+::set OGREHOME=D:/SDK/OgreSDK/Ogre/build/sdk
+
 xcopy /y "%OGREHOME%\bin\Debug\OgreMain_d.dll"                "dbin"
 xcopy /y "%OGREHOME%\bin\Debug\OgreHlmsPbs_d.dll"             "dbin"
 xcopy /y "%OGREHOME%\bin\Debug\OgreHlmsUnlit_d.dll"           "dbin"

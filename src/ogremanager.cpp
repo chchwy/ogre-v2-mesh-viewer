@@ -246,8 +246,8 @@ void OgreManager::setIrradianceBackground()
         tex->convertToImage(img, true, tex->getNumMipmaps() - 4); // 4 looks better
 
         irradiance = texMgr.createManual("irradiance_bg", autoGroup,
-                                         Ogre::TEX_TYPE_CUBE_MAP, 
-                                         img.getWidth(), img.getHeight(), 
+                                         Ogre::TEX_TYPE_CUBE_MAP,
+                                         img.getWidth(), img.getHeight(),
                                          Ogre::MIP_DEFAULT /* mipmap */, img.getFormat());
         irradiance->loadImage(img);
     }
@@ -397,10 +397,10 @@ void OgreManager::createScene()
     hlmsPbs->setShadowSettings(Ogre::HlmsPbs::PCF_4x4);
 
     mSceneManager->setForwardClustered(true,
-                                       16, 8,    // width & height 
+                                       16, 8,    // width & height
                                        24,       // num of slices
                                        96, 5,    // light per cell, decal per cell
-                                       5, 1000); // min & max distance
+                                       5, 3000); // min & max distance
 
     Q_ASSERT(mMeshRootNode == nullptr);
     mMeshRootNode = mSceneManager->getRootSceneNode()->createChildSceneNode();
