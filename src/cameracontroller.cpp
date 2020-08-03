@@ -31,8 +31,8 @@ void CameraController::setCamera(Ogre::Camera* cam)
 
     mCamera->setPosition(Ogre::Vector3(0, 0, 10));
     mCamera->lookAt(Ogre::Vector3(0, 0, 0));
-    mCamera->setNearClipDistance(1.0f);
-    mCamera->setFarClipDistance(8000.0f);
+    mCamera->setNearClipDistance(10.0f);
+    mCamera->setFarClipDistance(10000.0f);
     mCamera->setAutoAspectRatio(true);
 }
 
