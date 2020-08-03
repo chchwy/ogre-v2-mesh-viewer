@@ -9,6 +9,8 @@
 #include "OgreMesh2Serializer.h"
 #include "OgreHlmsJson.h"
 #include "OgreItem.h"
+#include "OgreHlmsPbsDatablock.h"
+#include <OgreHlmsPbs.h>
 
 #include "ogremanager.h"
 
@@ -111,9 +113,35 @@ void SaveAsDialog::listAllMeshesFromScene()
     std::vector<Ogre::Item*> items;
     collectMeshRecursively(node, items);
 
-    for (const Ogre::Item* m : items)
+    int counter = 0;
+    for (Ogre::Item* m : items)
     {
-        qDebug() << m->getName().c_str();
+        qDebug() << "Item:" << m->getName().c_str();
+
+        Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
+        Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsMgr->getHlms(Ogre::HLMS_PBS));
+        for (int i = 0; i < m->getNumSubItems(); ++i)
+        {
+            try
+            {
+                Ogre::HlmsMacroblock macro;
+                macro.mDepthWrite = false;
+                std::string mtlName = QString("HB_MTL_%1").arg(counter).toStdString();
+                auto block = static_cast<Ogre::HlmsPbsDatablock*>(hlmsPbs->createDatablock(Ogre::IdString(mtlName),
+                                                                  mtlName,
+                                                                  macro,
+                                                                  Ogre::HlmsBlendblock(),
+                                                                  Ogre::HlmsParamVec()));
+                block->setWorkflow(Ogre::HlmsPbsDatablock::Workflows::MetallicWorkflow);
+                m->getSubItem(i)->setDatablock(block);
+
+                counter++;
+            }
+            catch (std::exception& e)
+            {
+                qDebug() << e.what();
+            }
+        }
     }
 
     createListItems(items);
@@ -138,8 +166,21 @@ void SaveAsDialog::collectMeshRecursively(Ogre::SceneNode* node, std::vector<Ogr
     }
 }
 
+std::string random() {
+    const char alphabet[] = "abcdefghijklmnopqrstuvwxyz12345";
+
+    std::string s = "-12345";
+    for (size_t i = 1; i < s.size(); ++i)
+    {
+        int randomIndex = rand() % 26;
+        s[i] = alphabet[randomIndex];
+    }
+    return s;
+}
+
 void SaveAsDialog::collectNodeRecursively(Ogre::SceneNode* node, std::vector<Ogre::SceneNode*>& ogreNodes)
 {
+    //node->setName(node->getName() + random());
     ogreNodes.push_back(node);
 
     for (int i = 0; i < node->numChildren(); ++i)
@@ -270,7 +311,7 @@ void SaveAsDialog::applySubMeshMaterialNames(Ogre::Item* ogreItem)
 void SaveAsDialog::saveLuaScript(const std::vector<Ogre::SceneNode*>& nodes, const std::vector<Ogre::Item*>& ogreItems)
 {
     // This function is just for my engine.
-    QString fileName = "mesh_load2.lua";
+    QString fileName = "hb_load.lua";
     QString fullPath = QDir(mOutputFolder).filePath(fileName);
 
     QFile f(fullPath);
@@ -293,7 +334,7 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::SceneNode*>& nodes, con
         matrix3.ToEulerAnglesXYZ(rx, ry, rz);
 
         Ogre::Vector3 scale = node->getScale();
-        
+
         QString parentNodeName = (node == mOgre->meshRootNode()) ? "main_building" : QString::fromStdString(node->getParent()->getName());
 
         QString line = QString("node_list[%1] = { name=\"%2\", pos={x=%3, y=%4, z=%5}, rot={x=%6, y=%7, z=%8}, scale={x=%9, y=%10, z=%11}, parent=\"%12\" }")
@@ -346,7 +387,7 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::SceneNode*>& nodes, con
     for (size_t i = 0; i < ogreItems.size(); ++i)
     {
         Ogre::Item* item = ogreItems[i];
-        
+
         QString line = QString("mesh_list[%1] = { name=\"Mesh_%2\", mesh=\"%3\", parent=\"%4\" }")
             .arg(i)
             .arg(QString::fromStdString(item->getName()))
@@ -390,7 +431,7 @@ void SaveAsDialog::saveLuaScript(const std::vector<Ogre::SceneNode*>& nodes, con
         "    create_nodes()\n"
         "    create_meshes()\n"
         "end";
-        
+
     fout.flush();
 
     f.close();
