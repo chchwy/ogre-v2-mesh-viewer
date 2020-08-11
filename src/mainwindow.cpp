@@ -75,7 +75,7 @@ MainWindow::MainWindow()
     createDockWindows();
 
     // Set the title
-    setWindowTitle("Ogre v2 Mesh Viewer [v0.4.1]");
+    setWindowTitle("Ogre v2 Mesh Viewer [" APP_VERSION "]");
     readSettings();
 
     connect(mOgreManager, &OgreManager::sceneCreated, this, &MainWindow::onSceneLoaded);
