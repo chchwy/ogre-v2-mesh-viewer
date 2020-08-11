@@ -11,7 +11,7 @@ SceneTreeWidget::SceneTreeWidget(QWidget* parent, OgreManager* ogre) : QWidget(p
     ui->setupUi(this);
 
     mOgre = ogre;
-    mModel = new SceneTreeModel(this, ogre);
+    //mModel = new SceneTreeModel(this, ogre);
     //ui->treeView->setModel(mModel); // set the model after in sceneLoaded(), not here.
 
     connect(ui->treeView, &QTreeView::clicked, this, &SceneTreeWidget::treeViewClicked);
@@ -24,15 +24,13 @@ SceneTreeWidget::~SceneTreeWidget()
 
 void SceneTreeWidget::clear()
 {
-    QModelIndex rootIndex = ui->treeView->rootIndex();
-    mModel->clear(rootIndex);
+    mModel->deleteLater();
 }
 
 void SceneTreeWidget::sceneLoaded()
 {
-    QModelIndex rootIndex = ui->treeView->rootIndex();
-    mModel->refresh(rootIndex);
-
+    mModel = new SceneTreeModel(this, mOgre);
+    mModel->refresh();
     ui->treeView->setModel(mModel);
 }
 
