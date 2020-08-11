@@ -17,7 +17,7 @@ public:
     explicit SceneTreeModel(QObject* parent, OgreManager* ogre);
     ~SceneTreeModel();
 
-    // QTreeView 
+    // QTreeView
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     QModelIndex index(int row, int column,
                       const QModelIndex& parent = QModelIndex()) const override;
@@ -37,8 +37,7 @@ public:
     bool removeRows(int position, int rows,
                     const QModelIndex& parent = QModelIndex()) override;
 
-    void refresh(QModelIndex rootIndex);
-    void clear(QModelIndex rootIndex);
+    void refresh();
 
 private:
     int getSceneNodeRow(Ogre::SceneNode*) const;
