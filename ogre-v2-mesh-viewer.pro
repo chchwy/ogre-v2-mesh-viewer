@@ -3,11 +3,13 @@ message(Qt version: $$[QT_VERSION])
 
 QT += widgets
 CONFIG -= flat
-DEFINES += APP_VERSION_NUMBER=\\\"0.4.1\\\"
+
+VERSION = 0.4.2
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {
-    OGREHOME = "C:/SDK/OgreSDK/Ogre/build/sdk"
+    OGREHOME = "D:/SDK/OgreSDK/Ogre/build/sdk"
 }
 
 message(OGRE_HOME: $$OGREHOME)
