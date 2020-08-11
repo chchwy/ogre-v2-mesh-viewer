@@ -194,7 +194,7 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 		//OgreLog(content.first);
 		if (content.first == "normalTexture")
 		{
-			//setNormalTexture(datablock, content.second.TextureIndex());
+			setNormalTexture(datablock, content.second.TextureIndex());
 		}
 
 		//if (content.first == "occlusionTexture")
