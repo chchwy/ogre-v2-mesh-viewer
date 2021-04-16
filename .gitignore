@@ -61,7 +61,12 @@ Ogre.log
 /bin/*.dll
 /bin/*.exe
 /bin/translations/*
+/bin/*.hlsl
+
 /dbin/*.dll
 /dbin/*.exe
+/dbin/translations
+/dbin/*.hlsl
+/dbin/ogre.cfg
+
 /mesh
-dbin/translations
