@@ -64,3 +64,4 @@ Ogre.log
 /dbin/*.dll
 /dbin/*.exe
 /mesh
+dbin/translations
