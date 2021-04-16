@@ -9,7 +9,7 @@ DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 OGREHOME = $$(OGREHOME)
 isEmpty(OGREHOME) {
-    OGREHOME = "D:/SDK/OgreSDK/Ogre/build/sdk"
+    OGREHOME = "D:/ogre/ogre-next/build/sdk"
 }
 
 message(OGRE_HOME: $$OGREHOME)
