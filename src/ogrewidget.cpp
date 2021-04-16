@@ -33,6 +33,7 @@ OgreWidget::OgreWidget(QWidget* parent) : QWidget(parent)
 {
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_PaintOnScreen);
+    setAttribute(Qt::WA_StaticContents);
     setMinimumSize(240, 240);
 
     setFocusPolicy(Qt::StrongFocus);
