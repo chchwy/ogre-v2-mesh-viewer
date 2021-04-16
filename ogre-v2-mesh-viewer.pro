@@ -4,7 +4,7 @@ message(Qt version: $$[QT_VERSION])
 QT += widgets
 CONFIG -= flat
 
-VERSION = 0.4.2
+VERSION = 0.4.3
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 OGREHOME = $$(OGREHOME)
