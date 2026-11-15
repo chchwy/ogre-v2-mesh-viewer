@@ -75,7 +75,7 @@ QModelIndex SceneTreeWidget::lookForSceneNode(Ogre::SceneNode* tartgetNode, cons
     }
 
     int i = 0;
-    QModelIndex child = parent.child(i, 0);
+    QModelIndex child = parent.model()->index(i, 0, parent);
     while(child.isValid())
     {
         QModelIndex idx = lookForSceneNode(tartgetNode, child);
@@ -83,7 +83,7 @@ QModelIndex SceneTreeWidget::lookForSceneNode(Ogre::SceneNode* tartgetNode, cons
             return idx;
 
         i += 1;
-        child = parent.child(i, 0);
+        child = parent.model()->index(i, 0, parent);
     }
     return QModelIndex();
 }

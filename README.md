@@ -1,6 +1,6 @@
 # Ogre3D mesh viewer/converter
 
-A Ogre3D mesh viewer based on v2.1 which can import obj/gltf models.
+A Ogre3D mesh viewer based on Ogre-Next (v2.2+ texture system) which can import obj/gltf models.
 
  [Download Windows x64](https://github.com/chchwy/ogre-v2-mesh-viewer/releases)
 
@@ -26,10 +26,14 @@ A Ogre3D mesh viewer based on v2.1 which can import obj/gltf models.
 
 ## How to compile
 
-1. Have Qt 5 SDK installed (recommend Qt 5.6+), download it [here][0].
-2. Have a working Ogre3D 2.1 sdk.
-3. Set the path to Ogre sdk folder. You can either set an user-level `OGREHOME` environment variable, or set it directly in `ogre-v2-mesh-viewer.pro` line 9.
-4. Open `ogre-v2-mesh-viewer.pro` in QtCreator and presse `RUN`.
+1. Have the Qt SDK installed (developed against Qt 6.8 with MSVC 2022; Qt 5.15 should still work), download it [here][0].
+2. Build [ogre-next](https://github.com/OGRECave/ogre-next) (master / 4.0) and its dependencies, then run the `INSTALL` target so you get an sdk folder.
+   - On a non-English Windows, add `/utf-8` to `CMAKE_CXX_FLAGS`, otherwise MSVC misreads some ogre-next sources.
+3. Set the path to the Ogre sdk folder. You can either set an user-level `OGREHOME` environment variable, or set it directly in `ogre-v2-mesh-viewer.pro`.
+4. Open `ogre-v2-mesh-viewer.pro` in QtCreator and press `RUN`.
+5. Run `deploy.bat` to copy the Ogre and Qt DLLs next to the executable.
+
+Models passed on the command line are loaded at startup: `ogre-v2-mesh-viewer.exe model.glb other.mesh`.
 
 [0]: https://www.qt.io/download-qt-installer "Qt download"
 

@@ -9,7 +9,7 @@ Inspector::Inspector(QWidget* parent) : QWidget(parent)
 {
     setLayout(new QVBoxLayout);
     layout()->setSpacing(0);
-    layout()->setMargin(0);
+    layout()->setContentsMargins(0, 0, 0, 0);
 
     mScrollArea = new QScrollArea;
     mScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);

@@ -3,250 +3,113 @@
 #include "Ogre_glTF_textureImporter.hpp"
 #include "Ogre_glTF_common.hpp"
 #include <OgreLogManager.h>
-#include <OgreTextureManager.h>
-#include <OgreTexture.h>
-#include <OgreImage.h>
-#include <OgreHardwarePixelBuffer.h>
-#include <OgreColourValue.h>
-#include <OgreRoot.h>
-#include <OgreRenderTarget.h>
+#include <OgreImage2.h>
+#include <OgreTextureBox.h>
 #include "Ogre_glTF.hpp"
+#include "textureutil.h"
 
 using namespace Ogre_glTF;
 
-//TODO pack the loaded textures in texture arrays (TEX_TYPE_2D_ARRAY) to optimize the way textures are binded to the slots of an HlmsPbsDatablock.
-//TODO rethink the oder of operations while loading texture. Some of them need to be interpreted differently for they usage (MetalRoughMap needs to be separated in two greyscale map, NormalMap need SNORM reformating). Knowing what the material is doing with them will help avoid uncessesary resource usage and load time.
-//TODO planned refactoring : pixel format selection code needs to be put into it's own method
-//TODO planned refactoring : Loading of texture via OgreImage needs to be put into it's own method
-//TODO investigate if HardwarePixelBuffer is going to be deprecated. Why is it in the Ogre::v1 namespace? What will happen in Ogre 2.2's "texture refactor"?
-
 size_t textureImporter::id{ 0 };
 
-void textureImporter::loadTexture(const tinygltf::Texture& texture)
-{
-    auto textureManager = Ogre::TextureManager::getSingletonPtr();
-    const auto& image = model.images[texture.source];
-    const auto name = image.uri;
-
-    auto OgreTexture = textureManager->getByName(name);
-    if (OgreTexture)
-    {
-        //OgreLog("Texture " + name + " already loaded in Ogre::TextureManager");
-        return;
-    }
-
-    OgreLog("Loading texture image " + name);
-
-    const auto pixelFormat = [&] {
-        if (image.component == 3) return Ogre::PF_BYTE_RGB;
-        if (image.component == 4) return Ogre::PF_BYTE_RGBA;
-
-        throw InitError("Can get " + name + "pixel format");
-    }();
-
-    if (image.image.size() / image.component == image.width * image.height) { OgreLog("It looks like the image.component field and the image size does match"); }
-    else
-    {
-        OgreLog("I have no idea what is going on with the image format");
-    }
-
-    Ogre::Image OgreImage;
-
-    //The OgreImage class *can* take ownership of the pointer to the data and automatically delete it.
-    //We *don't* want that. 6th argument needs to be set to false to prevent that.
-    //The rest of the function is not modifying the model.images[x].image object. We get the image as a const ref.
-    //In order to keep the rest of this code const correct, and knowing that the "autoDelete" is specifically
-    //set to `false`, we're casting away const on the pointer to get the image data.
-    OgreImage.loadDynamicImage(const_cast<Ogre::uchar*>(image.image.data()), image.width, image.height, 1, pixelFormat, false);
-
-    OgreTexture = textureManager->createManual(name,
-                                               Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                                               Ogre::TextureType::TEX_TYPE_2D_ARRAY,
-                                               image.width,
-                                               image.height,
-                                               1,
-                                               1,
-                                               pixelFormat,
-                                               Ogre::TU_DEFAULT,
-                                               nullptr,
-                                               isHardwareGammaEnabled());
-
-    OgreTexture->loadImage(OgreImage);
-
-    loadedTextures.insert({ texture.source, OgreTexture });
-}
-
-bool textureImporter::isHardwareGammaEnabled() const
-{
-    const auto renderSystem = Ogre::Root::getSingleton().getRenderSystem();
-
-    //don't bother to check render targets for gamma if render system doesn't have the option enabled
-    try
-    {
-        const auto renderSystemGammaConversionConfigOption = renderSystem->getConfigOptions().at("sRGB Gamma Conversion");
-        if (renderSystemGammaConversionConfigOption.currentValue != "Yes") return false;
-    }
-    catch (const std::exception& e)
-    {
-        (void)e;
-        OgreLog("It appears that render system doesn't know if it uses srgb gamma conversion? How is that possible? We're going to check the render targets "
-                "anyway");
-    }
-
-    //Check if any render target has the option, and if so, return true
-    auto renderTargetIt = renderSystem->getRenderTargetIterator();
-    do
-    {
-        if (renderTargetIt.current()->second->isHardwareGammaEnabled()) return true;
-
-        renderTargetIt.moveNext();
-    } while (renderTargetIt.current() != renderTargetIt.end());
-
-    return false;
-}
-
-textureImporter::textureImporter(tinygltf::Model& input) : model{ input } { id++; }
+textureImporter::textureImporter(tinygltf::Model& input) : model{ input } { importerId = id++; }
 
 void textureImporter::loadTextures()
 {
-    for (const auto& texture : model.textures)
-    {
-        loadTexture(texture);
-    }
 }
 
-Ogre::TexturePtr textureImporter::getTexture(int glTFTextureSourceID)
+Ogre::TextureGpu* textureImporter::getOrCreate(int glTFTextureID, Usage usage)
 {
-    auto texture = loadedTextures.find(glTFTextureSourceID);
-    if (texture == std::end(loadedTextures)) return {};
+    if (glTFTextureID < 0 || glTFTextureID >= int(model.textures.size())) return nullptr;
 
-    return texture->second;
+    const int imageIndex = model.textures[glTFTextureID].source;
+    if (imageIndex < 0 || imageIndex >= int(model.images.size())) return nullptr;
+
+    const int key = imageIndex * 4 + int(usage);
+    const auto found = loadedTextures.find(key);
+    if (found != loadedTextures.end()) return found->second;
+
+    const tinygltf::Image& image = model.images[imageIndex];
+    const std::string label = image.uri.empty() ? image.name : image.uri;
+
+    if (image.bits != 8 || image.component != 4 || image.width <= 0 || image.height <= 0 ||
+        image.image.size() < size_t(image.width) * size_t(image.height) * 4u)
+    {
+        OgreLog("Unsupported glTF image layout, skipping texture " + label);
+        loadedTextures[key] = nullptr;
+        return nullptr;
+    }
+
+    static const char* suffixes[] = { "", "_normal", "_green", "_blue" };
+    const std::string name = "glTF_" + std::to_string(importerId) + "_" + std::to_string(imageIndex) + "_" + label + suffixes[int(usage)];
+
+    const Ogre::uint32 width = Ogre::uint32(image.width);
+    const Ogre::uint32 height = Ogre::uint32(image.height);
+
+    Ogre::PixelFormatGpu format = Ogre::PFG_RGBA8_UNORM_SRGB;
+    switch (usage)
+    {
+    case Usage::Colour: format = Ogre::PFG_RGBA8_UNORM_SRGB; break;
+    case Usage::Normal: format = Ogre::PFG_RG8_SNORM; break;
+    case Usage::GreenChannel:
+    case Usage::BlueChannel: format = Ogre::PFG_R8_UNORM; break;
+    }
+
+    Ogre::Image2 ogreImage;
+    ogreImage.createEmptyImage(width, height, 1u, Ogre::TextureTypes::Type2D, format);
+    const Ogre::TextureBox box = ogreImage.getData(0);
+
+    //tinygltf always hands us tightly packed 8 bits RGBA
+    const unsigned char* src = image.image.data();
+    for (Ogre::uint32 y = 0; y < height; ++y)
+    {
+        const unsigned char* srcRow = src + size_t(y) * width * 4u;
+        void* dstRow = box.at(0, y, 0);
+
+        switch (usage)
+        {
+        case Usage::Colour: memcpy(dstRow, srcRow, size_t(width) * 4u); break;
+        case Usage::Normal:
+        {
+            Ogre::int8* dst = static_cast<Ogre::int8*>(dstRow);
+            for (Ogre::uint32 x = 0; x < width; ++x)
+            {
+                dst[x * 2 + 0] = Ogre::int8(int(srcRow[x * 4 + 0]) - 128);
+                dst[x * 2 + 1] = Ogre::int8(int(srcRow[x * 4 + 1]) - 128);
+            }
+            break;
+        }
+        case Usage::GreenChannel:
+        case Usage::BlueChannel:
+        {
+            const int channel = (usage == Usage::GreenChannel) ? 1 : 2;
+            Ogre::uint8* dst = static_cast<Ogre::uint8*>(dstRow);
+            for (Ogre::uint32 x = 0; x < width; ++x) dst[x] = srcRow[x * 4 + channel];
+            break;
+        }
+        }
+    }
+
+    ogreImage.generateMipmaps(usage == Usage::Colour);
+
+    OgreLog("Creating texture " + name);
+    Ogre::TextureGpu* texture = TextureUtil::createFromImage(name, ogreImage, Ogre::TextureTypes::Type2DArray);
+    loadedTextures[key] = texture;
+    return texture;
 }
 
-Ogre::TexturePtr textureImporter::generateGreyScaleFromChannel(int gltfTextureSourceID, int channel)
+Ogre::TextureGpu* textureImporter::getTexture(int glTFTextureID)
 {
-    auto textureManager = Ogre::TextureManager::getSingletonPtr();
-    const auto& image = model.images[gltfTextureSourceID];
-
-    assert(channel < 4 && channel >= 0 /*, "Channel needs to be between 0 and 3"*/);
-    const auto name = "glTF_texture_" + image.name + std::to_string(id) + std::to_string(gltfTextureSourceID) + "_greyscale_channel" + std::to_string(channel);
-
-    auto texture = textureManager->getByName(name);
-    if (texture)
-    {
-        //OgreLog("texture " + name + "Already loaded in Ogre::TextureManager");
-        return texture;
-    }
-
-    OgreLog("Can't find texure " + name + ". Generating it from glTF");
-
-    assert(channel < image.component);
-
-    //Greyscale the image by putting all channel to the same value, ignoring alpha
-    std::vector<Ogre::uchar> imageData(image.image.size());
-    const auto pixelCount{ imageData.size() / image.component };
-    for (size_t i{ 0 }; i < pixelCount; i++) //for each pixel
-    {
-        //Get the channel that has the value
-        Ogre::uchar grey = image.image[(i * image.component) + channel];
-
-        //Turn pixel at this specific shade of grey
-        for (size_t c{ 0 }; c < 3; c++) imageData[i * image.component + c] = grey;
-
-        //If there's an alpha channel, put it to 1.0f (255)
-        if (image.component > 3) imageData[i * image.component + 3] = 255;
-    }
-
-    const auto pixelFormat = [&] {
-        if (image.component == 3) return Ogre::PF_BYTE_RGB;
-        if (image.component == 4) return Ogre::PF_BYTE_RGBA;
-
-        OgreLog("unrecognized pixel format from tinygltf image");
-        throw InitError("Can get " + name + "pixel format");
-    }();
-
-    Ogre::Image OgreImage;
-    Ogre::TexturePtr OgreTexture;
-
-    //TODO refactor this
-
-    //The OgreImage class *can* take ownership of the pointer to the data and automatically delete it.
-    //We *don't* want that. 6th argument needs to be set to false to prevent that.
-    //The rest of the funciton is not modifying the model.images[x].image object. We get the image as a const ref.
-    //In order to keep the rest of this code const correct, and knowing that the "autoDelete" is specifically
-    //set to `false`, we're casting away const on the pointer to get the image data.
-    OgreImage.loadDynamicImage(imageData.data(), image.width, image.height, 1, pixelFormat, false);
-
-    OgreTexture = textureManager->createManual(name,
-                                               Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                                               Ogre::TextureType::TEX_TYPE_2D_ARRAY,
-                                               image.width,
-                                               image.height,
-                                               1,
-                                               1,
-                                               pixelFormat,
-                                               Ogre::TU_DEFAULT,
-                                               nullptr,
-                                               isHardwareGammaEnabled());
-    OgreTexture->loadImage(OgreImage);
-    return OgreTexture;
+    return getOrCreate(glTFTextureID, Usage::Colour);
 }
 
-Ogre::TexturePtr textureImporter::getNormalSNORM(int gltfTextureSourceID)
+Ogre::TextureGpu* textureImporter::generateGreyScaleFromChannel(int glTFTextureID, int channel)
 {
-    auto textureManager = Ogre::TextureManager::getSingletonPtr();
-    const auto& image = model.images[gltfTextureSourceID];
-    const auto name = image.uri;
+    assert(channel == 1 || channel == 2);
+    return getOrCreate(glTFTextureID, channel == 1 ? Usage::GreenChannel : Usage::BlueChannel);
+}
 
-    auto texture = textureManager->getByName(name);
-    if (texture)
-    {
-        //OgreLog("texture " + name + "Already loaded in Ogre::TextureManager");
-        return texture;
-    }
-
-    OgreLog("Can't find texture " + name + ". Generating it from glTF");
-
-    const auto pixelFormat = [&] {
-        if (image.component == 3) return Ogre::PF_BYTE_RGB;
-        if (image.component == 4) return Ogre::PF_BYTE_RGBA;
-
-        OgreLog("unrecognized pixel format from tinygltf image");
-        throw InitError("Can get " + name + "pixel format");
-    }();
-
-    const auto pixelFormatSnorm = [&] {
-        if (image.component == 3) return Ogre::PF_R8G8B8_SNORM;
-        if (image.component == 4) return Ogre::PF_R8G8B8A8_SNORM;
-        throw InitError("Can get " + name + "pixel format");
-    }();
-
-    Ogre::TexturePtr OgreTexture = textureManager->createManual(name,
-                                                                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                                                                Ogre::TextureType::TEX_TYPE_2D_ARRAY,
-                                                                image.width,
-                                                                image.height,
-                                                                1,
-                                                                1,
-                                                                pixelFormatSnorm,
-                                                                Ogre::TU_DEFAULT,
-                                                                nullptr,
-                                                                isHardwareGammaEnabled());
-
-    auto pixels = OgreTexture->getBuffer()->lock({ 0, 0, unsigned(image.width), unsigned(image.height) }, //PixelBox that take the whole image
-                                                 Ogre::v1::HardwareBuffer::LockOptions::HBL_NORMAL);
-    //This loop convert BGR to RGB image data while also putting the value in the SNORM range [-1.0; +1.0]
-    for (size_t y{ 0 }; y < image.height; y++)
-        for (size_t x{ 0 }; x < image.width; x++)
-            pixels.setColourAt(Ogre::ColourValue(2.0f * (float(image.image[image.component * (y * image.width + x) + 2]) / 255.0f) - 1.0f, //R to B
-                                                 2.0f * (float(image.image[image.component * (y * image.width + x) + 1]) / 255.0f) - 1.0f, //G to G
-                                                 2.0f * (float(image.image[image.component * (y * image.width + x) + 0]) / 255.0f) - 1.0f, //B to R
-                                                 1.0f),
-                               x,
-                               y,
-                               0);
-
-    OgreTexture->getBuffer()->unlock();
-
-    return OgreTexture;
+Ogre::TextureGpu* textureImporter::getNormalSNORM(int glTFTextureID)
+{
+    return getOrCreate(glTFTextureID, Usage::Normal);
 }

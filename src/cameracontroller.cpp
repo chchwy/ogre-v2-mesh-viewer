@@ -30,6 +30,8 @@ void CameraController::setCamera(Ogre::Camera* cam)
     mCameraNode->resetOrientation();
 
     mCamera->setPosition(Ogre::Vector3(0, 0, 10));
+    // lookAt reads the parent's derived transform, which a freshly created node has not computed yet
+    mCameraNode->_getFullTransformUpdated();
     mCamera->lookAt(Ogre::Vector3(0, 0, 0));
     mCamera->setNearClipDistance(10.0f);
     mCamera->setFarClipDistance(10000.0f);
@@ -317,7 +319,7 @@ void CameraController::mouseMove(Ogre::Vector2 mousePos)
 
 void CameraController::mouseWheel(const QWheelEvent* evt)
 {
-    mMouseWheelDelta = evt->delta();
+    mMouseWheelDelta = evt->angleDelta().y();
     //qDebug() << (uint64_t)mCamera << ", " << (uint64_t)mTarget;
     mDistFromTarget = (mCamera->getPosition() - mTarget->_getDerivedPositionUpdated()).length();
     mCamera->moveRelative(Ogre::Vector3(0, 0, -mMouseWheelDelta * 0.0004f * mDistFromTarget));

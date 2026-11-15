@@ -226,7 +226,9 @@ void SaveAsDialog::saveHlmsJson(const Ogre::Item* ogreItem)
         if (f.open(QFile::WriteOnly))
         {
             QTextStream fout(&f);
-            fout.setCodec("UTF-8");
+        #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    fout.setCodec("UTF-8");
+#endif
             fout << QString::fromStdString(outJson);
         }
         f.close();

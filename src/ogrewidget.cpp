@@ -23,6 +23,7 @@
 #include "cameracontroller.h"
 
 #include "OgreCamera.h"
+#include "OgreWindow.h"
 
 #include "Compositor/OgreCompositorManager2.h"
 #include "OgreRenderSystem.h"
@@ -48,15 +49,10 @@ OgreWidget::~OgreWidget()
 {
 }
 
-HGLRC OgreWidget::getCurrentGlContext()
+QSize OgreWidget::sizeInPixels() const
 {
-#ifdef _WIN32
-    return wglGetCurrentContext(); // Windows
-#else
-    return glXGetCurrentContext(); // Linux
-#endif
-    assert(false);
-    return 0;
+    const qreal ratio = devicePixelRatioF();
+    return QSize(std::max(1, qRound(width() * ratio)), std::max(1, qRound(height() * ratio)));
 }
 
 void OgreWidget::createRenderWindow(OgreManager* ogreManager)
@@ -67,45 +63,22 @@ void OgreWidget::createRenderWindow(OgreManager* ogreManager)
     Ogre::Root* root = ogreManager->ogreRoot();
     Q_ASSERT(root);
 
-    // Get render system and assign window handle
     Ogre::RenderSystem* renderSystem = root->getRenderSystem();
     Ogre::NameValuePairList parameters;
 
-    // Reuse the glContext if available
-    HGLRC glContext = 0;
-    if (ogreManager->isRenderSystemGL())
-    {
-        parameters["currentGLContext"] = Ogre::String("false");
-        glContext = ogreManager->getGlContext();
-        if (glContext)
-        {
-            parameters["externalGLContext"] = Ogre::StringConverter::toString((size_t)(glContext));
-            parameters["vsync"] = "No";
-        }
-    }
-
-    std::string sWindowHandle = std::to_string((size_t)(winId()));;
-    parameters["externalWindowHandle"] = sWindowHandle;
-    parameters["parentWindowHandle"] = sWindowHandle;
+    parameters["externalWindowHandle"] = std::to_string((size_t)(winId()));
 
     Ogre::ConfigOptionMap& cfgOpts = renderSystem->getConfigOptions();
-    parameters["gamma"] = "true";
+    parameters["gamma"] = "Yes";
     parameters["FSAA"] = cfgOpts["FSAA"].currentValue;
     parameters["vsync"] = cfgOpts["VSync"].currentValue;
 
+    const QSize size = sizeInPixels();
     mOgreRenderWindow = root->createRenderWindow("MainRenderWin",
-                                                 width(), height(),
+                                                 size.width(), size.height(),
                                                  false, // full screen
                                                  &parameters);
-    mOgreRenderWindow->setVisible(true);
-
-    // Determine whether the GL context can be reused
-    if (ogreManager->isRenderSystemGL() && !glContext)
-    {
-        // Store the glContext in the ogre manager
-        glContext = getCurrentGlContext();
-        ogreManager->setGlContext(glContext);
-    }
+    mOgreRenderWindow->_setVisible(true);
 }
 
 void OgreWidget::createCompositor()
@@ -119,7 +92,7 @@ void OgreWidget::createCompositor()
     const Ogre::IdString workspaceNameHash = workspaceName;
 
     Ogre::CompositorManager2* compositorManager = mOgreManager->ogreRoot()->getCompositorManager2();
-    compositorManager->addWorkspace(mOgreManager->sceneManager(), mOgreRenderWindow, mCamera, workspaceNameHash, true);
+    compositorManager->addWorkspace(mOgreManager->sceneManager(), mOgreRenderWindow->getTexture(), mCamera, workspaceNameHash, true);
 
     mInitialized = true;
 }
@@ -127,6 +100,27 @@ void OgreWidget::createCompositor()
 void OgreWidget::updateOgre(float timeSinceLastFrame)
 {
     mTimeSinceLastFrame = timeSinceLastFrame;
+    syncWindowSize();
+}
+
+void OgreWidget::syncWindowSize()
+{
+    if (!mCamera || !mOgreRenderWindow)
+        return;
+
+    // Qt may deliver the resize event before the native window has its final size,
+    // so the render window is re-checked every frame instead of only on resizeEvent.
+    const QSize size = sizeInPixels();
+    if (mSyncedSize == size)
+        return;
+
+    mOgreRenderWindow->requestResolution(size.width(), size.height());
+    mOgreRenderWindow->windowMovedOrResized();
+
+    if (int(mOgreRenderWindow->getWidth()) == size.width() && int(mOgreRenderWindow->getHeight()) == size.height())
+        mSyncedSize = size;
+
+    mCamera->setAspectRatio(Ogre::Real(mOgreRenderWindow->getWidth()) / Ogre::Real(mOgreRenderWindow->getHeight()));
 }
 
 QPaintEngine* OgreWidget::paintEngine() const
@@ -143,18 +137,7 @@ void OgreWidget::paintEvent(QPaintEvent* e)
 void OgreWidget::resizeEvent(QResizeEvent* e)
 {
     if (e->isAccepted())
-    {
-        const QSize& newSize = e->size();
-        if (mCamera && mOgreRenderWindow)
-        {
-            Ogre::Real aspectRatio = Ogre::Real(newSize.width()) / Ogre::Real(newSize.height());
-            mCamera->setAspectRatio(aspectRatio);
-
-            mOgreRenderWindow->resize(newSize.width(), newSize.height());
-            mOgreRenderWindow->windowMovedOrResized();
-            //qDebug() << "Window resize=" << newSize << ", Ratio=" << aspectRatio;
-        }
-    }
+        syncWindowSize();
 }
 
 void OgreWidget::keyPressEvent(QKeyEvent* ev)

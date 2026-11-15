@@ -300,7 +300,7 @@ void MaterialWidget::updateMaterialCombo()
 
         QString name = QString::fromStdString(*datablock->getNameStr());
         QString displayText = QString("[%1] %2").arg(i).arg(name);
-        ui->mtlNameCombo->addItem(displayText, QVariant(i));
+        ui->mtlNameCombo->addItem(displayText, QVariant(int(i)));
     }
 }
 
@@ -326,7 +326,6 @@ void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
 {
     Q_ASSERT(mCurrentItem);
     
-    Ogre::TexturePtr tex = pbs->getTexture(Ogre::PBSM_DIFFUSE);
     mDiffuseTexButton->updateTexImage(pbs, Ogre::PBSM_DIFFUSE);
     
     const QSize iconSize(120, 16);

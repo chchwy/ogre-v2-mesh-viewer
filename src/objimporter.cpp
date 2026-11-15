@@ -18,7 +18,6 @@
 #include "OgreSubMesh2.h"
 
 #include "OgreHlmsManager.h"
-#include "OgreHlmsTextureManager.h"
 #include "OgreHlmsPbs.h"
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreHlmsJsonPbs.h"
@@ -415,7 +414,6 @@ Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& s
 {
     Ogre::Root& root = Ogre::Root::getSingleton();
     Ogre::HlmsManager* hlmsManager = root.getHlmsManager();
-    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
 
     Q_ASSERT(dynamic_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS)));
 
@@ -453,8 +451,7 @@ Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& s
 
     datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
 
-    auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-    datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+    datablock->setTexture(Ogre::PBSM_REFLECTION, "env.dds");
 
     datablock->setDiffuse(Ogre::Vector3(srcMtl.diffuse[0], srcMtl.diffuse[1], srcMtl.diffuse[2]));
     datablock->setBackgroundDiffuse(Ogre::ColourValue(1, 1, 1, 1));
@@ -464,36 +461,31 @@ Ogre::HlmsPbsDatablock* ObjImporter::importMaterial(const tinyobj::material_t& s
 
     if (!srcMtl.diffuse_texname.empty())
     {
-        auto tex = hlmsTextureManager->createOrRetrieveTexture(srcMtl.diffuse_texname, Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
-        datablock->setTexture(Ogre::PBSM_DIFFUSE, tex.xIdx, tex.texture);
+        datablock->setTexture(Ogre::PBSM_DIFFUSE, srcMtl.diffuse_texname);
         datablock->setSamplerblock(Ogre::PBSM_DIFFUSE, samplerBlock);
     }
 
     if (!srcMtl.specular_texname.empty())
     {
-        auto tex = hlmsTextureManager->createOrRetrieveTexture(srcMtl.specular_texname, Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
-        datablock->setTexture(Ogre::PBSM_SPECULAR, tex.xIdx, tex.texture);
+        datablock->setTexture(Ogre::PBSM_SPECULAR, srcMtl.specular_texname);
         datablock->setSamplerblock(Ogre::PBSM_SPECULAR, samplerBlock);
     }
 
     if (!srcMtl.roughness_texname.empty())
     {
-        auto tex = hlmsTextureManager->createOrRetrieveTexture(srcMtl.roughness_texname, Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME);
-        datablock->setTexture(Ogre::PBSM_ROUGHNESS, tex.xIdx, tex.texture);
+        datablock->setTexture(Ogre::PBSM_ROUGHNESS, srcMtl.roughness_texname);
         datablock->setSamplerblock(Ogre::PBSM_ROUGHNESS, samplerBlock);
     }
 
     if (!srcMtl.metallic_texname.empty())
     {
-        auto tex = hlmsTextureManager->createOrRetrieveTexture(srcMtl.metallic_texname, Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME);
-        datablock->setTexture(Ogre::PBSM_METALLIC, tex.xIdx, tex.texture);
+        datablock->setTexture(Ogre::PBSM_METALLIC, srcMtl.metallic_texname);
         datablock->setSamplerblock(Ogre::PBSM_METALLIC, samplerBlock);
     }
 
     if (!srcMtl.normal_texname.empty())
     {
-        auto tex = hlmsTextureManager->createOrRetrieveTexture(srcMtl.normal_texname, Ogre::HlmsTextureManager::TEXTURE_TYPE_NORMALS);
-        datablock->setTexture(Ogre::PBSM_NORMAL, tex.xIdx, tex.texture);
+        datablock->setTexture(Ogre::PBSM_NORMAL, srcMtl.normal_texname);
         datablock->setSamplerblock(Ogre::PBSM_NORMAL, samplerBlock);
     }
 

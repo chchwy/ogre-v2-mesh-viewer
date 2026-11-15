@@ -3,6 +3,10 @@ message(Qt version: $$[QT_VERSION])
 
 QT += widgets
 CONFIG -= flat
+CONFIG += c++17
+
+# ogre-next sources are UTF-8 without BOM
+msvc:QMAKE_CXXFLAGS += /utf-8
 
 VERSION = 0.4.3
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
@@ -53,7 +57,8 @@ HEADERS = \
     src/materialwidget.h \
     src/spinslider.h \
     src/texturebutton.h \
-    src/meshwidget.h
+    src/meshwidget.h \
+    src/textureutil.h
 
 SOURCES = \
     src/main.cpp \
@@ -88,7 +93,8 @@ SOURCES = \
     src/materialwidget.cpp \
     src/spinslider.cpp \
     src/texturebutton.cpp \
-    src/meshwidget.cpp
+    src/meshwidget.cpp \
+    src/textureutil.cpp
 
 FORMS += \
     src/mainwindow.ui \
@@ -105,10 +111,10 @@ PRECOMPILED_HEADER = src/stdafx.h
 
 INCLUDEPATH += "src"
 INCLUDEPATH += "$$OGREHOME/include"
-INCLUDEPATH += "$$OGREHOME/include/OGRE"
-INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Pbs"
-INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Unlit"
-INCLUDEPATH += "$$OGREHOME/include/OGRE/Hlms/Common"
+INCLUDEPATH += "$$OGREHOME/include/OGRE-Next"
+INCLUDEPATH += "$$OGREHOME/include/OGRE-Next/Hlms/Pbs"
+INCLUDEPATH += "$$OGREHOME/include/OGRE-Next/Hlms/Unlit"
+INCLUDEPATH += "$$OGREHOME/include/OGRE-Next/Hlms/Common"
 INCLUDEPATH += "src/TinyXML"
 INCLUDEPATH += "src/TinyObjLoader"
 INCLUDEPATH += "src/TinyGLTF"
@@ -122,20 +128,20 @@ Release:LIBS += -L"$$OGREHOME/lib/release/opt"
 
 CONFIG(debug, debug|release):LIBS += \
     -lopengl32 \
-    -lOgreMain_d \
-    -lOgreHlmsPbs_d \
-    -lOgreHlmsUnlit_d \
-    -lOgreOverlay_d
+    -lOgreNextMain_d \
+    -lOgreNextHlmsPbs_d \
+    -lOgreNextHlmsUnlit_d \
+    -lOgreNextOverlay_d
 
 CONFIG(release, debug|release):LIBS += \
     -lopengl32 \
-    -lOgreMain \
-    -lOgreHlmsPbs \
-    -lOgreHlmsUnlit \
-    -lOgreOverlay
+    -lOgreNextMain \
+    -lOgreNextHlmsPbs \
+    -lOgreNextHlmsUnlit \
+    -lOgreNextOverlay
 
-Release:DESTDIR = ./bin
-Debug:DESTDIR = ./dbin
+Release:DESTDIR = $$PWD/bin
+Debug:DESTDIR = $$PWD/dbin
 target.path = $$[QTDIR]/
 INSTALLS += target
 

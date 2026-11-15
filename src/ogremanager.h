@@ -28,6 +28,7 @@ class Root;
 class Timer;
 class RenderSystem;
 class SceneManager;
+class TextureGpu;
 
 namespace v1
 {
@@ -65,8 +66,6 @@ public:
     MeshLoader* meshLoader() { return mMeshLoader; }
 
     bool isRenderSystemGL() const;
-    HGLRC getGlContext() const;
-    void setGlContext(HGLRC glContext);
 
     Ogre::Mesh* currentMesh(int index = 0);
 
@@ -82,6 +81,7 @@ private:
     void setupResources();
     void registerHlms();
     void createBall(int x, int y);
+    void setSkyTexture(Ogre::TextureGpu* texture, float mipBias);
 
 private:
     std::vector<OgreWidget*> mOgreWidgets;
@@ -96,8 +96,6 @@ private:
 
     std::string mResourcesCfg;
     std::string mPluginsCfg;
-
-    HGLRC mGlContext = 0;
 
     Ogre::SceneNode* mMeshRootNode = nullptr;
 

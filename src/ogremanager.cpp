@@ -21,9 +21,16 @@
 #include "ogremanager.h"
 
 #include "OgreRoot.h"
+#include "OgreAbiUtils.h"
 #include "OgreRenderSystem.h"
 #include "OgreTimer.h"
-#include "OgreTextureManager.h"
+#include "OgreTextureGpuManager.h"
+#include "OgreImage2.h"
+#include "OgreTechnique.h"
+#include "OgrePass.h"
+#include "OgreTextureUnitState.h"
+#include "OgrePlatformInformation.h"
+#include "OgreLogManager.h"
 
 #include "OgreConfigFile.h"
 #include "OgreArchiveManager.h"
@@ -37,7 +44,6 @@
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreMesh2.h"
-#include "OgreHlmsTextureManager.h"
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreHlmsPbs.h"
 #include "Overlay/OgreOverlaySystem.h"
@@ -51,19 +57,19 @@
 #include "ogrewidget.h"
 #include "OgreGLTF/Ogre_glTF.hpp"
 #include "meshloader.h"
+#include "textureutil.h"
 
 
 OgreManager::OgreManager()
 {
-    mGlContext = 0;
-
     QDir exePath(QApplication::applicationDirPath());
 
     mResourcesCfg = exePath.filePath("resources2.cfg").toStdString();
     mPluginsCfg = exePath.filePath("plugins.cfg").toStdString();
 
     // Create Ogre and initialize it
-    mRoot = new Ogre::Root(mPluginsCfg, "ogre.cfg", "Ogre.log");
+    const Ogre::AbiCookie abiCookie = Ogre::generateAbiCookie();
+    mRoot = new Ogre::Root(&abiCookie, mPluginsCfg, "ogre.cfg", "Ogre.log");
 
     if (!mRoot->restoreConfig())
     {
@@ -72,7 +78,7 @@ OgreManager::OgreManager()
     }
 
     Ogre_glTF::glTFLoaderPlugin* gltfPlugin = OGRE_NEW Ogre_glTF::glTFLoaderPlugin;
-    mRoot->installPlugin(gltfPlugin);
+    mRoot->installPlugin(gltfPlugin, nullptr);
 
     mCurrentRenderSystem = mRoot->getRenderSystem();
     mRoot->initialise(false);
@@ -94,15 +100,13 @@ OgreManager::~OgreManager()
     delete mTimer; mTimer = nullptr;
 
     mCurrentRenderSystem = nullptr;
-    mGlContext = 0;
 }
 
 void OgreManager::initialize()
 {
     // Create scene manager
     const size_t numThreads = std::max<int>(1, Ogre::PlatformInformation::getNumLogicalCores());
-    Ogre::InstancingThreadedCullingMethod threadedCullingMethod = (numThreads > 1) ? Ogre::INSTANCING_CULLING_THREADED : Ogre::INSTANCING_CULLING_SINGLETHREAD;
-    mSceneManager = mRoot->createSceneManager(Ogre::ST_GENERIC, numThreads, threadedCullingMethod, "default");
+    mSceneManager = mRoot->createSceneManager(Ogre::ST_GENERIC, numThreads, "default");
     mSceneManager->setShadowDirectionalLightExtrusionDistance(500.0f);
     mSceneManager->setShadowFarDistance(500.0f);
 
@@ -114,7 +118,18 @@ void OgreManager::initialize()
     registerHlms();
 
     // Initialise, parse scripts etc
-    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(false);
+    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
+
+    // Accurate specular IBL needs the BRDF lookup tables
+    try
+    {
+        Ogre::Hlms* hlms = mRoot->getHlmsManager()->getHlms(Ogre::HLMS_PBS);
+        static_cast<Ogre::HlmsPbs*>(hlms)->loadLtcMatrix();
+    }
+    catch (Ogre::FileNotFoundException& e)
+    {
+        Ogre::LogManager::getSingleton().logMessage(e.getFullDescription(), Ogre::LML_CRITICAL);
+    }
 }
 
 void OgreManager::setupResources()
@@ -161,15 +176,6 @@ bool OgreManager::isRenderSystemGL() const
     return false;
 }
 
-HGLRC OgreManager::getGlContext() const
-{
-    return mGlContext;
-}
-
-void OgreManager::setGlContext(HGLRC glContext)
-{
-    mGlContext = glContext;
-}
 
 void OgreManager::clearScene()
 {
@@ -232,66 +238,55 @@ void OgreManager::createSubcomponents()
     mMeshLoader = new MeshLoader(this, this);
 }
 
+void OgreManager::setSkyTexture(Ogre::TextureGpu* texture, float mipBias)
+{
+    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
+    mtl->load();
+    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+    texUnit->setTexture(texture);
+
+    Ogre::HlmsSamplerblock samplerblock = *texUnit->getSamplerblock();
+    samplerblock.mMipLodBias = mipBias;
+    texUnit->setSamplerblock(samplerblock);
+}
+
 void OgreManager::setIrradianceBackground()
 {
-    Ogre::String autoGroup = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
-    auto& texMgr = Ogre::TextureManager::getSingleton();
+    Ogre::TextureGpu* env = TextureUtil::manager()->createOrRetrieveTexture(
+        "env.dds", Ogre::GpuPageOutStrategy::Discard, Ogre::CommonTextureTypes::EnvMap,
+        Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+    env->scheduleTransitionTo(Ogre::GpuResidency::Resident);
+    env->waitForMetadata();
 
-    Ogre::TexturePtr irradiance = texMgr.getByName("irradiance_bg");
-    if (irradiance.isNull())
-    {
-        Ogre::TexturePtr tex = texMgr.getByName("env.dds", autoGroup);
-
-        Ogre::Image img;
-        tex->convertToImage(img, true, tex->getNumMipmaps() - 4); // 4 looks better
-
-        irradiance = texMgr.createManual("irradiance_bg", autoGroup,
-                                         Ogre::TEX_TYPE_CUBE_MAP,
-                                         img.getWidth(), img.getHeight(),
-                                         Ogre::MIP_DEFAULT /* mipmap */, img.getFormat());
-        irradiance->loadImage(img);
-    }
-    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
-    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-    texUnit->setTextureName("irradiance_bg", Ogre::TEX_TYPE_CUBE_MAP);
+    // The blurry low mips of the environment map are a cheap stand-in for an irradiance map
+    const float mipBias = std::max(0.0f, float(env->getNumMipmaps()) - 5.0f);
+    setSkyTexture(env, mipBias);
 }
 
 void OgreManager::setEnvironmentBackground()
 {
-    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
-    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-    texUnit->setTextureName("env.dds", Ogre::TEX_TYPE_CUBE_MAP);
+    Ogre::TextureGpu* env = TextureUtil::manager()->createOrRetrieveTexture(
+        "env.dds", Ogre::GpuPageOutStrategy::Discard, Ogre::CommonTextureTypes::EnvMap,
+        Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+    env->scheduleTransitionTo(Ogre::GpuResidency::Resident);
+    setSkyTexture(env, 0.0f);
 }
 
 void OgreManager::setBlackBackground()
 {
-    Ogre::String autoGroup = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
-    auto& texMgr = Ogre::TextureManager::getSingleton();
-
-    Ogre::TexturePtr blackTex = texMgr.getByName("black_bg");
-    if (blackTex.isNull())
+    Ogre::TextureGpu* blackTex = TextureUtil::manager()->findTextureNoThrow("black_bg");
+    if (!blackTex)
     {
-        std::vector<uint8_t> pixelData;
-        pixelData.resize(4 * 16 * 16 * 6);
-        for (int i = 0; i < pixelData.size(); i += 4)
-        {
-            pixelData[i + 0] = 0; //R
-            pixelData[i + 1] = 0; //G
-            pixelData[i + 2] = 0; //B
-            pixelData[i + 3] = 255; //A
-        }
+        Ogre::Image2 img;
+        img.createEmptyImage(16, 16, 6, Ogre::TextureTypes::TypeCube, Ogre::PFG_RGBA8_UNORM_SRGB);
+        for (Ogre::uint32 face = 0; face < 6; ++face)
+            for (Ogre::uint32 y = 0; y < 16; ++y)
+                for (Ogre::uint32 x = 0; x < 16; ++x)
+                    img.setColourAt(Ogre::ColourValue::Black, x, y, face);
 
-        Ogre::Image img;
-        img.loadDynamicImage(pixelData.data(), 16, 16, 1, Ogre::PF_A8B8G8R8, false, 6, 0);
-        blackTex = texMgr.createManual("black_bg", autoGroup,
-                                         Ogre::TEX_TYPE_CUBE_MAP,
-                                         img.getWidth(), img.getHeight(),
-                                         0 /* mipmap */, img.getFormat());
-        blackTex->loadImage(img);
+        blackTex = TextureUtil::createFromImage("black_bg", img, Ogre::TextureTypes::TypeCube);
     }
-    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getByName("SkyPostprocess");
-    Ogre::TextureUnitState* texUnit = mtl->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-    texUnit->setTextureName("black_bg", Ogre::TEX_TYPE_CUBE_MAP);
+    setSkyTexture(blackTex, 0.0f);
 }
 
 void OgreManager::registerHlms()
@@ -399,7 +394,7 @@ void OgreManager::createScene()
     mSceneManager->setForwardClustered(true,
                                        16, 8,    // width & height
                                        24,       // num of slices
-                                       96, 5,    // light per cell, decal per cell
+                                       96, 5, 0, // light per cell, decal per cell, cubemap probes per cell
                                        5, 3000); // min & max distance
 
     Q_ASSERT(mMeshRootNode == nullptr);
@@ -452,12 +447,8 @@ void OgreManager::createBall(int x, int y)
                                  Ogre::HlmsBlendblock(),
                                  Ogre::HlmsParamVec()));
 
-    //auto tex = Ogre::TextureManager::getSingleton().getByName( "wood.png", "ViewerResc" );
-    auto skybox = Ogre::TextureManager::getSingleton().getByName("env.dds", "ViewerResc");
-
     datablock->setWorkflow(Ogre::HlmsPbsDatablock::MetallicWorkflow);
-    //datablock->setTexture( Ogre::PBSM_DIFFUSE, 0, tex );
-    datablock->setTexture(Ogre::PBSM_REFLECTION, 0, skybox);
+    datablock->setTexture(Ogre::PBSM_REFLECTION, "env.dds");
     datablock->setDiffuse(Ogre::Vector3(1.0f, 1.0f, 1.0f));
     datablock->setSpecular(Ogre::Vector3(1.0f, 1.0f, 1.0f));
     datablock->setRoughness(x / 4.0f);

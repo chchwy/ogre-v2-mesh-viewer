@@ -11,6 +11,8 @@
 
 #include "OgreHlmsPbs.h"
 #include "OgreHlmsPbsDatablock.h"
+#include "OgreImage2.h"
+#include "textureutil.h"
 
 #include "OgreXML/OgreXMLMeshSerializer.h"
 
@@ -97,7 +99,7 @@ bool ObjExporter::convertToOgreData(const QString& sXmlFile)
 
         if (xin.isStartElement())
         {
-            const QStringRef tagName = xin.name();
+            const auto tagName = xin.name();
             if (tagName == "submesh")
             {
                 clearOgreDataSubMesh(currentMesh);
@@ -140,7 +142,7 @@ bool ObjExporter::convertToOgreData(const QString& sXmlFile)
         }
         else if (xin.isEndElement())
         {
-            const QStringRef tagName = xin.name();
+            const auto tagName = xin.name();
             if (tagName == "submesh")
             {
                 mSubmeshes.push_back(currentMesh);
@@ -272,7 +274,6 @@ bool ObjExporter::writeMtlFile(Ogre::Mesh* mesh01, const QString& sOutFile)
 {
     Ogre::Root& root = Ogre::Root::getSingleton();
     Ogre::HlmsManager* hlmsManager = root.getHlmsManager();
-    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
     Q_ASSERT(dynamic_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS)));
 
     Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
@@ -314,17 +315,17 @@ bool ObjExporter::writeMtlFile(Ogre::Mesh* mesh01, const QString& sOutFile)
 
         qDebug() << "It's not able to export textures at the moment.";
         /*
-        Ogre::TexturePtr diffuseTex = datablock->getTexture(Ogre::PBSM_DIFFUSE);
-        writeTexture(diffuseTex.get(), sOutFolder + "diffuse.png");
+        Ogre::TextureGpu* diffuseTex = datablock->getTexture(Ogre::PBSM_DIFFUSE);
+        writeTexture(diffuseTex, sOutFolder + "diffuse.png");
 
-        Ogre::TexturePtr normalTex = datablock->getTexture(Ogre::PBSM_NORMAL);
-        writeTexture(normalTex.get(), sOutFolder + "normal.png");
+        Ogre::TextureGpu* normalTex = datablock->getTexture(Ogre::PBSM_NORMAL);
+        writeTexture(normalTex, sOutFolder + "normal.png");
 
-        Ogre::TexturePtr roughnessTex = datablock->getTexture(Ogre::PBSM_ROUGHNESS);
-        writeTexture(roughnessTex.get(), sOutFolder + "roughness.png");
+        Ogre::TextureGpu* roughnessTex = datablock->getTexture(Ogre::PBSM_ROUGHNESS);
+        writeTexture(roughnessTex, sOutFolder + "roughness.png");
 
-        Ogre::TexturePtr metallicTex = datablock->getTexture(Ogre::PBSM_METALLIC);
-        writeTexture(metallicTex.get(), sOutFolder + "metallic.png");
+        Ogre::TextureGpu* metallicTex = datablock->getTexture(Ogre::PBSM_METALLIC);
+        writeTexture(metallicTex, sOutFolder + "metallic.png");
         */
 
         float trans = datablock->getTransparency();
@@ -342,16 +343,15 @@ bool ObjExporter::writeMtlFile(Ogre::Mesh* mesh01, const QString& sOutFile)
     return true;
 }
 
-void ObjExporter::writeTexture(Ogre::Texture* tex, const std::string& sTexFileName)
+void ObjExporter::writeTexture(Ogre::TextureGpu* tex, const std::string& sTexFileName)
 {
     if (tex)
     {
         try
         {
-            //qDebug() << "Array: " << tex->isTextureTypeArray();
-            Ogre::Image img;
-            tex->convertToImage(img);
-            img.save(sTexFileName);
+            Ogre::Image2 img;
+            if (TextureUtil::download(tex, img))
+                img.save(sTexFileName, 0, 1);
         }
         catch (const std::exception&)
         {

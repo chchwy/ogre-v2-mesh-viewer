@@ -51,7 +51,7 @@ void materialLoader::setBaseColorTexture(Ogre::HlmsPbsDatablock* block, int valu
 	if(texture)
 	{
 		//OgreLog("diffuse texture from textureImporter : " + texture->getName());
-		block->setTexture(Ogre::PbsTextureTypes::PBSM_DIFFUSE, 0, texture);
+		block->setTexture(Ogre::PbsTextureTypes::PBSM_DIFFUSE, texture);
 	}
 }
 
@@ -67,13 +67,13 @@ void materialLoader::setMetalRoughTexture(Ogre::HlmsPbsDatablock* block, int glt
 	if(metalTexure)
 	{
 		//OgreLog("metalness grey-scale texture extracted by textureImporter : " + metalTexure->getName());
-		block->setTexture(Ogre::PBSM_METALLIC, 0, metalTexure);
+		block->setTexture(Ogre::PBSM_METALLIC, metalTexure);
 	}
 
 	if(roughTexure)
 	{
 		//OgreLog("roughness grey-scale texture extracted by textureImporter : " + roughTexure->getName());
-		block->setTexture(Ogre::PBSM_ROUGHNESS, 0, roughTexure);
+		block->setTexture(Ogre::PBSM_ROUGHNESS, roughTexure);
 	}
 }
 
@@ -84,7 +84,7 @@ void materialLoader::setNormalTexture(Ogre::HlmsPbsDatablock* block, int value) 
 	if(texture)
 	{
 		//OgreLog("normal texture from textureImporter : " + texture->getName());
-		block->setTexture(Ogre::PbsTextureTypes::PBSM_NORMAL, 0, texture);
+		block->setTexture(Ogre::PbsTextureTypes::PBSM_NORMAL, texture);
 	}
 }
 
@@ -96,7 +96,7 @@ void materialLoader::setOcclusionTexture(Ogre::HlmsPbsDatablock* block, int valu
 	{
 		//OgreLog("occlusion texture from textureImporter : " + texture->getName());
 		//OgreLog("Warning: Ogre doesn't support occlusion map in it's HLMS PBS implementation!");
-		//block->setTexture(Ogre::PbsTextureTypes::PBSM_, 0, texture);
+		//block->setTexture(Ogre::PbsTextureTypes::PBSM_, texture);
 	}
 }
 
@@ -107,7 +107,7 @@ void materialLoader::setEmissiveTexture(Ogre::HlmsPbsDatablock* block, int value
 	if(texture)
 	{
 		//OgreLog("emissive texture from textureImporter : " + texture->getName());
-		block->setTexture(Ogre::PbsTextureTypes::PBSM_EMISSIVE, 0, texture);
+		block->setTexture(Ogre::PbsTextureTypes::PBSM_EMISSIVE, texture);
 	}
 }
 
@@ -220,11 +220,9 @@ Ogre::HlmsDatablock* materialLoader::getDatablock(size_t index) const
 	//	OgreLog("extPBRValues");
 	//	for(const auto& content : material.extPBRValues)
 	//		OgreLog(content.first);
-    auto hlmsTextureManager = Ogre::Root::getSingleton().getHlmsManager()->getTextureManager();
-    if (datablock->getTexture(Ogre::PBSM_REFLECTION).isNull())
+    if (datablock->getTexture(Ogre::PBSM_REFLECTION) == nullptr)
     {
-        auto envMap = hlmsTextureManager->createOrRetrieveTexture("env.dds", Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP);
-        datablock->setTexture(Ogre::PBSM_REFLECTION, envMap.xIdx, envMap.texture);
+        datablock->setTexture(Ogre::PBSM_REFLECTION, "env.dds");
     }
 	return datablock;
 }

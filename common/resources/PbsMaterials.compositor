@@ -4,30 +4,38 @@ compositor_node PbsMaterialsRenderingNode
 
 	target rt_renderwindow
 	{
-		
-		pass clear
-		{
-			colour_value 0.0 0.0 0.0 1
-		}
-
 		//Render opaque stuff
 		pass render_scene
 		{
+			load
+			{
+				all				clear
+				clear_colour	0.0 0.0 0.0 1
+			}
+			store
+			{
+				depth	dont_care
+				stencil	dont_care
+			}
 			overlays	off
 			rq_first	0
 			rq_last		2
 		}
-		
+
 		//Render sky after opaque stuff (performance optimization)
 		pass render_quad
 		{
+			skip_load_store_semantics true
+
 			quad_normals	camera_direction
 			material SkyPostprocess
 		}
-		
+
 		//Render transparent stuff after sky
 		pass render_scene
 		{
+			skip_load_store_semantics true
+
 			overlays	on
 			rq_first	2
 		}

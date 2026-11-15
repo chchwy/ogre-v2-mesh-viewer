@@ -111,7 +111,7 @@ void BatchConversionDialog::ConvertButtonClicked()
         
         bool ok = writeMeshToDisk(meshPtr, outFile);
 
-        qDebug() << "Src=" << inFile << ", Mesh=" << (!meshPtr.isNull()) << ", Dest=" << outFile;
+        qDebug() << "Src=" << inFile << ", Mesh=" << (meshPtr != nullptr) << ", Dest=" << outFile;
     }
 
     QMessageBox::information(this, "Batch conversion", "Conversion done.");

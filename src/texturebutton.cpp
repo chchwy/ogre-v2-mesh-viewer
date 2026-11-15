@@ -10,9 +10,14 @@
 #include <QFileInfo>
 #include <QMessageBox>
 
-#include "OgreTexture.h"
-#include "OgreImage.h"
+#include "OgreTextureGpu.h"
+#include "OgreTextureGpuManager.h"
+#include "OgreTextureBox.h"
+#include "OgreImage2.h"
 #include "OgreHlmsPbsDatablock.h"
+#include "OgreResourceGroupManager.h"
+
+#include "textureutil.h"
 
 
 TextureButton::TextureButton(QPushButton* button, Ogre::PbsTextureTypes texType) : QObject(button)
@@ -30,50 +35,35 @@ void TextureButton::updateTexImage(Ogre::HlmsPbsDatablock* datablock, Ogre::PbsT
 {
     mDatablock = datablock;
 
-    Ogre::HlmsTextureManager::TextureLocation texLocation;
-    texLocation.texture = datablock->getTexture(textureType);
-    texLocation.xIdx = datablock->_getTextureIdx(textureType);
-    texLocation.yIdx = 0;
-    texLocation.divisor = 1;
-
-    if (texLocation.texture.isNull())
+    Ogre::TextureGpu* texture = datablock->getTexture(textureType);
+    if (texture == nullptr)
     {
         clear();
         return;
     }
 
-    //qDebug() << "Type:" << (int)textureType
-    //         << ", X index:" << texLocation.xIdx
-    //         << ", Pointer:" << texLocation.texture;
-
-    Ogre::Image img;
-    texLocation.texture->convertToImage(img, false, 0, texLocation.xIdx, 1);
-    
-    int originalWidth = img.getWidth();
-    int originalHeight = img.getHeight();
-    //img.resize(64, 64);
-
-    QString textureName;
-    const Ogre::String* aliasName = getHlmsTexManager()->findAliasName(texLocation);
-    if (aliasName)
+    Ogre::Image2 img;
+    if (!TextureUtil::download(texture, img))
     {
-        textureName = QString::fromStdString(*aliasName);
+        clear();
+        return;
     }
-    setInfoText(textureName, originalWidth, originalHeight);
-    
+
+    setInfoText(QString::fromStdString(texture->getNameStr()), img.getWidth(), img.getHeight());
+
     QImage qtImg = toQtImage(img);
-    if (!qtImg.isNull())
+    if (qtImg.isNull())
     {
-        QPixmap pixmap = QPixmap::fromImage(qtImg);
-        mButton->setIconSize(QSize(64, 64));
-        mButton->setIcon(QIcon(pixmap));
+        qtImg = QImage(64, 64, QImage::Format_RGBA8888_Premultiplied);
+        QPainter painter(&qtImg);
+        painter.fillRect(QRect(0, 0, 64, 64), Qt::white);
+        painter.drawText(13, 30, "Preview");
+        painter.drawText(6, 42, "Unavailable");
     }
-    else
-    {
-        // TODO: show unknown format
-        mButton->setIcon(QIcon());
-        mButton->setIconSize(QSize(1, 1));
-    }
+
+    QPixmap pixmap = QPixmap::fromImage(qtImg.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    mButton->setIconSize(QSize(64, 64));
+    mButton->setIcon(QIcon(pixmap));
 }
 
 void TextureButton::buttonClicked()
@@ -87,11 +77,10 @@ void TextureButton::buttonClicked()
 
     if (mDatablock)
     {
-        Ogre::HlmsTextureManager::TextureLocation loc;
-        bool ok = LoadImage(fileName, loc);
-        if (ok)
+        Ogre::TextureGpu* texture = loadTexture(fileName);
+        if (texture)
         {
-            mDatablock->setTexture(mTextureType, loc.xIdx, loc.texture);
+            mDatablock->setTexture(mTextureType, texture);
             updateTexImage(mDatablock, mTextureType);
 
             settings.setValue("textureLocation", QFileInfo(fileName).absolutePath());
@@ -112,13 +101,6 @@ void TextureButton::setInfoText(const QString& texName, int width, int height)
     mButton->setText(texInfo);
 }
 
-Ogre::HlmsTextureManager* TextureButton::getHlmsTexManager()
-{
-    if (mHlmsTexManager == nullptr)
-        mHlmsTexManager = Ogre::Root::getSingleton().getHlmsManager()->getTextureManager();
-    return mHlmsTexManager;
-}
-
 void TextureButton::clear()
 {
     mButton->setIcon(QIcon());
@@ -126,118 +108,123 @@ void TextureButton::clear()
     mButton->setText("No Texture");
 }
 
-QImage::Format TextureButton::toQtImageFormat(Ogre::PixelFormat ogreFormat)
+QImage TextureButton::toQtImage(const Ogre::Image2& img)
 {
-    switch (ogreFormat)
+    const Ogre::TextureBox box = img.getData(0);
+    const int width = int(box.width);
+    const int height = int(box.height);
+
+    switch (img.getPixelFormat())
     {
-    case Ogre::PF_A8R8G8B8: return QImage::Format_ARGB32;
-    case Ogre::PF_A8: return QImage::Format_Alpha8;
-    case Ogre::PF_L8: return QImage::Format_Grayscale8;
-    //case Ogre::PF_A8B8G8R8: return QImage::Format_Invalid;
-    default:
-        qDebug() << "Unknown tex format:" << ogreFormat;
-        break;
+    case Ogre::PFG_RGBA8_UNORM:
+    case Ogre::PFG_RGBA8_UNORM_SRGB:
+    {
+        QImage qtImg(width, height, QImage::Format_RGBA8888);
+        for (int y = 0; y < height; ++y)
+            memcpy(qtImg.scanLine(y), box.at(0, y, 0), size_t(width) * 4u);
+        return qtImg;
     }
-    return QImage::Format_Invalid;
-}
-
-QImage TextureButton::toQtImage(const Ogre::Image& img)
-{
-    QImage::Format qtFormat = toQtImageFormat(img.getFormat());
-    if (qtFormat != QImage::Format_Invalid)
+    case Ogre::PFG_BGRA8_UNORM:
+    case Ogre::PFG_BGRA8_UNORM_SRGB:
+    case Ogre::PFG_BGRX8_UNORM:
+    case Ogre::PFG_BGRX8_UNORM_SRGB:
     {
-        QImage qImg(img.getData(), img.getWidth(), img.getHeight(), qtFormat);
-        return qImg;
+        const bool hasAlpha = (img.getPixelFormat() == Ogre::PFG_BGRA8_UNORM || img.getPixelFormat() == Ogre::PFG_BGRA8_UNORM_SRGB);
+        QImage qtImg(width, height, hasAlpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+        for (int y = 0; y < height; ++y)
+            memcpy(qtImg.scanLine(y), box.at(0, y, 0), size_t(width) * 4u);
+        return qtImg;
     }
-
-    switch(img.getFormat())
+    case Ogre::PFG_R8_UNORM:
+    case Ogre::PFG_A8_UNORM:
     {
-    case Ogre::PF_R8G8_SNORM:
+        QImage qtImg(width, height, QImage::Format_Grayscale8);
+        for (int y = 0; y < height; ++y)
+            memcpy(qtImg.scanLine(y), box.at(0, y, 0), size_t(width));
+        return qtImg;
+    }
+    case Ogre::PFG_RG8_SNORM:
+    case Ogre::PFG_RG8_UNORM:
     {
-        QImage qtImg(img.getWidth(), img.getHeight(), QImage::Format_RGBA8888_Premultiplied);
-
-        char* src = (char*)img.getData();
-        for (size_t x = 0; x < img.getWidth(); ++x)
+        // Two channel normal map: show it in the familiar blue-ish look
+        const bool isSigned = (img.getPixelFormat() == Ogre::PFG_RG8_SNORM);
+        QImage qtImg(width, height, QImage::Format_RGB32);
+        for (int y = 0; y < height; ++y)
         {
-            for (size_t y = 0; y < img.getHeight(); ++y)
+            const uchar* src = static_cast<const uchar*>(box.at(0, y, 0));
+            QRgb* dst = reinterpret_cast<QRgb*>(qtImg.scanLine(y));
+            for (int x = 0; x < width; ++x)
             {
-                size_t src_byte_offset = x * y * 2;
-                int r = src[src_byte_offset + 0] + 128;
-                int g = src[src_byte_offset + 1] + 128;
-                qtImg.setPixel((int)x, (int)y, qRgb(r, g, 255));
+                int r = src[x * 2 + 0];
+                int g = src[x * 2 + 1];
+                if (isSigned)
+                {
+                    r = static_cast<signed char>(r) + 128;
+                    g = static_cast<signed char>(g) + 128;
+                }
+                dst[x] = qRgb(r, g, 255);
             }
         }
-        //qtImg.save("C:/Temp/normal.png");
         return qtImg;
+    }
+    default:
+        qDebug() << "No preview for texture format:" << int(img.getPixelFormat());
         break;
     }
-    case Ogre::PF_A8B8G8R8:
+    return QImage();
+}
+
+Ogre::TextureGpu* TextureButton::loadTexture(const QString& texturePath)
+{
+    const QFileInfo info(texturePath);
+    if (!info.exists() || info.suffix().isEmpty()) { return nullptr; }
+
+    Ogre::CommonTextureTypes::CommonTextureTypes texType = Ogre::CommonTextureTypes::NonColourData;
+    switch (mTextureType)
     {
-        QImage qtImg(img.getWidth(), img.getHeight(), QImage::Format_RGBA8888_Premultiplied);
+    case Ogre::PBSM_DIFFUSE:
+    case Ogre::PBSM_EMISSIVE:
+        texType = Ogre::CommonTextureTypes::Diffuse;
         break;
-    }
+    case Ogre::PBSM_METALLIC:
+    case Ogre::PBSM_ROUGHNESS:
+        texType = Ogre::CommonTextureTypes::Monochrome;
+        break;
+    case Ogre::PBSM_NORMAL:
+        texType = Ogre::CommonTextureTypes::NormalMap;
+        break;
+    case Ogre::PBSM_REFLECTION:
+        texType = Ogre::CommonTextureTypes::EnvMap;
+        break;
     default:
         break;
     }
 
-    static QImage emptyImg(64, 64, QImage::Format_RGBA8888_Premultiplied);
-    QPainter painter(&emptyImg);
-    painter.fillRect(QRect(0, 0, 64, 64), Qt::white);
-    painter.drawText(13, 30, "Preview");
-    painter.drawText(6, 42, "Unavailable");
-    return emptyImg;
-}
-
-bool TextureButton::LoadImage(const QString& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc)
-{
-    bool ok = false;
-    std::ifstream ifs(texturePath.toStdWString(), std::ios::binary | std::ios::in);
-    ON_SCOPE_EXIT(ifs.close());
-    if (!ifs.is_open()) { return false; }
-
-    QString fileExt = QFileInfo(texturePath).suffix();
-    if (fileExt.isEmpty()) { return false; }
-
-
-    std::string texName = texturePath.toStdString();
-    Ogre::DataStreamPtr dataStream(new Ogre::FileStreamDataStream(texName, &ifs, false));
+    const Ogre::String group = "ViewerResc";
+    const Ogre::String folder = info.absolutePath().toStdString();
+    const Ogre::String fileName = info.fileName().toStdString();
 
     try
     {
-        Ogre::Image img;
-        img.load(dataStream, fileExt.toStdString());
+        auto& resourceMgr = Ogre::ResourceGroupManager::getSingleton();
+        if (!resourceMgr.resourceLocationExists(folder, group))
+            resourceMgr.addResourceLocation(folder, "FileSystem", group);
 
-        if (img.getWidth() == 0) { return false; }
+        // Decode once up front, so a broken file is reported instead of silently showing a dummy texture
+        Ogre::Image2 probe;
+        probe.load(fileName, group);
+        if (probe.getWidth() == 0) { return nullptr; }
 
-        Ogre::HlmsTextureManager::TextureMapType mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
-        switch (mTextureType) {
-        case Ogre::PBSM_DIFFUSE:
-        case Ogre::PBSM_EMISSIVE:
-            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE;
-            break;
-        case Ogre::PBSM_METALLIC:
-        case Ogre::PBSM_ROUGHNESS:
-            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_MONOCHROME;
-            break;
-        case Ogre::PBSM_NORMAL:
-            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_NORMALS;
-            break;
-        case Ogre::PBSM_REFLECTION:
-            mapType = Ogre::HlmsTextureManager::TEXTURE_TYPE_ENV_MAP;
-            break;
-        default:
-            Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL;
-            Ogre::HlmsTextureManager::TEXTURE_TYPE_DETAIL_NORMAL_MAP;
-            Ogre::HlmsTextureManager::TEXTURE_TYPE_NON_COLOR_DATA;
-            break;
-        }
-        loc = getHlmsTexManager()->createOrRetrieveTexture(texName, texName, mapType, 0, &img);
-        ok = true;
+        // The same file may be wanted as e.g. both a colour and a monochrome texture
+        const Ogre::String alias = texturePath.toStdString() + "#" + std::to_string(int(texType));
+        Ogre::TextureGpu* texture = TextureUtil::manager()->createOrRetrieveTexture(
+            fileName, alias, Ogre::GpuPageOutStrategy::Discard, texType, group);
+        texture->scheduleTransitionTo(Ogre::GpuResidency::Resident);
+        return texture;
     }
-    catch(Ogre::Exception& e)
+    catch (Ogre::Exception& e)
     {
         qDebug() << e.what();
-        ok = false;
     }
-    return ok;
+    return nullptr;
 }

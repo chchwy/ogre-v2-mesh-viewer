@@ -79,7 +79,7 @@ namespace v1 {
             const char *claimedVertexCount_ = elem->Attribute("vertexcount");
             if(!claimedVertexCount_ || StringConverter::parseInt(claimedVertexCount_) > 0)
             {
-                mMesh->sharedVertexData[VpNormal] = new VertexData();
+                mMesh->sharedVertexData[VpNormal] = new VertexData(HardwareBufferManager::getSingletonPtr());
                 readGeometry(elem, mMesh->sharedVertexData[VpNormal]);
             }
         }
@@ -848,7 +848,7 @@ namespace v1 {
                 TiXmlElement* geomNode = smElem->FirstChildElement("geometry");
                 if (geomNode)
                 {
-                    sm->vertexData[VpNormal] = new VertexData();
+                    sm->vertexData[VpNormal] = new VertexData(HardwareBufferManager::getSingletonPtr());
                     readGeometry(geomNode, sm->vertexData[VpNormal]);
                 }
             }

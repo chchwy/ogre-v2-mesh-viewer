@@ -25,14 +25,11 @@
 #include "OgreColourValue.h"
 #include "OgreVector2.h"
 
-#define NOMINMAX
-#include <windows.h>
-
 
 namespace Ogre
 {
 class Root;
-class RenderWindow;
+class Window;
 class SceneManager;
 class Camera;
 }
@@ -77,15 +74,18 @@ protected:
     void mousePressEvent(QMouseEvent*) override;
     void mouseReleaseEvent(QMouseEvent*) override;
 
-    HGLRC getCurrentGlContext();
-
 private:
+    QSize sizeInPixels() const;
+    void syncWindowSize();
+
+    QSize mSyncedSize;
+
     int mId = 0;
     bool mInitialized = false;
 
     OgreManager* mOgreManager = nullptr;
 
-    Ogre::RenderWindow* mOgreRenderWindow = nullptr;
+    Ogre::Window* mOgreRenderWindow = nullptr;
 
     Ogre::Camera* mCamera = nullptr;
 

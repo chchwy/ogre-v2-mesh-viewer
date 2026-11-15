@@ -130,15 +130,31 @@ void MainWindow::readSettings()
 
 void MainWindow::onSceneLoaded()
 {
-    QDir meshDir(QApplication::applicationDirPath());
-    meshDir.cd("../mesh");
-
-    qDebug() << "Search for meshes in" << meshDir.absolutePath();
-    QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh" << "*.glb" << "*.gltf");
-    while (d.hasNext())
+    // Files given on the command line replace the sample models
+    QStringList meshFiles = QCoreApplication::arguments().mid(1);
+    if (meshFiles.isEmpty())
     {
-        QString meshFile = d.next();
-        mOgreManager->meshLoader()->load(meshFile);
+        QDir meshDir(QApplication::applicationDirPath());
+        meshDir.cd("../mesh");
+
+        qDebug() << "Search for meshes in" << meshDir.absolutePath();
+        QDirIterator d(meshDir.absolutePath(), QStringList() << "*.mesh" << "*.glb" << "*.gltf");
+        while (d.hasNext())
+            meshFiles << d.next();
+    }
+    else
+    {
+        mFirstLoad = false;
+    }
+
+    auto& resourceMgr = Ogre::ResourceGroupManager::getSingleton();
+    for (const QString& meshFile : meshFiles)
+    {
+        const std::string folder = QFileInfo(meshFile).absolutePath().toStdString();
+        if (!resourceMgr.resourceLocationExists(folder, "ViewerResc"))
+            resourceMgr.addResourceLocation(folder, "FileSystem", "ViewerResc");
+
+        mOgreManager->meshLoader()->load(QFileInfo(meshFile).absoluteFilePath());
     }
 
     mOgreManager->setIrradianceBackground();

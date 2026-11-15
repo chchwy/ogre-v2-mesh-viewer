@@ -44,10 +44,11 @@ public:
     glTFLoaderPlugin();
     virtual ~glTFLoaderPlugin();
     const Ogre::String& getName() const override;
-    void install() override;
+    void install(const Ogre::NameValuePairList* options) override;
     void initialise() override;
     void shutdown() override;
     void uninstall() override;
+    void getAbiCookie(Ogre::AbiCookie& outAbiCookie) override;
 
     ///This will get you the object you want ;-)
     glTFLoaderInterface* getLoader() const override

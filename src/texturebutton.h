@@ -2,13 +2,15 @@
 #define TEXTUREBUTTON_H
 
 #include <QObject>
+#include <QImage>
 #include "OgreHlmsPbsPrerequisites.h"
 
 class QPushButton;
 namespace Ogre
 {
-class HlmsTextureManager;
 class HlmsPbsDatablock;
+class Image2;
+class TextureGpu;
 }
 
 class TextureButton : public QObject
@@ -21,19 +23,17 @@ public:
     void updateTexImage(Ogre::HlmsPbsDatablock*, Ogre::PbsTextureTypes);
     void clear();
 
-    static QImage::Format toQtImageFormat(Ogre::PixelFormat);
-    static QImage toQtImage(const Ogre::Image& img);
+    /// Converts mip 0, slice 0 of the image. Returns a null QImage for unsupported formats.
+    static QImage toQtImage(const Ogre::Image2& img);
 
 private:
     void buttonClicked();
 
     void setInfoText(const QString& texName, int width, int height);
-    Ogre::HlmsTextureManager* getHlmsTexManager();
-    bool LoadImage(const QString& texturePath, Ogre::HlmsTextureManager::TextureLocation& loc);
+    Ogre::TextureGpu* loadTexture(const QString& texturePath);
 
     Ogre::PbsTextureTypes mTextureType = Ogre::PBSM_DIFFUSE;
     Ogre::HlmsPbsDatablock* mDatablock = nullptr;
-    Ogre::HlmsTextureManager* mHlmsTexManager = nullptr;
     QPushButton* mButton = nullptr;
 };
 

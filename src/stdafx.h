@@ -5,6 +5,10 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <sstream>
+#include <fstream>
+#include <array>
+#include <memory>
 
 // windows header
 #ifdef _WIN32
@@ -17,12 +21,19 @@
 #include "OgrePrerequisites.h"
 #include "OgreString.h"
 #include "OgreRoot.h"
-#include "OgreRenderWindow.h"
+#include "OgreWindow.h"
 #include "OgreCamera.h"
 #include "OgreItem.h"
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "OgreMesh2.h"
+#include "OgreSubMesh2.h"
+#include "Vao/OgreVaoManager.h"
+#include "Vao/OgreVertexArrayObject.h"
+#include "Vao/OgreIndexBufferPacked.h"
+#include "Vao/OgreVertexBufferPacked.h"
 
 #include "OgreHlmsManager.h"
-#include "OgreHlmsTextureManager.h"
 
 // common qt headers
 #include <QString>
