@@ -24,6 +24,10 @@
 
 #include "OgreCamera.h"
 #include "OgreWindow.h"
+#include "OgreTextureGpu.h"
+#include "OgreTextureBox.h"
+#include "OgreImage2.h"
+#include "OgrePixelFormatGpuUtils.h"
 
 #include "Compositor/OgreCompositorManager2.h"
 #include "OgreRenderSystem.h"
@@ -121,6 +125,34 @@ void OgreWidget::syncWindowSize()
         mSyncedSize = size;
 
     mCamera->setAspectRatio(Ogre::Real(mOgreRenderWindow->getWidth()) / Ogre::Real(mOgreRenderWindow->getHeight()));
+}
+
+bool OgreWidget::saveScreenshot(const QString& filePath)
+{
+    try
+    {
+        Ogre::Image2 image;
+        image.convertFromTexture(mOgreRenderWindow->getTexture(), 0, 0);
+
+        // The back buffer's alpha is whatever the shaders left there; a screenshot should be opaque
+        if (Ogre::PixelFormatGpuUtils::getBytesPerPixel(image.getPixelFormat()) == 4u)
+        {
+            const Ogre::TextureBox box = image.getData(0);
+            for (Ogre::uint32 y = 0; y < box.height; ++y)
+            {
+                Ogre::uint8* row = static_cast<Ogre::uint8*>(box.at(0, y, 0));
+                for (Ogre::uint32 x = 0; x < box.width; ++x)
+                    row[x * 4u + 3u] = 255u;
+            }
+        }
+        image.save(filePath.toStdString(), 0, 1);
+    }
+    catch (Ogre::Exception& e)
+    {
+        qDebug() << "Cannot save screenshot:" << e.what();
+        return false;
+    }
+    return true;
 }
 
 QPaintEngine* OgreWidget::paintEngine() const

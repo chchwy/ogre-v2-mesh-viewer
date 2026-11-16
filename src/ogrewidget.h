@@ -57,6 +57,9 @@ public:
 
     CameraController* cameraController() { return mCameraController; }
 
+    /// Saves what the render window currently shows. Returns false on failure.
+    bool saveScreenshot(const QString& filePath);
+
     int id() { return mId; }
     void setId(int id) { mId = id; }
 

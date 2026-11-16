@@ -2,51 +2,30 @@
 #define OBJEXPORTER_H
 
 #include <string>
+#include <vector>
+#include <QString>
+
+#include "meshdata.h"
 
 namespace Ogre
 {
-    class Mesh;
     class TextureGpu;
 }
 
-
+/// Writes scene objects as one Wavefront .obj (world transforms baked in) plus its .mtl.
 class ObjExporter
 {
-    // intermediate data containers during the conversion
-    struct OgreDataVertex
-    {
-        float position[3];
-        float normal[3];
-        float texcoord[2];
-    };
-
-    struct OgreDataFace
-    {
-        int index[3];
-    };
-
-    struct OgreDataSubMesh
-    {
-        std::string meshName;
-        std::string material;
-        std::vector<OgreDataVertex> vertices;
-        std::vector<OgreDataFace> faces;
-    };
-
 public:
-    ObjExporter();
-
-    bool writeToFile(Ogre::Mesh* srcMesh, const QString& sOutFile);
+    bool writeToFile(const std::vector<MeshData::Object>& objects, const QString& sOutFile);
 
 private:
-    bool convertToOgreData(const QString& sXmlFile);
-    void clearOgreDataSubMesh(OgreDataSubMesh&);
-    void clearOgreDataVertex(OgreDataVertex&);
-    bool writeObjFile(const QString& sOutObjFile, const QString& sMtlFileName);
-    bool writeMtlFile(Ogre::Mesh*, const QString& sOutFile);
-    void writeTexture(Ogre::TextureGpu* tex, const std::string& sTexFileName);
-    void normalize(OgreDataVertex&);
-    std::vector<OgreDataSubMesh> mSubmeshes;
+    bool writeObjFile(const std::vector<MeshData::Object>& objects, const QString& sOutObjFile, const QString& sMtlFileName);
+    bool writeMtlFile(const std::vector<MeshData::Object>& objects, const QString& sOutFile);
+
+    /// Saves the texture next to the .mtl. Returns the file name, or an empty string on failure.
+    QString writeTexture(Ogre::TextureGpu* tex, const QString& sFolder, const QString& sBaseName);
+
+    static QString materialName(const MeshData::SubMesh& subMesh);
 };
 
 #endif // OBJEXPORTER_H

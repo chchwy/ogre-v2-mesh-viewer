@@ -27,6 +27,7 @@ private:
     void ConvertButtonClicked();
 
     bool writeMeshToDisk(const Ogre::MeshPtr mesh, const QString& outFile);
+    bool convertMeshToObj(const QString& inFile, const QString& outFile);
     void clearList();
 
 private:

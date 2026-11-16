@@ -14,6 +14,9 @@
 // qt headers
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
+
+#include "tinyxml.h"
 
 #include "ogremanager.h"
 #include "objimporter.h"
@@ -49,6 +52,10 @@ bool MeshLoader::load(QString filePath)
     else if (filePath.endsWith(".gltf") || filePath.endsWith(".glb"))
     {
         return loadGLTF(filePath);
+    }
+    else if (filePath.endsWith(".scene"))
+    {
+        return loadDotScene(filePath);
     }
     else if (filePath.endsWith(".obj"))
     {
@@ -108,33 +115,14 @@ bool MeshLoader::loadOgreMesh(QString filePath)
 {
     QFileInfo info(filePath);
 
-    std::string sNewResourceLocation = info.absolutePath().toStdString();
-    auto& manager = Ogre::ResourceGroupManager::getSingleton();
-    if (!manager.resourceLocationExists(sNewResourceLocation, "ViewerResc"))
-    {
-        manager.addResourceLocation(sNewResourceLocation, "FileSystem", "ViewerResc");
-        auto allMaterials = manager.findResourceNames("ViewerResc", "*.material.json");
-        for (const std::string& sMtlName : *allMaterials)
-        {
-            Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
-        }
-    }
+    loadMaterialsFromFolder(info.absolutePath());
 
-    QString sNewMeshFile = info.fileName();
-
-    Ogre::Item* item = loadOgreV2(sNewMeshFile);
-    if (item == nullptr)
-    {
-        item = loadOgreV1(sNewMeshFile);
-    }
-
-    if (item == nullptr)
+    Ogre::MeshPtr mesh = loadMeshFile(filePath);
+    if (!mesh)
         return false;
 
-    if (item->getName().empty())
-    {
-        item->setName(sNewMeshFile.toStdString());
-    }
+    Ogre::Item* item = mOgre->sceneManager()->createItem(mesh);
+    item->setName(mesh->getName());
 
     attachMeshToSceneTree(item);
     return true;
@@ -178,43 +166,44 @@ bool MeshLoader::loadWavefrontObj(QString filePath)
     return true;
 }
 
-Ogre::Item* MeshLoader::loadOgreV1(QString meshName)
+Ogre::MeshPtr MeshLoader::loadMeshFile(const QString& filePath)
 {
-    Ogre::Item* item = nullptr;
-    Ogre::String sMeshName = meshName.toStdString();
+    const QFileInfo info(filePath);
+    const std::string folder = info.absolutePath().toStdString();
+    const std::string fileName = info.fileName().toStdString();
+
+    auto& resourceMgr = Ogre::ResourceGroupManager::getSingleton();
+    if (!resourceMgr.resourceLocationExists(folder, "ViewerResc"))
+        resourceMgr.addResourceLocation(folder, "FileSystem", "ViewerResc");
+
+    // A v1 file that was converted earlier (e.g. the same mesh used twice in a scene)
+    const std::string v1ImportName = fileName + " (v1 import)";
+    if (Ogre::MeshPtr imported = Ogre::MeshManager::getSingleton().getByName(v1ImportName, "ViewerResc"))
+        return imported;
+
+    try
+    {
+        return Ogre::MeshManager::getSingleton().load(fileName, "ViewerResc");
+    }
+    catch (Ogre::Exception&) {}
 
     try
     {
         Ogre::v1::MeshManager& meshV1Mgr = Ogre::v1::MeshManager::getSingleton();
-        Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.load(sMeshName, "ViewerResc",
+        Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.load(fileName, "ViewerResc",
                                                   Ogre::v1::HardwareBuffer::HBU_STATIC,
                                                   Ogre::v1::HardwareBuffer::HBU_STATIC);
 
-        Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
-
-        QString strV2Name = meshName + " (v1)";
-        Ogre::MeshPtr v2Mesh = meshMgr.createManual(strV2Name.toStdString(), "ViewerResc");
+        Ogre::MeshPtr v2Mesh = Ogre::MeshManager::getSingleton().createManual(v1ImportName, "ViewerResc");
         v2Mesh->importV1(v1Mesh.get(), true, true, true);
-        item = mOgre->sceneManager()->createItem(v2Mesh);
-        item->setName(v2Mesh->getName());
-
         meshV1Mgr.remove(v1Mesh->getHandle());
+        return v2Mesh;
     }
-    catch (Ogre::Exception& e) {}
-    return item;
-}
-
-Ogre::Item* MeshLoader::loadOgreV2(QString meshName)
-{
-    Ogre::Item* item = nullptr;
-    try
+    catch (Ogre::Exception& e)
     {
-        Ogre::MeshManager& meshMgr = Ogre::MeshManager::getSingleton();
-        Ogre::MeshPtr mesh = meshMgr.create(meshName.toStdString(), "ViewerResc");
-        item = mOgre->sceneManager()->createItem(mesh);
+        qDebug() << "Cannot load mesh" << filePath << e.what();
     }
-    catch (Ogre::Exception& e) {}
-    return item;
+    return Ogre::MeshPtr();
 }
 
 void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
@@ -224,9 +213,13 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
     node->attachObject(item);
     node->setName(item->getName());
 
-    //Ogre::WireAabb* wireAabb = mOgre->sceneManager()->createWireAabb();
-    //wireAabb->track(item);
+    applyDefaultMaterials(item);
 
+    emit sceneNodeAdded(node);
+}
+
+void MeshLoader::applyDefaultMaterials(Ogre::Item* item)
+{
     Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
 
     for (int i = 0; i < item->getNumSubItems(); ++i)
@@ -237,16 +230,22 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
 
         if (datablock == hlmsMgr->getDefaultDatablock())
         {
+            Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>( hlmsMgr->getHlms(Ogre::HLMS_PBS) );
+
+            // Imported files (e.g. a re-imported .mtl) may already use a TmpBlock name
             static int cnt = 0;
             std::stringstream sout;
-            sout << "TmpBlock_" << cnt;
-            cnt++;
+            do
+            {
+                sout.str("");
+                sout << "TmpBlock_" << cnt;
+                cnt++;
+            } while (hlmsPbs->getDatablock(sout.str()) != nullptr);
 
             Ogre::HlmsBlendblock blend;
             blend.mSourceBlendFactorAlpha = Ogre::SBF_SOURCE_ALPHA;
             blend.mDestBlendFactorAlpha = Ogre::SBF_ONE_MINUS_SOURCE_ALPHA;
 
-            Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>( hlmsMgr->getHlms(Ogre::HLMS_PBS) );
             Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(
                 hlmsPbs->createDatablock(sout.str(),
                                          sout.str(),
@@ -270,6 +269,158 @@ void MeshLoader::attachMeshToSceneTree(Ogre::Item* item)
 
         }
     }
+}
 
-    emit sceneNodeAdded(node);
+void MeshLoader::loadMaterialsFromFolder(const QString& folder)
+{
+    const std::string location = folder.toStdString();
+    auto& manager = Ogre::ResourceGroupManager::getSingleton();
+    if (manager.resourceLocationExists(location, "ViewerResc"))
+        return;
+
+    manager.addResourceLocation(location, "FileSystem", "ViewerResc");
+    auto allMaterials = manager.findResourceNames("ViewerResc", "*.material.json");
+    for (const std::string& sMtlName : *allMaterials)
+    {
+        Ogre::Root::getSingleton().getHlmsManager()->loadMaterials(sMtlName, "ViewerResc", nullptr, "");
+    }
+}
+
+namespace
+{
+Ogre::Real realAttribute(const TiXmlElement* element, const char* name, Ogre::Real defaultValue)
+{
+    double value = defaultValue;
+    if (element && element->QueryDoubleAttribute(name, &value) == TIXML_SUCCESS)
+        return Ogre::Real(value);
+    return defaultValue;
+}
+}
+
+bool MeshLoader::loadDotScene(QString filePath)
+{
+    TiXmlDocument document;
+    if (!document.LoadFile(filePath.toLocal8Bit().constData()))
+    {
+        qDebug() << "Cannot parse scene file:" << filePath << document.ErrorDesc();
+        return false;
+    }
+
+    const TiXmlElement* sceneElement = document.FirstChildElement("scene");
+    const TiXmlElement* nodesElement = sceneElement ? sceneElement->FirstChildElement("nodes") : nullptr;
+    if (nodesElement == nullptr)
+    {
+        qDebug() << "No <scene><nodes> in" << filePath;
+        return false;
+    }
+
+    const QFileInfo info(filePath);
+    loadMaterialsFromFolder(info.absolutePath());
+
+    Ogre::SceneNode* sceneRoot = mOgre->meshRootNode()->createChildSceneNode();
+    sceneRoot->setName(info.fileName().toStdString());
+
+    // The <nodes> element may carry a transform of its own
+    readDotSceneTransform(nodesElement, sceneRoot);
+
+    for (const TiXmlElement* child = nodesElement->FirstChildElement("node"); child; child = child->NextSiblingElement("node"))
+        loadDotSceneNode(child, sceneRoot, info.absolutePath());
+
+    emit sceneNodeAdded(sceneRoot);
+    return true;
+}
+
+void MeshLoader::readDotSceneTransform(const TiXmlElement* element, Ogre::SceneNode* node)
+{
+    if (const TiXmlElement* position = element->FirstChildElement("position"))
+    {
+        node->setPosition(realAttribute(position, "x", 0), realAttribute(position, "y", 0), realAttribute(position, "z", 0));
+    }
+
+    // Exporters disagree on the element and attribute names of the orientation
+    const TiXmlElement* rotation = element->FirstChildElement("rotation");
+    if (rotation == nullptr)
+        rotation = element->FirstChildElement("quaternion");
+    if (rotation)
+    {
+        Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
+        if (rotation->Attribute("qw"))
+        {
+            q = Ogre::Quaternion(realAttribute(rotation, "qw", 1), realAttribute(rotation, "qx", 0),
+                                 realAttribute(rotation, "qy", 0), realAttribute(rotation, "qz", 0));
+        }
+        else if (rotation->Attribute("w"))
+        {
+            q = Ogre::Quaternion(realAttribute(rotation, "w", 1), realAttribute(rotation, "x", 0),
+                                 realAttribute(rotation, "y", 0), realAttribute(rotation, "z", 0));
+        }
+        else if (rotation->Attribute("angle"))
+        {
+            const Ogre::Vector3 axis(realAttribute(rotation, "axisX", 0), realAttribute(rotation, "axisY", 1), realAttribute(rotation, "axisZ", 0));
+            q.FromAngleAxis(Ogre::Radian(realAttribute(rotation, "angle", 0)), axis.normalisedCopy());
+        }
+        q.normalise();
+        node->setOrientation(q);
+    }
+
+    if (const TiXmlElement* scale = element->FirstChildElement("scale"))
+    {
+        node->setScale(realAttribute(scale, "x", 1), realAttribute(scale, "y", 1), realAttribute(scale, "z", 1));
+    }
+}
+
+void MeshLoader::loadDotSceneNode(const TiXmlElement* element, Ogre::SceneNode* parent, const QString& sceneFolder)
+{
+    Ogre::SceneNode* node = parent->createChildSceneNode();
+    if (const char* name = element->Attribute("name"))
+        node->setName(name);
+
+    readDotSceneTransform(element, node);
+
+    for (const TiXmlElement* entity = element->FirstChildElement("entity"); entity; entity = entity->NextSiblingElement("entity"))
+    {
+        const char* meshFile = entity->Attribute("meshFile");
+        if (meshFile == nullptr)
+            continue;
+
+        Ogre::MeshPtr mesh = loadMeshFile(QDir(sceneFolder).filePath(QString::fromUtf8(meshFile)));
+        if (!mesh)
+        {
+            qDebug() << "Scene refers to a mesh that cannot be loaded:" << meshFile;
+            continue;
+        }
+
+        Ogre::Item* item = mOgre->sceneManager()->createItem(mesh);
+        item->setName(entity->Attribute("name") ? entity->Attribute("name") : meshFile);
+        node->attachObject(item);
+
+        Ogre::HlmsManager* hlmsMgr = mOgre->ogreRoot()->getHlmsManager();
+
+        // A material on the entity applies to every sub item, <subentity> overrides one of them
+        if (const char* material = entity->Attribute("material"))
+        {
+            if (Ogre::HlmsDatablock* datablock = hlmsMgr->getDatablockNoDefault(material))
+                item->setDatablock(datablock);
+        }
+        if (const TiXmlElement* subEntities = entity->FirstChildElement("subentities"))
+        {
+            for (const TiXmlElement* sub = subEntities->FirstChildElement("subentity"); sub; sub = sub->NextSiblingElement("subentity"))
+            {
+                int index = -1;
+                const char* material = sub->Attribute("materialName");
+                if (sub->QueryIntAttribute("index", &index) != TIXML_SUCCESS || material == nullptr)
+                    continue;
+
+                Ogre::HlmsDatablock* datablock = hlmsMgr->getDatablockNoDefault(material);
+                if (datablock && index >= 0 && index < int(item->getNumSubItems()))
+                    item->getSubItem(size_t(index))->setDatablock(datablock);
+            }
+        }
+
+        applyDefaultMaterials(item);
+    }
+
+    // Lights and cameras are not shown by the viewer; only the node hierarchy and meshes are kept
+    for (const TiXmlElement* child = element->FirstChildElement("node"); child; child = child->NextSiblingElement("node"))
+        loadDotSceneNode(child, node, sceneFolder);
 }

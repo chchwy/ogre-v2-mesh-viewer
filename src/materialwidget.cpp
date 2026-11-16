@@ -3,6 +3,9 @@
 #include "ui_materialwidget.h"
 
 #include <QColorDialog>
+#include <QGroupBox>
+#include <QLabel>
+#include <QVBoxLayout>
 #include "OgreHlmsPbsDatablock.h"
 
 #include "spinslider.h"
@@ -50,6 +53,8 @@ MaterialWidget::MaterialWidget(QWidget* parent) : QWidget(parent)
     mMetallicTexButton = new TextureButton(ui->metallicTexButton, Ogre::PBSM_METALLIC);
     mMetallicSpinSlider = new SpinSlider(ui->metallicSlider, ui->metallicSpin);
     connect(mMetallicSpinSlider, &SpinSlider::valueChanged, this, &MaterialWidget::metallicValueChanged);
+
+    createEmissiveGroup();
 
     hide();
 }
@@ -320,6 +325,7 @@ void MaterialWidget::updateOneDatablock()
     updateNormalGroup(pbs);
     updateRoughnessGroup(pbs);
     updateMetallicGroup(pbs);
+    updateEmissiveGroup(pbs);
 }
 
 void MaterialWidget::updateDiffuseGroup(Ogre::HlmsPbsDatablock* pbs)
@@ -403,4 +409,67 @@ void MaterialWidget::updateMetallicGroup(Ogre::HlmsPbsDatablock* pbs)
     QSignalBlocker b1(mMetallicSpinSlider);
     float metallic = pbs->getMetalness();
     mMetallicSpinSlider->setValue(metallic);
+}
+
+void MaterialWidget::createEmissiveGroup()
+{
+    // Built in code, next to the groups that come from the .ui file
+    QGroupBox* group = new QGroupBox("Emissive");
+    QVBoxLayout* groupLayout = new QVBoxLayout(group);
+
+    QPushButton* texButton = new QPushButton;
+    texButton->setSizePolicy(ui->metallicTexButton->sizePolicy());
+    texButton->setMinimumSize(ui->metallicTexButton->minimumSize());
+    texButton->setFlat(ui->metallicTexButton->isFlat());
+    texButton->setStyleSheet(ui->metallicTexButton->styleSheet());
+    groupLayout->addWidget(texButton);
+
+    QHBoxLayout* colorRow = new QHBoxLayout;
+    colorRow->addWidget(new QLabel("Emissive Color"));
+    mEmissiveColorButton = new QPushButton;
+    mEmissiveColorButton->setSizePolicy(ui->diffuseColorButton->sizePolicy());
+    colorRow->addWidget(mEmissiveColorButton, 1);
+    groupLayout->addLayout(colorRow);
+
+    ui->metallicGroup->parentWidget()->layout()->addWidget(group);
+
+    mEmissiveTexButton = new TextureButton(texButton, Ogre::PBSM_EMISSIVE);
+    connect(mEmissiveColorButton, &QPushButton::clicked, this, &MaterialWidget::emissiveColorButtonClicked);
+}
+
+void MaterialWidget::emissiveColorButtonClicked()
+{
+    Ogre::HlmsPbsDatablock* pbs = getCurrentDatablock();
+    if (pbs == nullptr)
+        return;
+
+    const Ogre::Vector3 originalColor = pbs->getEmissive();
+    const QColor initColor = QColor::fromRgbF(std::min(originalColor.x, 1.0f), std::min(originalColor.y, 1.0f), std::min(originalColor.z, 1.0f));
+
+    QColorDialog dialog(initColor, this);
+    dialog.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+
+    connect(&dialog, &QColorDialog::currentColorChanged, [pbs](const QColor& c)
+    {
+        pbs->setEmissive(Ogre::Vector3(c.redF(), c.greenF(), c.blueF()));
+    });
+
+    if (dialog.exec() != QDialog::Accepted)
+        pbs->setEmissive(originalColor); // back to the original color if users hit cancel button
+
+    updateEmissiveGroup(pbs);
+}
+
+void MaterialWidget::updateEmissiveGroup(Ogre::HlmsPbsDatablock* pbs)
+{
+    Q_ASSERT(mCurrentItem);
+
+    mEmissiveTexButton->updateTexImage(pbs, Ogre::PBSM_EMISSIVE);
+
+    const QSize iconSize(120, 16);
+    const Ogre::Vector3 emissive = pbs->getEmissive();
+    QPixmap pixmap(iconSize);
+    pixmap.fill(QColor::fromRgbF(std::min(emissive.x, 1.0f), std::min(emissive.y, 1.0f), std::min(emissive.z, 1.0f)));
+    mEmissiveColorButton->setIcon(pixmap);
+    mEmissiveColorButton->setIconSize(iconSize);
 }

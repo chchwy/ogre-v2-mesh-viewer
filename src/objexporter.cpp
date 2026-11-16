@@ -3,377 +3,202 @@
 
 #include "objexporter.h"
 
-#include "OgreMesh.h"
-#include "OgreMesh2.h"
-#include "OgreMeshManager.h"
-#include "OgreMeshManager2.h"
-#include "OgreSubMesh2.h"
-
-#include "OgreHlmsPbs.h"
 #include "OgreHlmsPbsDatablock.h"
 #include "OgreImage2.h"
+#include "OgreMatrix3.h"
 #include "textureutil.h"
 
-#include "OgreXML/OgreXMLMeshSerializer.h"
-
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
-#include <QXmlStreamReader>
-#include <QVector3D>
-#include <QTemporaryDir>
-
-#define CLOCK_LINENUM_CAT( name, ln ) name##ln
-#define CLOCK_LINENUM( name, ln ) CLOCK_LINENUM_CAT( name, ln )
-#define CLOCK_BEGIN CLOCK_LINENUM(t1, __LINE__)
-#define CLOCK_END   CLOCK_LINENUM(t2, __LINE__)
-#define PROFILE( f ) \
-    clock_t CLOCK_BEGIN = clock(); \
-    f; \
-    clock_t CLOCK_END = clock(); \
-    qDebug() << #f << ": Use" << float( CLOCK_END - CLOCK_BEGIN ) / CLOCKS_PER_SEC << "sec";
+#include <QRegularExpression>
+#include <QSet>
+#include <QTextStream>
 
 
-ObjExporter::ObjExporter()
+bool ObjExporter::writeToFile(const std::vector<MeshData::Object>& objects, const QString& sOutFile)
 {
-}
-
-bool ObjExporter::writeToFile(Ogre::Mesh* srcMesh, const QString& sOutFile)
-{
-    Q_ASSERT(srcMesh);
-    auto& meshV1Mgr = Ogre::v1::MeshManager::getSingleton();
-
-    static int convertionCount = 4431; // just to avoid name conflicts
-    std::ostringstream sout;
-    sout << "conversion_" << convertionCount++;
-
-    Ogre::v1::MeshPtr v1Mesh = meshV1Mgr.createManual(sout.str(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-    v1Mesh->importV2(srcMesh);
-
-    QTemporaryDir tempDir;
-    if (!tempDir.isValid())
-    {
-        return false;
-    }
-
-    //QString sTempXmlFile = "C:/Users/Matt/Desktop/abc.mesh.xml";
-    QString sTempXmlFile = QDir(tempDir.path()).filePath("out.mesh.xml");
-
-    Ogre::v1::XMLMeshSerializer xmlSerializer;
-    PROFILE(xmlSerializer.exportMesh(v1Mesh.get(), sTempXmlFile.toStdString()));
-    PROFILE(convertToOgreData(sTempXmlFile));
-
     QFileInfo info(sOutFile);
-    QString sMtlFile = info.absoluteDir().filePath(info.baseName() + ".mtl");
-    PROFILE(writeMtlFile(srcMesh, sMtlFile));
-    PROFILE(writeObjFile(sOutFile, info.baseName() + ".mtl"));
+    const QString sMtlFileName = info.completeBaseName() + ".mtl";
 
-    qDebug() << "Output Obj File=" << sOutFile;
-
-    meshV1Mgr.remove(v1Mesh);
-
-    bool b = QFile::remove(sTempXmlFile);
-    Q_ASSERT(b);
-
-    return true;
-}
-
-bool ObjExporter::convertToOgreData(const QString& sXmlFile)
-{
-    QFile file(sXmlFile);
-    if (file.open(QIODevice::ReadOnly) == false)
+    if (!writeMtlFile(objects, info.absoluteDir().filePath(sMtlFileName)))
         return false;
 
-    QXmlStreamReader xin;
-    xin.setDevice(&file);
-
-    OgreDataSubMesh currentMesh;
-    OgreDataVertex currentVertex;
-
-    while (!xin.atEnd())
-    {
-        xin.readNext();
-        //auto theType = xin.readNext();
-        //qDebug() << theType;
-        //qDebug() << "Type=" << theType << "Name=" << xin.name().toString();
-
-        if (xin.isStartElement())
-        {
-            const auto tagName = xin.name();
-            if (tagName == "submesh")
-            {
-                clearOgreDataSubMesh(currentMesh);
-                currentMesh.material = xin.attributes().value("material").toString().toStdString();
-            }
-            else if (tagName == "face")
-            {
-                OgreDataFace f;
-                f.index[0] = xin.attributes().value("v1").toInt();
-                f.index[1] = xin.attributes().value("v2").toInt();
-                f.index[2] = xin.attributes().value("v3").toInt();
-                //qDebug() << f.index[0] << f.index[1] << f.index[2];
-                currentMesh.faces.push_back(f);
-            }
-            else if (tagName == "faces")
-            {
-                qDebug() << "Face Count=" << xin.attributes().value("count");
-            }
-            else if (tagName == "vertex")
-            {
-                clearOgreDataVertex(currentVertex);
-            }
-            else if (tagName == "position")
-            {
-                currentVertex.position[0] = xin.attributes().value("x").toFloat();
-                currentVertex.position[1] = xin.attributes().value("y").toFloat();
-                currentVertex.position[2] = xin.attributes().value("z").toFloat();
-            }
-            else if (tagName == "normal")
-            {
-                currentVertex.normal[0] = xin.attributes().value("x").toFloat();
-                currentVertex.normal[1] = xin.attributes().value("y").toFloat();
-                currentVertex.normal[2] = xin.attributes().value("z").toFloat();
-            }
-            else if (tagName == "texcoord")
-            {
-                currentVertex.texcoord[0] = xin.attributes().value("u").toFloat();
-                currentVertex.texcoord[1] = xin.attributes().value("v").toFloat();
-            }
-        }
-        else if (xin.isEndElement())
-        {
-            const auto tagName = xin.name();
-            if (tagName == "submesh")
-            {
-                mSubmeshes.push_back(currentMesh);
-            }
-            else if (tagName == "vertex")
-            {
-                normalize(currentVertex);
-                currentMesh.vertices.push_back(currentVertex);
-            }
-        }
-    }
-
-    qDebug() << "Mesh count =" << mSubmeshes.size();
-    for (const OgreDataSubMesh& m : mSubmeshes)
-    {
-        qDebug() << "face count=" << m.faces.size();
-        qDebug() << "vertex count=" << m.vertices.size();
-    }
-
-    if (xin.hasError())
-    {
-        qDebug() << "ERROR:" << xin.errorString();
-        return false;
-    }
-
-    return true;
+    return writeObjFile(objects, sOutFile, sMtlFileName);
 }
 
-void ObjExporter::clearOgreDataSubMesh(OgreDataSubMesh& m)
+QString ObjExporter::materialName(const MeshData::SubMesh& subMesh)
 {
-    m.meshName = "";
-    m.material = "";
-    m.faces.clear();
-    m.vertices.clear();
+    QString name = QString::fromStdString(subMesh.materialName);
+    if (name.isEmpty())
+        name = "default";
+
+    // Names in .obj/.mtl files end at the first whitespace
+    name.replace(QRegularExpression("\\s"), "_");
+    return name;
 }
 
-void ObjExporter::clearOgreDataVertex(OgreDataVertex& v)
-{
-    v.position[0] = 0.f;
-    v.position[1] = 0.f;
-    v.position[2] = 0.f;
-
-    v.normal[0] = 0.f;
-    v.normal[1] = 0.f;
-    v.normal[2] = 0.f;
-
-    v.texcoord[0] = 0.f;
-    v.texcoord[1] = 0.f;
-}
-
-bool ObjExporter::writeObjFile(const QString& sOutFile, const QString& sMtlFileName)
+bool ObjExporter::writeObjFile(const std::vector<MeshData::Object>& objects, const QString& sOutFile, const QString& sMtlFileName)
 {
     QFile file(sOutFile);
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        return false;
-    }
-    int64_t indexOffset = 1; // obj uses 1 based index
-
-    QTextStream fout(&file);
-
-    fout << "mtllib " << sMtlFileName << "\n";
-
-    for (int i = 0; i < mSubmeshes.size(); ++i)
-    {
-        OgreDataSubMesh& mesh01 = mSubmeshes[i];
-        if (!mesh01.meshName.empty())
-            fout << "o " << QString::fromStdString(mesh01.meshName) << "\n";
-        else
-            fout << "o exportMesh001\n";
-
-        // write vertices
-        for (const OgreDataVertex& v : mesh01.vertices)
-        {
-
-            QString sout;
-            fout << "v " << qSetRealNumberPrecision(6)
-                << v.position[0] << " "
-                << v.position[1] << " "
-                << v.position[2] << "\n";
-            //fout << QString::asprintf("v %.6f %.6f %.6f\n", v.position[0], v.position[1], v.position[2]);
-            //fout << sout;
-        }
-        for (const OgreDataVertex& v : mesh01.vertices)
-        {
-            //QString sout;
-            fout << QString::asprintf("vn %.6f %.6f %.6f\n", v.normal[0], v.normal[1], v.normal[2]);
-            //fout << sout;
-        }
-        for (const OgreDataVertex& v : mesh01.vertices)
-        {
-            //QString sout;
-            fout << QString::asprintf("vt %.4f %.4f\n", v.texcoord[0], v.texcoord[1]);
-            //fout << sout;
-        }
-
-        // TODO: usemtl
-        fout << "usemtl " << mesh01.material.c_str() << "\n";
-
-        // write faces
-        for (const OgreDataFace& f : mesh01.faces)
-        {
-            fout << "f ";
-            fout << (f.index[0] + indexOffset) << "/"
-                << (f.index[0] + indexOffset) << "/"
-                << (f.index[0] + indexOffset) << " ";
-
-            fout << (f.index[1] + indexOffset) << "/"
-                << (f.index[1] + indexOffset) << "/"
-                << (f.index[1] + indexOffset) << " ";
-
-            fout << (f.index[2] + indexOffset) << "/"
-                << (f.index[2] + indexOffset) << "/"
-                << (f.index[2] + indexOffset) << "\n";
-        }
-
-        fout.flush();
-
-        indexOffset += mesh01.vertices.size();
-    }
-
-    file.flush();
-    file.close();
-
-    return true;
-}
-
-bool ObjExporter::writeMtlFile(Ogre::Mesh* mesh01, const QString& sOutFile)
-{
-    Ogre::Root& root = Ogre::Root::getSingleton();
-    Ogre::HlmsManager* hlmsManager = root.getHlmsManager();
-    Q_ASSERT(dynamic_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS)));
-
-    Ogre::HlmsPbs* hlmsPbs = static_cast<Ogre::HlmsPbs*>(hlmsManager->getHlms(Ogre::HLMS_PBS));
-
-    QFileInfo info(sOutFile);
-    std::string sOutFolder = info.absolutePath().toStdString() + "/";
-
-    QFile file(sOutFile);
-    if (!file.open(QIODevice::WriteOnly))
     {
         qDebug() << "Error: unable to write to file " << sOutFile;
         return false;
     }
 
     QTextStream fout(&file);
+    fout << "mtllib " << sMtlFileName << "\n";
 
-    for (int m = 0; m < mesh01->getNumSubMeshes(); ++m)
+    int64_t indexOffset = 1; // obj uses 1 based index
+
+    for (const MeshData::Object& object : objects)
     {
-        Ogre::SubMesh* subMesh = mesh01->getSubMesh(m);
-        //Ogre::HlmsPbsDatablock* dataBlock = subMesh->getD
-        qDebug() << "Mtl: " << subMesh->getMaterialName().c_str();
+        Ogre::Matrix3 normalMatrix;
+        object.worldTransform.extract3x3Matrix(normalMatrix);
+        normalMatrix = normalMatrix.Inverse().Transpose();
 
-        auto datablock = (Ogre::HlmsPbsDatablock*)hlmsPbs->getDatablock(subMesh->getMaterialName());
-        if (datablock == nullptr)
+        QString objectName = QString::fromStdString(object.name);
+        objectName.replace(QRegularExpression("\\s"), "_");
+
+        for (size_t i = 0; i < object.subMeshes.size(); ++i)
         {
-            continue;
+            const MeshData::SubMesh& subMesh = object.subMeshes[i];
+            if (subMesh.vertices.empty())
+                continue;
+
+            fout << "o " << objectName << "_" << i << "\n";
+
+            for (const MeshData::Vertex& v : subMesh.vertices)
+            {
+                const Ogre::Vector3 p = object.worldTransform * Ogre::Vector3(v.position[0], v.position[1], v.position[2]);
+                fout << QString::asprintf("v %.6f %.6f %.6f\n", p.x, p.y, p.z);
+            }
+            for (const MeshData::Vertex& v : subMesh.vertices)
+            {
+                Ogre::Vector3 n = normalMatrix * Ogre::Vector3(v.normal[0], v.normal[1], v.normal[2]);
+                if (n.normalise() == 0.0f || n.isNaN())
+                    n = Ogre::Vector3::UNIT_Y;
+                fout << QString::asprintf("vn %.6f %.6f %.6f\n", n.x, n.y, n.z);
+            }
+            for (const MeshData::Vertex& v : subMesh.vertices)
+            {
+                // obj has v = 0 at the bottom, Ogre at the top
+                fout << QString::asprintf("vt %.6f %.6f\n", v.texcoord[0], 1.0f - v.texcoord[1]);
+            }
+
+            fout << "usemtl " << materialName(subMesh) << "\n";
+
+            for (size_t f = 0; f + 2 < subMesh.indices.size(); f += 3)
+            {
+                fout << "f";
+                for (int k = 0; k < 3; ++k)
+                {
+                    const int64_t index = subMesh.indices[f + k] + indexOffset;
+                    fout << " " << index << "/" << index << "/" << index;
+                }
+                fout << "\n";
+            }
+
+            indexOffset += int64_t(subMesh.vertices.size());
         }
-
-        fout << "newmtl " << subMesh->getMaterialName().c_str() << "\n";
-
-        Ogre::ColourValue backgrond = datablock->getBackgroundDiffuse();
-        fout << QString::asprintf("Ka %.3f %.3f %.3f\n", backgrond.r, backgrond.g, backgrond.b);
-
-        Ogre::Vector3 diffuse = datablock->getDiffuse();
-        fout << QString::asprintf("Kd %.3f %.3f %.3f\n", diffuse.x, diffuse.y, diffuse.z);
-
-        Ogre::Vector3 speclr = datablock->getSpecular();
-        fout << QString::asprintf("Ks %.3f %.3f %.3f\n", speclr.x, speclr.y, speclr.z);
-
-        qDebug() << "It's not able to export textures at the moment.";
-        /*
-        Ogre::TextureGpu* diffuseTex = datablock->getTexture(Ogre::PBSM_DIFFUSE);
-        writeTexture(diffuseTex, sOutFolder + "diffuse.png");
-
-        Ogre::TextureGpu* normalTex = datablock->getTexture(Ogre::PBSM_NORMAL);
-        writeTexture(normalTex, sOutFolder + "normal.png");
-
-        Ogre::TextureGpu* roughnessTex = datablock->getTexture(Ogre::PBSM_ROUGHNESS);
-        writeTexture(roughnessTex, sOutFolder + "roughness.png");
-
-        Ogre::TextureGpu* metallicTex = datablock->getTexture(Ogre::PBSM_METALLIC);
-        writeTexture(metallicTex, sOutFolder + "metallic.png");
-        */
-
-        float trans = datablock->getTransparency();
-        fout << QString::asprintf("d  %.4f\n", trans);
-        fout << QString::asprintf("Tr %.4f\n", (1.0 - trans));
-
-        fout << "illum 2\n";
-        fout << QString::asprintf("Pm %.4f\n", datablock->getMetalness());
-        fout << QString::asprintf("Pr %.4f\n", datablock->getRoughness());
     }
 
     fout.flush();
     file.close();
-
     return true;
 }
 
-void ObjExporter::writeTexture(Ogre::TextureGpu* tex, const std::string& sTexFileName)
+bool ObjExporter::writeMtlFile(const std::vector<MeshData::Object>& objects, const QString& sOutFile)
 {
-    if (tex)
+    QFile file(sOutFile);
+    if (!file.open(QFile::WriteOnly | QFile::Truncate))
     {
-        try
+        qDebug() << "Error: unable to write to file " << sOutFile;
+        return false;
+    }
+
+    const QFileInfo info(sOutFile);
+    const QString sFolder = info.absolutePath();
+
+    QTextStream fout(&file);
+    QSet<QString> written;
+
+    for (const MeshData::Object& object : objects)
+    {
+        for (const MeshData::SubMesh& subMesh : object.subMeshes)
         {
-            Ogre::Image2 img;
-            if (TextureUtil::download(tex, img))
-                img.save(sTexFileName, 0, 1);
-        }
-        catch (const std::exception&)
-        {
-            qDebug() << "Failed to write image:" << sTexFileName.c_str();
+            const QString name = materialName(subMesh);
+            if (subMesh.vertices.empty() || written.contains(name))
+                continue;
+            written.insert(name);
+
+            fout << "newmtl " << name << "\n";
+
+            auto datablock = dynamic_cast<Ogre::HlmsPbsDatablock*>(subMesh.datablock);
+            if (datablock == nullptr)
+            {
+                fout << "Kd 1.000 1.000 1.000\n\n";
+                continue;
+            }
+
+            const Ogre::Vector3 diffuse = datablock->getDiffuse();
+            fout << QString::asprintf("Kd %.3f %.3f %.3f\n", diffuse.x, diffuse.y, diffuse.z);
+
+            const Ogre::Vector3 specular = datablock->getSpecular();
+            fout << QString::asprintf("Ks %.3f %.3f %.3f\n", specular.x, specular.y, specular.z);
+
+            const Ogre::Vector3 emissive = datablock->getEmissive();
+            fout << QString::asprintf("Ke %.3f %.3f %.3f\n", emissive.x, emissive.y, emissive.z);
+
+            const float alpha = datablock->getTransparency();
+            fout << QString::asprintf("d %.4f\n", alpha);
+
+            fout << "illum 2\n";
+            fout << QString::asprintf("Pr %.4f\n", datablock->getRoughness());
+            fout << QString::asprintf("Pm %.4f\n", datablock->getMetalness());
+
+            const struct { Ogre::PbsTextureTypes type; const char* keyword; const char* suffix; } maps[] = {
+                { Ogre::PBSM_DIFFUSE, "map_Kd", "diffuse" },
+                { Ogre::PBSM_ROUGHNESS, "map_Pr", "roughness" },
+                { Ogre::PBSM_METALLIC, "map_Pm", "metallic" },
+                { Ogre::PBSM_EMISSIVE, "map_Ke", "emissive" },
+            };
+            for (const auto& map : maps)
+            {
+                const QString texFile = writeTexture(datablock->getTexture(map.type), sFolder, name + "_" + map.suffix);
+                if (!texFile.isEmpty())
+                    fout << map.keyword << " " << texFile << "\n";
+            }
+            fout << "\n";
         }
     }
+
+    fout.flush();
+    file.close();
+    return true;
 }
 
-void ObjExporter::normalize(OgreDataVertex& v)
+QString ObjExporter::writeTexture(Ogre::TextureGpu* tex, const QString& sFolder, const QString& sBaseName)
 {
-    QVector3D v3D(v.normal[0], v.normal[1], v.normal[2]);
-    v3D.normalize();
+    if (tex == nullptr)
+        return QString();
 
-    if (isnan(v3D.x()))
+    QString fileName = sBaseName + ".png";
+    fileName.replace(QRegularExpression("[\\\\/:*?\"<>|]"), "_");
+
+    try
     {
-        v.normal[0] = 0.0f;
-        v.normal[1] = 1.0f;
-        v.normal[2] = 0.0f;
-        return;
-    }
+        Ogre::Image2 img;
+        if (!TextureUtil::download(tex, img))
+            return QString();
 
-    v.normal[0] = v3D.x();
-    v.normal[1] = v3D.y();
-    v.normal[2] = v3D.z();
+        img.save(QDir(sFolder).filePath(fileName).toStdString(), 0, 1);
+    }
+    catch (const std::exception& e)
+    {
+        qDebug() << "Failed to write image:" << fileName << e.what();
+        return QString();
+    }
+    return fileName;
 }

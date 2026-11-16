@@ -38,7 +38,7 @@ void LoadFromFolderDialog::listAllMeshesInFolder()
 {
     QStringList meshList;
 
-    QStringList nameFilters{ "*.mesh", "*.mesh.xml", "*.obj", "*.gltf", "*.glb" };
+    QStringList nameFilters{ "*.mesh", "*.mesh.xml", "*.obj", "*.gltf", "*.glb", "*.scene" };
     QDirIterator it(mFolder, nameFilters, QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext())
     {

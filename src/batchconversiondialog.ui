@@ -83,7 +83,7 @@
    <item>
     <widget class="QPushButton" name="ConvertButton">
      <property name="text">
-      <string>Convert to Ogre Mesh</string>
+      <string>Convert (obj to mesh, mesh to obj)</string>
      </property>
     </widget>
    </item>

@@ -58,7 +58,9 @@ HEADERS = \
     src/spinslider.h \
     src/texturebutton.h \
     src/meshwidget.h \
-    src/textureutil.h
+    src/textureutil.h \
+    src/meshdata.h \
+    src/gltfexporter.h
 
 SOURCES = \
     src/main.cpp \
@@ -94,7 +96,9 @@ SOURCES = \
     src/spinslider.cpp \
     src/texturebutton.cpp \
     src/meshwidget.cpp \
-    src/textureutil.cpp
+    src/textureutil.cpp \
+    src/meshdata.cpp \
+    src/gltfexporter.cpp
 
 FORMS += \
     src/mainwindow.ui \

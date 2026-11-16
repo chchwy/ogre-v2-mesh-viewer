@@ -10,6 +10,7 @@ class SceneNode;
 }
 
 class OgreManager;
+class TiXmlElement;
 
 
 class MeshLoader : public QObject
@@ -22,6 +23,10 @@ public:
     bool load(QString filePath);
     void enableZupToYupConversion(bool b);
 
+    /// Loads a .mesh file (v2, or v1 converted to v2) without creating any scene object.
+    /// Returns a null pointer when the file cannot be read.
+    static Ogre::MeshPtr loadMeshFile(const QString& filePath);
+
 signals:
     void sceneNodeAdded(Ogre::SceneNode* node);
 
@@ -31,10 +36,14 @@ private:
     bool loadGLTF(QString filePath);
     bool loadWavefrontObj(QString filePath);
 
-    Ogre::Item* loadOgreV1(QString meshName);
-    Ogre::Item* loadOgreV2(QString meshName);
 
     void attachMeshToSceneTree(Ogre::Item* item);
+    void applyDefaultMaterials(Ogre::Item* item);
+    void loadMaterialsFromFolder(const QString& folder);
+
+    bool loadDotScene(QString filePath);
+    void loadDotSceneNode(const TiXmlElement* element, Ogre::SceneNode* parent, const QString& sceneFolder);
+    void readDotSceneTransform(const TiXmlElement* element, Ogre::SceneNode* node);
 
     OgreManager* mOgre = nullptr;
     bool mZupToYup = false;

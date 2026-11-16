@@ -191,6 +191,8 @@ OgreDataVertex ObjImporter::getVertex(const tinyobj::index_t& index)
     for (const OgreDataSubMesh& m : mOgreSubMeshes)
     {
         Ogre::SubMesh* subMesh = mesh->createSubMesh();
+        if (!m.material.empty())
+            subMesh->setMaterialName(m.material);
 
         //Vertex declaration
         Ogre::VertexElement2Vec vertexElements

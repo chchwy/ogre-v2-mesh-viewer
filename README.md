@@ -9,12 +9,15 @@ A Ogre3D mesh viewer based on Ogre-Next (v2.2+ texture system) which can import 
 ## Features
 
 - Load Ogre v2, v1, xml meshes with HLMS materials.
-- Import Wavefront Obj and save as Ogre Meshes
+- Import Wavefront Obj (with its `.mtl` materials and textures) and save as Ogre Meshes
 - Import glTF 2.0 models and save as Ogre Meshes
-  - It's not perfect yet, some glTF models appear black or have flat materials
+  - Skinning is not supported; normal maps are ignored on meshes without tangents
+- Import DotScene (`.scene`) files: node hierarchy and meshes (lights and cameras are skipped)
+- Export the scene to Wavefront Obj or glTF 2.0 (`.glb` / `.gltf`), with materials and textures
 - Show scene hierarchy
 - Basic HLMS editing
-  - Texture: diffuse, background diffuse, normal, roughness, metalness
+  - Texture: diffuse, normal, roughness, metalness, emissive
+  - Colour: diffuse, background diffuse, specular, emissive
   - Transparent value and mode
   - Solid or wireframe
   - Two-sided on/off
@@ -22,7 +25,18 @@ A Ogre3D mesh viewer based on Ogre-Next (v2.2+ texture system) which can import 
   - Position, rotation and scale
   - Show/hide bounding boxes
   - Switch visibility
-- Batch conversion tool from obj => .mesh
+- Batch conversion tool: obj => .mesh and .mesh => obj
+- Save a screenshot of the view (`F12`)
+
+## Command line
+
+```
+ogre-v2-mesh-viewer.exe [files...] [--export <file>] [--screenshot <file.png>]
+```
+
+- `files`: models to load at startup (`.mesh`, `.mesh.xml`, `.obj`, `.gltf`, `.glb`, `.scene`).
+- `--export`: write the loaded models to a `.obj`, `.glb` or `.gltf` file, then quit.
+- `--screenshot`: save a picture of the view, then quit.
 
 ## How to compile
 
@@ -33,26 +47,23 @@ A Ogre3D mesh viewer based on Ogre-Next (v2.2+ texture system) which can import 
 4. Open `ogre-v2-mesh-viewer.pro` in QtCreator and press `RUN`.
 5. Run `deploy.bat` to copy the Ogre and Qt DLLs next to the executable.
 
-Models passed on the command line are loaded at startup: `ogre-v2-mesh-viewer.exe model.glb other.mesh`.
-
 [0]: https://www.qt.io/download-qt-installer "Qt download"
 
 ## TODO
 
-- [ ] HLMS material editing (WIP)
-- [ ] Batch convertor from mesh to obj
-- [ ] glTF export
-- [ ] Support DotScene
+- [ ] More HLMS material editing: detail maps, UV sets, sampler settings
+- [ ] glTF skinning and animation
+- [ ] DotScene lights and cameras
+- [x] Batch convertor from mesh to obj
+- [x] glTF export
+- [x] Support DotScene
 - [x] Improve performance by converting obj data to ogre mesh directly
 - [x] Automatically generate normals if there are no normal vectors in obj
 - [x] glTF import
 
 ## Known issues
 
-- [ ] Normals are broken when converting a v2-mesh to a obj
-- [ ] Normal textures are not showing correctly on the material panel
-- [ ] Normal weight doesn't update right after updating the Pbs blocks
-- [ ] Metallic texture is not showing with DirectX11 rendersystem
+- [ ] Block-compressed textures (e.g. BC/DXT `.dds`) have no preview on the material panel and are not exported
 
 ## Acknowledgements
 

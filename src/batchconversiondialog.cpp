@@ -10,6 +10,9 @@
 
 #include "OgreMesh2Serializer.h"
 #include "objimporter.h"
+#include "objexporter.h"
+#include "meshdata.h"
+#include "meshloader.h"
 
 
 BatchConversionDialog::BatchConversionDialog(QWidget* parent) : QDialog(parent)
@@ -57,7 +60,7 @@ void BatchConversionDialog::AddFileButtonClicked()
     QStringList files = QFileDialog::getOpenFileNames(this,
                                                       "Select one or more files",
                                                       defaultFolder,
-                                                      "Wavefront obj (*.obj)");
+                                                      "Models (*.obj *.mesh);;Wavefront obj (*.obj);;Ogre mesh (*.mesh)");
     ui->FileListWidget->addItems(files);
 
     if (!files.isEmpty())
@@ -99,22 +102,40 @@ void BatchConversionDialog::ConvertButtonClicked()
     QString sOutFolder = ui->OutputFolderText->text();
 
     int itemCount = ui->FileListWidget->count();
+    int failCount = 0;
 
     for (int i = 0; i < itemCount; ++i)
     {
         QString inFile = ui->FileListWidget->item(i)->text();
-        QString outFile = sOutFolder + "/" + QFileInfo(inFile).completeBaseName() + ".mesh";
-        
-        ObjImporter importer;
-        importer.setZUpToYUp(bZupToYup);
-        Ogre::MeshPtr meshPtr = importer.import(inFile, false);
-        
-        bool ok = writeMeshToDisk(meshPtr, outFile);
+        bool ok = false;
+        QString outFile;
 
-        qDebug() << "Src=" << inFile << ", Mesh=" << (meshPtr != nullptr) << ", Dest=" << outFile;
+        if (inFile.endsWith(".mesh", Qt::CaseInsensitive))
+        {
+            outFile = sOutFolder + "/" + QFileInfo(inFile).completeBaseName() + ".obj";
+            ok = convertMeshToObj(inFile, outFile);
+        }
+        else
+        {
+            outFile = sOutFolder + "/" + QFileInfo(inFile).completeBaseName() + ".mesh";
+
+            ObjImporter importer;
+            importer.setZUpToYUp(bZupToYup);
+            Ogre::MeshPtr meshPtr = importer.import(inFile, false);
+
+            ok = meshPtr && writeMeshToDisk(meshPtr, outFile);
+        }
+
+        if (!ok)
+            ++failCount;
+
+        qDebug() << "Src=" << inFile << ", Success=" << ok << ", Dest=" << outFile;
     }
 
-    QMessageBox::information(this, "Batch conversion", "Conversion done.");
+    if (failCount == 0)
+        QMessageBox::information(this, "Batch conversion", "Conversion done.");
+    else
+        QMessageBox::warning(this, "Batch conversion", QString("Conversion done, %1 file(s) failed.").arg(failCount));
     clearList();
 }
 
@@ -137,6 +158,24 @@ bool BatchConversionDialog::writeMeshToDisk(const Ogre::MeshPtr mesh, const QStr
         ok = false;
     }
     return (ok && QFile::exists(outFile));
+}
+
+bool BatchConversionDialog::convertMeshToObj(const QString& inFile, const QString& outFile)
+{
+    Ogre::MeshPtr mesh = MeshLoader::loadMeshFile(inFile);
+    if (!mesh)
+        return false;
+
+    MeshData::Object object;
+    object.name = QFileInfo(inFile).completeBaseName().toStdString();
+    object.subMeshes = MeshData::readMesh(mesh.get());
+
+    Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
+    for (MeshData::SubMesh& subMesh : object.subMeshes)
+        subMesh.datablock = hlmsManager->getDatablockNoDefault(subMesh.materialName);
+
+    ObjExporter exporter;
+    return exporter.writeToFile({ object }, outFile);
 }
 
 void BatchConversionDialog::clearList()

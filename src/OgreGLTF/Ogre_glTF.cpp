@@ -16,6 +16,8 @@
 
 #include <OgreItem.h>
 #include <OgreMesh2.h>
+#include <OgreHlmsPbsDatablock.h>
+#include <OgreHlms.h>
 
 using namespace Ogre_glTF;
 
@@ -127,11 +129,43 @@ void loaderAdapter::makeNode(Ogre::SceneNode* ogreNode, const tinygltf::Node& no
 
         for (int i = 0; i < item->getNumSubItems(); ++i)
         {
-            int materialIndex = pimpl->model.meshes[node.mesh].primitives[i].material;
-            Ogre::HlmsDatablock* datablock = pimpl->materialLoad.getDatablock(materialIndex);
+            const tinygltf::Primitive& primitive = pimpl->model.meshes[node.mesh].primitives[i];
+            Ogre::HlmsDatablock* datablock = pimpl->materialLoad.getDatablock(primitive.material);
+
+            // Normal mapping needs tangents. Without them the surface would render black,
+            // so such primitives get a copy of the material without its normal map.
+            auto pbs = dynamic_cast<Ogre::HlmsPbsDatablock*>(datablock);
+            if (pbs && pbs->getTexture(Ogre::PBSM_NORMAL) && primitive.attributes.count("TANGENT") == 0)
+            {
+                const Ogre::String name = *datablock->getNameStr() + "_noNormalMap";
+                Ogre::HlmsDatablock* flat = datablock->getCreator()->getDatablock(name);
+                if (flat == nullptr)
+                {
+                    OgreLog("Primitive has a normal map but no tangents, ignoring the normal map: " + name);
+                    flat = datablock->clone(name);
+                    static_cast<Ogre::HlmsPbsDatablock*>(flat)->setTexture(Ogre::PBSM_NORMAL, static_cast<Ogre::TextureGpu*>(nullptr));
+                }
+                datablock = flat;
+            }
             item->getSubItem(i)->setDatablock(datablock);
         }
     }
+    if (node.matrix.size() == 16)
+    {
+        // glTF matrices are column-major
+        Ogre::Matrix4 matrix;
+        for (int col = 0; col < 4; ++col)
+            for (int row = 0; row < 4; ++row)
+                matrix[row][col] = Ogre::Real(node.matrix[col * 4 + row]);
+
+        Ogre::Vector3 position, scale;
+        Ogre::Quaternion orientation;
+        matrix.decomposition(position, scale, orientation);
+        ogreChildNode->setPosition(position);
+        ogreChildNode->setOrientation(orientation);
+        ogreChildNode->setScale(scale);
+    }
+
     if (!node.translation.empty())
         ogreChildNode->translate(node.translation[0], node.translation[1], node.translation[2]);
 

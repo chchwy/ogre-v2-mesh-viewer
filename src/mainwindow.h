@@ -65,7 +65,9 @@ private:
 private:
     void actionOpen();
     void actionSaveMesh();
-    void actionExportObj();
+    void actionExport();
+    void actionScreenshot();
+    bool exportScene(const QString& sOutFile);
     void actionLoadFromFolder();
     void actionBatchConverter();
     void actionResetCamera();
@@ -88,6 +90,10 @@ private:
     QString mUserDocumentPath;
 
     bool mFirstLoad = true;
+
+    // --screenshot <file>: save the view after a few frames, then quit
+    QString mScreenshotPath;
+    int mFramesUntilScreenshot = 0;
 
     Ui::MainWindow* ui = nullptr;
 };

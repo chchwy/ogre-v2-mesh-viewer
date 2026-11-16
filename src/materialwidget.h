@@ -17,6 +17,7 @@ class HlmsPbsDatablock;
 
 class SpinSlider;
 class TextureButton;
+class QPushButton;
 
 class MaterialWidget : public QWidget
 {
@@ -42,6 +43,7 @@ public slots:
     void normalValueChanged(double value);
     void roughnessValueChanged(double value);
     void metallicValueChanged(double value);
+    void emissiveColorButtonClicked();
 
 private:
     Ogre::Item* getFirstItem(Ogre::SceneNode* node);
@@ -54,6 +56,8 @@ private:
     void updateNormalGroup(Ogre::HlmsPbsDatablock*);
     void updateRoughnessGroup(Ogre::HlmsPbsDatablock*);
     void updateMetallicGroup(Ogre::HlmsPbsDatablock*);
+    void updateEmissiveGroup(Ogre::HlmsPbsDatablock*);
+    void createEmissiveGroup();
 
 private:
     Ogre::Item* mCurrentItem = nullptr;
@@ -65,6 +69,8 @@ private:
     TextureButton* mNormalTexButton = nullptr;
     TextureButton* mRoughnessTexButton = nullptr;
     TextureButton* mMetallicTexButton = nullptr;
+    TextureButton* mEmissiveTexButton = nullptr;
+    QPushButton* mEmissiveColorButton = nullptr;
 
     Ui::MaterialWidget* ui = nullptr;
 };

@@ -96,6 +96,10 @@ OgreManager::~OgreManager()
     mLoadedV1Meshes.clear();
     mLoadedV2Meshes.clear();
 
+    // Shutting down while the streaming thread is still loading a texture crashes
+    if (mRoot && mRoot->getRenderSystem())
+        mRoot->getRenderSystem()->getTextureGpuManager()->waitForStreamingCompletion();
+
     delete mRoot; mRoot = nullptr;
     delete mTimer; mTimer = nullptr;
 

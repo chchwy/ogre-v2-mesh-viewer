@@ -24,7 +24,11 @@ SceneTreeWidget::~SceneTreeWidget()
 
 void SceneTreeWidget::clear()
 {
-    mModel->deleteLater();
+    // The view must let go of the model right away: its indexes point at scene nodes
+    // that the caller is about to destroy.
+    ui->treeView->setModel(nullptr);
+    delete mModel;
+    mModel = nullptr;
 }
 
 void SceneTreeWidget::sceneLoaded()

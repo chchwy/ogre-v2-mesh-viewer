@@ -36,6 +36,9 @@
 #include <QMessageBox>
 #include <QDirIterator>
 #include <QProgressDialog>
+#include <QCommandLineParser>
+#include <QDateTime>
+#include <QStatusBar>
 
 #include "OgreMesh2Serializer.h"
 
@@ -43,6 +46,10 @@
 #include "ogrewidget.h"
 #include "meshloader.h"
 #include "objexporter.h"
+#include "meshdata.h"
+#include "gltfexporter.h"
+#include "textureutil.h"
+#include "OgreTextureGpuManager.h"
 #include "batchconversiondialog.h"
 #include "loadfromfolderdialog.h"
 #include "lightwidget.h"
@@ -87,6 +94,8 @@ MainWindow::MainWindow()
     // actions
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::actionOpen);
     connect(ui->actionSaveOgreMesh, &QAction::triggered, this, &MainWindow::actionSaveMesh);
+    connect(ui->actionExport, &QAction::triggered, this, &MainWindow::actionExport);
+    connect(ui->actionScreenshot, &QAction::triggered, this, &MainWindow::actionScreenshot);
     connect(ui->actionBatchConverter, &QAction::triggered, this, &MainWindow::actionBatchConverter);
     connect(ui->actionLoad_From_Folder, &QAction::triggered, this, &MainWindow::actionLoadFromFolder);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::doQuitMenuAction);
@@ -105,6 +114,10 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    // The scene tree holds raw Ogre::SceneNode pointers, and Qt still lays the view out
+    // while the window closes; drop them before Ogre is destroyed.
+    mSeceneWidget->clear();
+
     delete mOgreManager;
     delete ui;
 }
@@ -130,8 +143,15 @@ void MainWindow::readSettings()
 
 void MainWindow::onSceneLoaded()
 {
+    QCommandLineParser parser;
+    QCommandLineOption exportOption("export", "Export the loaded models to <file> (.obj, .glb or .gltf), then quit.", "file");
+    parser.addOption(exportOption);
+    QCommandLineOption screenshotOption("screenshot", "Save a picture of the view to <file> (.png), then quit.", "file");
+    parser.addOption(screenshotOption);
+    parser.parse(QCoreApplication::arguments());
+
     // Files given on the command line replace the sample models
-    QStringList meshFiles = QCoreApplication::arguments().mid(1);
+    QStringList meshFiles = parser.positionalArguments();
     if (meshFiles.isEmpty())
     {
         QDir meshDir(QApplication::applicationDirPath());
@@ -159,12 +179,35 @@ void MainWindow::onSceneLoaded()
 
     mOgreManager->setIrradianceBackground();
     mSeceneWidget->sceneLoaded();
+
+    if (parser.isSet(screenshotOption))
+    {
+        mScreenshotPath = parser.value(screenshotOption);
+        mFramesUntilScreenshot = 5;
+    }
+
+    if (parser.isSet(exportOption))
+    {
+        const bool ok = exportScene(parser.value(exportOption));
+        QTimer::singleShot(0, this, [ok] { QCoreApplication::exit(ok ? 0 : 1); });
+    }
 }
 
 void MainWindow::Tick()
 {
     if (mOgreManager)
         mOgreManager->render();
+
+    if (!mScreenshotPath.isEmpty() && --mFramesUntilScreenshot <= 0)
+    {
+        // Make sure every texture has arrived, then draw one more frame with them
+        TextureUtil::manager()->waitForStreamingCompletion();
+        mOgreManager->render();
+
+        const bool ok = mOgreWidget->saveScreenshot(mScreenshotPath);
+        mScreenshotPath.clear();
+        QCoreApplication::exit(ok ? 0 : 1);
+    }
 }
 
 void MainWindow::createDockWindows()
@@ -219,10 +262,11 @@ void MainWindow::actionOpen()
     QString lastOpenLocation = settings.value("actionOpen", mUserDocumentPath).toString();
 
     QString fileFilters =
-        "All supported formats (*.mesh *.mesh.xml *.obj *.gltf *.glb);;"
+        "All supported formats (*.mesh *.mesh.xml *.obj *.gltf *.glb *.scene);;"
         "Ogre Mesh (*.mesh *.mesh.xml);;"
         "Wavefront Obj (*.obj);;"
-        "glTF (*.gltf *.glb);;All Files (*)";
+        "glTF (*.gltf *.glb);;"
+        "DotScene (*.scene);;All Files (*)";
 
     QString sMeshFileName = QFileDialog::getOpenFileName(this, "Open", lastOpenLocation, fileFilters);
     if (sMeshFileName.isEmpty())
@@ -298,45 +342,65 @@ void MainWindow::actionSaveMesh()
     dialog->open();
 }
 
-void MainWindow::actionExportObj()
+void MainWindow::actionExport()
 {
     mTimer->stop();
     ON_SCOPE_EXIT(mTimer->start());
 
     QSettings settings("OgreV2ModelViewer", "OgreV2ModelViewer");
-    QString sLastOpenLocation = settings.value("actionExportObj", mUserDocumentPath).toString();
+    QString sLastOpenLocation = settings.value("actionExport", mUserDocumentPath).toString();
 
-    QString sObjFileName = QFileDialog::getSaveFileName(this, "Export Obj",
-                                                        sLastOpenLocation + "/a.obj",
-                                                        "Wavefront obj (*.obj)");
-    if (sObjFileName.isEmpty())
+    QString sOutFile = QFileDialog::getSaveFileName(this, "Export",
+                                                    sLastOpenLocation + "/scene.obj",
+                                                    "Wavefront obj (*.obj);;glTF binary (*.glb);;glTF (*.gltf)");
+    if (sOutFile.isEmpty())
     {
         return;
     }
 
-    //QString sObjFileName = "C:/Users/Matt/Desktop/a.obj";
+    settings.setValue("actionExport", QFileInfo(sOutFile).absolutePath());
 
-    if (QFile::exists(sObjFileName)) QFile::remove(sObjFileName);
+    if (!exportScene(sOutFile))
+    {
+        QMessageBox::information(this, "Error", "Failed to export " + sOutFile);
+    }
+}
 
-    Q_ASSERT(!QFile::exists(sObjFileName));
+void MainWindow::actionScreenshot()
+{
+    const QString folder = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    const QString fileName = "ogre-mesh-viewer-" + QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss-zzz") + ".png";
+    const QString filePath = QDir(folder).filePath(fileName);
 
-    QFileInfo info(sObjFileName);
-    settings.setValue("actionExportObj", info.absolutePath());
+    if (mOgreWidget->saveScreenshot(filePath))
+        statusBar()->showMessage("Screenshot saved to " + filePath, 5000);
+    else
+        statusBar()->showMessage("Failed to save screenshot", 5000);
+}
 
-    Ogre::Mesh* mesh = mOgreManager->currentMesh();
-    if (mesh != nullptr)
+bool MainWindow::exportScene(const QString& sOutFile)
+{
+    const std::vector<MeshData::Object> objects = MeshData::readScene(mOgreManager->meshRootNode());
+    if (objects.empty())
+    {
+        qDebug() << "Nothing to export";
+        return false;
+    }
+
+    bool ok = false;
+    if (sOutFile.endsWith(".obj", Qt::CaseInsensitive))
     {
         ObjExporter objExporter;
-        bool ok = objExporter.writeToFile(mesh, sObjFileName);
-
-        qDebug() << "Obj=" << sObjFileName << ", Success=" << ok;
-
-        if (!ok)
-        {
-            qDebug() << "Failed to export obj model.";
-            QMessageBox::information(this, "Error", "Filed to export obj model");
-        }
+        ok = objExporter.writeToFile(objects, sOutFile);
     }
+    else if (sOutFile.endsWith(".glb", Qt::CaseInsensitive) || sOutFile.endsWith(".gltf", Qt::CaseInsensitive))
+    {
+        GltfExporter gltfExporter;
+        ok = gltfExporter.writeToFile(objects, sOutFile);
+    }
+
+    qDebug() << "Export=" << sOutFile << ", Success=" << ok;
+    return ok;
 }
 
 void MainWindow::actionLoadFromFolder()
